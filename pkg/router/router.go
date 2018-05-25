@@ -7,6 +7,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/pagient/pagient-api/pkg/config"
+	"github.com/pagient/pagient-api/pkg/context"
 	"github.com/pagient/pagient-api/pkg/handler"
 	"github.com/pagient/pagient-api/pkg/middleware/basicauth"
 	"github.com/pagient/pagient-api/pkg/middleware/header"
@@ -34,8 +35,10 @@ func Load(cfg *config.Config) http.Handler {
 			Msg("")
 	}))
 
-	mux.Use(middleware.Timeout(60 * time.Second))
+	mux.Use(middleware.RequestID)
 	mux.Use(middleware.RealIP)
+	mux.Use(middleware.Recoverer)
+	mux.Use(middleware.Timeout(60 * time.Second))
 
 	mux.Use(header.Version)
 	mux.Use(header.Cache)
@@ -45,17 +48,26 @@ func Load(cfg *config.Config) http.Handler {
 	mux.NotFound(handler.Notfound(cfg))
 
 	mux.Route("/", func(root chi.Router) {
-		root.Route("/patient", func(state chi.Router) {
-			state.Use(basicauth.Basicauth(cfg))
+		root.Use(basicauth.Basicauth(cfg))
 
-			state.Post("/", handler.UpdatePatient(cfg))
+		// Manage patients
+		root.Route("/patients", func(state chi.Router) {
+			state.Get("/", handler.GetPatients(cfg))
+			state.Post("/", handler.AddPatient(cfg))
+
+			state.Route("/{patientID}", func(state chi.Router) {
+				state.Use(context.PatientCtx)
+
+				state.Get("/", handler.GetPatient(cfg))
+				state.Post("/", handler.UpdatePatient(cfg))
+			})
 		})
+
+		// List pagers
+		root.Get("/pagers", handler.GetPagers(cfg))
+		// List clients
+		root.Get("/clients", handler.GetClients(cfg))
 	})
 
 	return mux
-}
-
-func init() {
-	chi.RegisterMethod("lock")
-	chi.RegisterMethod("unlock")
 }
