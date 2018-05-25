@@ -246,38 +246,6 @@ func serverAction(cfg *config.Config) cli.ActionFunc {
 			})
 		}
 
-		{
-			server := &http.Server{
-				Addr:         cfg.Server.Private,
-				Handler:      router.Status(cfg),
-				ReadTimeout:  5 * time.Second,
-				WriteTimeout: 10 * time.Second,
-			}
-
-			gr.Add(func() error {
-				log.Info().
-					Str("addr", cfg.Server.Private).
-					Msg("starting status server")
-
-				return server.ListenAndServe()
-			}, func(reason error) {
-				ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-				defer cancel()
-
-				if err := server.Shutdown(ctx); err != nil {
-					log.Info().
-						Err(err).
-						Msg("failed to stop status server gracefully")
-
-					return
-				}
-
-				log.Info().
-					Err(reason).
-					Msg("status server stopped gracefully")
-			})
-		}
-
 		return gr.Run()
 	}
 }
