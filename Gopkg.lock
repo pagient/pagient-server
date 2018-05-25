@@ -13,14 +13,14 @@
     ".",
     "middleware"
   ]
-  revision = "e83ac2304db3c50cf03d96a2fcd39009d458bc35"
-  version = "v3.3.2"
+  revision = "967844826e58cf31213a7dfb82455d242ad85101"
+  version = "v3.0.0"
 
 [[projects]]
-  name = "github.com/joho/godotenv"
+  branch = "master"
+  name = "github.com/kardianos/minwinsvc"
   packages = ["."]
-  revision = "a79fa1e548e2c689c241d10173efd51e5d689d5b"
-  version = "v1.2.0"
+  revision = "cad6b2b879b0970e4245a20ebf1a81a756e2bb70"
 
 [[projects]]
   name = "github.com/oklog/run"
@@ -53,6 +53,21 @@
   version = "v1.0"
 
 [[projects]]
+  branch = "master"
+  name = "golang.org/x/sys"
+  packages = [
+    "windows",
+    "windows/svc"
+  ]
+  revision = "31355384c89b50e6faeffdb36f64a77a8210188e"
+
+[[projects]]
+  name = "gopkg.in/ini.v1"
+  packages = ["."]
+  revision = "6529cf7c58879c08d927016dde4477f18a0634cb"
+  version = "v1.36.0"
+
+[[projects]]
   branch = "v2"
   name = "gopkg.in/urfave/cli.v2"
   packages = ["."]
@@ -61,6 +76,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "5792fc711466af442626f692992da9e0fc4d7c8347117912686415c1f423d17a"
+  inputs-digest = "adc34350402e01d42a8e4339b23f7729aa084d0e1f2b396046fa7ce5e1d3ba04"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -12,7 +12,7 @@ import (
 func Basicauth(cfg *config.Config) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if cfg.General.Username != "" && cfg.General.Password != "" {
+			if len(cfg.General.Users) > 0 {
 				w.Header().Set("WWW-Authenticate", `Basic realm="Pagient"`)
 
 				s := strings.SplitN(r.Header.Get("Authorization"), " ", 2)
@@ -36,12 +36,8 @@ func Basicauth(cfg *config.Config) func(next http.Handler) http.Handler {
 					return
 				}
 
-				if pair[0] != cfg.General.Username {
-					http.Error(w, http.StatusText(http.StatusUnauthorized), 401)
-					return
-				}
-
-				if pair[1] != cfg.General.Password {
+				pw, err := cfg.General.GetPassword(pair[0])
+				if err != nil || pair[1] != pw {
 					http.Error(w, http.StatusText(http.StatusUnauthorized), 401)
 					return
 				}

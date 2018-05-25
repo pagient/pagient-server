@@ -1,0 +1,42 @@
+[server]
+; address to bind the server
+ADDRESS        = 0.0.0.0:8080
+; external access to server
+HOST           = http://localhost:8080
+; root path of the proxy
+ROOT           = /
+; path to ssl cert
+CERT           =
+; path to ssl key
+KEY            =
+; use strict ssl curves
+STRICT_CURVES  = false
+; use strict ssl ciphers
+STRICT_CIPHERS = false
+
+[general]
+; root path of stored data
+ROOT    = data/
+; secret for file encryption
+SECRET  =
+; users in basic auth notication ({name}:{password})
+; can be specified multiple times
+USERS   = test:hallo
+USERS   = hallo:test
+; clients in the form {name}:{id}
+; name has to match with user name
+; can be specified multiple times
+CLIENTS = test:1
+CLIENTS = hallo:2
+
+[database]
+; provider of stored data
+PROVIDER = file
+
+[log]
+; set logging level
+LEVEL   = info
+; enable colored logging
+COLORED = false
+; enable pretty logging
+PRETTY  = false

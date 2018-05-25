@@ -15,122 +15,13 @@ import (
 	"gopkg.in/urfave/cli.v2"
 )
 
-var (
-	defaultAddr = "0.0.0.0:8080"
-	privateAddr = "127.0.0.1:8081"
-)
-
 // Server provides the sub-command to start the server.
 func Server(cfg *config.Config) *cli.Command {
 	return &cli.Command{
 		Name:   "server",
 		Usage:  "start the integrated server",
-		Flags:  serverFlags(cfg),
 		Before: serverBefore(cfg),
 		Action: serverAction(cfg),
-	}
-}
-
-func serverFlags(cfg *config.Config) []cli.Flag {
-	return []cli.Flag{
-		&cli.StringFlag{
-			Name:        "private-addr",
-			Value:       privateAddr,
-			Usage:       "address for metrics and health",
-			EnvVars:     []string{"PAGIENT_PRIVATE_ADDR"},
-			Destination: &cfg.Server.Private,
-		},
-		&cli.StringFlag{
-			Name:        "server-addr",
-			Value:       defaultAddr,
-			Usage:       "address to bind the server",
-			EnvVars:     []string{"PAGIENT_SERVER_ADDR"},
-			Destination: &cfg.Server.Public,
-		},
-		&cli.StringFlag{
-			Name:        "server-root",
-			Value:       "/",
-			Usage:       "root path of the proxy",
-			EnvVars:     []string{"PAGIENT_SERVER_ROOT"},
-			Destination: &cfg.Server.Root,
-		},
-		&cli.StringFlag{
-			Name:        "server-host",
-			Value:       "http://localhost:8080",
-			Usage:       "external access to server",
-			EnvVars:     []string{"PAGIENT_SERVER_HOST"},
-			Destination: &cfg.Server.Host,
-		},
-		&cli.StringFlag{
-			Name:        "server-cert",
-			Value:       "",
-			Usage:       "path to ssl cert",
-			EnvVars:     []string{"PAGIENT_SERVER_CERT"},
-			Destination: &cfg.Server.Cert,
-		},
-		&cli.StringFlag{
-			Name:        "server-key",
-			Value:       "",
-			Usage:       "path to ssl key",
-			EnvVars:     []string{"PAGIENT_SERVER_KEY"},
-			Destination: &cfg.Server.Key,
-		},
-		&cli.BoolFlag{
-			Name:        "strict-curves",
-			Value:       false,
-			Usage:       "use strict ssl curves",
-			EnvVars:     []string{"PAGIENT_STRICT_CURVES"},
-			Destination: &cfg.Server.StrictCurves,
-		},
-		&cli.BoolFlag{
-			Name:        "strict-ciphers",
-			Value:       false,
-			Usage:       "use strict ssl ciphers",
-			EnvVars:     []string{"PAGIENT_STRICT_CIPHERS"},
-			Destination: &cfg.Server.StrictCiphers,
-		},
-		&cli.StringFlag{
-			Name:        "templates-path",
-			Value:       "",
-			Usage:       "path to custom templates",
-			EnvVars:     []string{"PAGIENT_SERVER_TEMPLATES"},
-			Destination: &cfg.Server.Templates,
-		},
-		&cli.StringFlag{
-			Name:        "assets-path",
-			Value:       "",
-			Usage:       "path to custom assets",
-			EnvVars:     []string{"PAGIENT_SERVER_ASSETS"},
-			Destination: &cfg.Server.Assets,
-		},
-		&cli.StringFlag{
-			Name:        "storage-path",
-			Value:       "storage/",
-			Usage:       "folder for storing certs and misc files",
-			EnvVars:     []string{"PAGIENT_SERVER_STORAGE"},
-			Destination: &cfg.Server.Storage,
-		},
-		&cli.StringFlag{
-			Name:        "general-username",
-			Value:       "",
-			Usage:       "username for basic auth",
-			EnvVars:     []string{"PAGIENT_GENERAL_USERNAME"},
-			Destination: &cfg.General.Username,
-		},
-		&cli.StringFlag{
-			Name:        "general-password",
-			Value:       "",
-			Usage:       "password for basic auth",
-			EnvVars:     []string{"PAGIENT_GENERAL_PASSWORD"},
-			Destination: &cfg.General.Password,
-		},
-		&cli.StringFlag{
-			Name:        "encryption-secret",
-			Value:       "",
-			Usage:       "secret for file encryption",
-			EnvVars:     []string{"PAGIENT_ENCRYPTION_SECRET"},
-			Destination: &cfg.General.Secret,
-		},
 	}
 }
 
@@ -174,7 +65,7 @@ func serverAction(cfg *config.Config) cli.ActionFunc {
 
 			{
 				server := &http.Server{
-					Addr:         cfg.Server.Public,
+					Addr:         cfg.Server.Address,
 					Handler:      router.Load(cfg),
 					ReadTimeout:  5 * time.Second,
 					WriteTimeout: 10 * time.Second,
@@ -189,7 +80,7 @@ func serverAction(cfg *config.Config) cli.ActionFunc {
 
 				gr.Add(func() error {
 					log.Info().
-						Str("addr", cfg.Server.Public).
+						Str("addr", cfg.Server.Address).
 						Msg("starting https server")
 
 					return server.ListenAndServeTLS("", "")
@@ -216,7 +107,7 @@ func serverAction(cfg *config.Config) cli.ActionFunc {
 
 		{
 			server := &http.Server{
-				Addr:         cfg.Server.Public,
+				Addr:         cfg.Server.Address,
 				Handler:      router.Load(cfg),
 				ReadTimeout:  5 * time.Second,
 				WriteTimeout: 10 * time.Second,
@@ -224,7 +115,7 @@ func serverAction(cfg *config.Config) cli.ActionFunc {
 
 			gr.Add(func() error {
 				log.Info().
-					Str("addr", cfg.Server.Public).
+					Str("addr", cfg.Server.Address).
 					Msg("starting http server")
 
 				return server.ListenAndServe()

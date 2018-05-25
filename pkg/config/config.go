@@ -1,42 +1,238 @@
 package config
 
+import (
+	"fmt"
+	"os"
+	"runtime"
+	"os/exec"
+	"strconv"
+	"strings"
+	"path/filepath"
+
+	_ "github.com/kardianos/minwinsvc"
+	"github.com/rs/zerolog/log"
+	"gopkg.in/ini.v1"
+	"path"
+)
+
+const (
+	DatabaseProviderFile string = "file"
+)
+
+var (
+	isWindows bool
+	appWorkPath   string
+)
+
 // Server defines the server configuration.
 type Server struct {
-	Private       string
-	Public        string
-	Host          string
-	Root          string
-	Cert          string
-	Key           string
-	StrictCurves  bool
-	StrictCiphers bool
-	Templates     string
-	Assets        string
-	Storage       string
-}
-
-// Logs defines the logging configuration.
-type Logs struct {
-	Level   string
-	Colored bool
-	Pretty  bool
+	Address       string `ini:"ADDRESS"`
+	Host          string `ini:"HOST"`
+	Root          string `ini:"ROOT"`
+	Cert          string `ini:"CERT"`
+	Key           string `ini:"KEY"`
+	StrictCurves  bool `ini:"STRICT_CURVES"`
+	StrictCiphers bool `ini:"STRICT_CIPHERS"`
 }
 
 // General defines the general configuration.
 type General struct {
-	Username string
-	Password string
-	Secret   string
+	Root    string `ini:"ROOT"`
+	Secret  string `ini:"SECRET"`
+	Users   []string `ini:"USERS,value,omitempty,allowshadow"`
+	Clients []string `ini:"CLIENTS,value,omitempty,allowshadow"`
+}
+
+func (cfg General) GetPassword(name string) (string, error) {
+	for _, user := range cfg.Users {
+		userInfo := strings.SplitN(user, ":", 2)
+		if userInfo[0] == name {
+			return userInfo[1], nil
+		}
+	}
+
+	return "", fmt.Errorf("No user named %s is configured", name)
+}
+
+func (cfg General) GetClientID(name string) (int64, error) {
+	for _, clientMapping := range cfg.Clients {
+		clientInfo := strings.SplitN(clientMapping, ":", 2)
+		if clientInfo[0] == name {
+			return strconv.ParseInt(clientInfo[1], 10, 64)
+		}
+	}
+
+	return 0, fmt.Errorf("No client named %s is configured", name)
+}
+
+// Database defines the database configuration
+type Database struct {
+	Provider string `ini:"PROVIDER"`
+}
+
+// Log defines the logging configuration.
+type Log struct {
+	Level   string `ini:"LEVEL"`
+	Colored bool `ini:"COLORED"`
+	Pretty  bool `ini:"PRETTY"`
 }
 
 // Config defines the general configuration.
 type Config struct {
-	Server  Server
-	Logs    Logs
-	General General
+	Server   Server
+	General  General
+	Database Database
+	Log      Log
 }
 
 // New prepares a new default configuration.
 func New() *Config {
-	return &Config{}
+	cfg, err := ini.ShadowLoad(path.Join(appWorkPath, "/conf/app.ini"))
+	if err != nil {
+		log.Fatal().
+			Msg(err.Error())
+
+		os.Exit(1)
+	}
+
+	serverCfg := new(Server)
+	if err = cfg.Section("server").MapTo(serverCfg); err != nil {
+		log.Fatal().
+			Msg(err.Error())
+
+		os.Exit(1)
+	}
+
+	generalCfg := new(General)
+	if err = cfg.Section("general").MapTo(generalCfg); err != nil {
+		log.Fatal().
+			Msg(err.Error())
+
+		os.Exit(1)
+	}
+	generalCfg.Root = path.Join(appWorkPath, generalCfg.Root)
+
+	checkFormatting(generalCfg)
+	checkUserClientMapping(generalCfg)
+
+	databaseCfg := new(Database)
+	if err = cfg.Section("database").MapTo(databaseCfg); err != nil {
+		log.Error().
+			Msg(err.Error())
+
+		os.Exit(1)
+	}
+
+	logCfg := new(Log)
+	if err = cfg.Section("log").MapTo(logCfg); err != nil {
+		log.Fatal().
+			Msg(err.Error())
+
+		os.Exit(1)
+	}
+
+	return &Config{
+		Server:   *serverCfg,
+		General:  *generalCfg,
+		Database: *databaseCfg,
+		Log:      *logCfg,
+	}
+}
+
+func init() {
+	isWindows = runtime.GOOS == "windows"
+
+	var appPath string
+	var err error
+	if appPath, err = getAppPath(); err != nil {
+		log.Fatal().
+			Msg(err.Error())
+
+		os.Exit(1)
+	}
+
+	appWorkPath = getWorkPath(appPath)
+}
+
+func getAppPath() (string, error) {
+	var appPath string
+	var err error
+
+	if isWindows && filepath.IsAbs(os.Args[0]) {
+		appPath = filepath.Clean(os.Args[0])
+	} else {
+		appPath, err = exec.LookPath(os.Args[0])
+	}
+
+	if err != nil {
+		return "", err
+	}
+	appPath, err = filepath.Abs(appPath)
+	if err != nil {
+		return "", err
+	}
+
+	// Note: we don't use path.Dir here because it does not handle case
+	//		 which path starts with two "/" in Windows: "//psf/Home/..."
+	return strings.Replace(appPath, "\\", "/", -1), err
+}
+
+func getWorkPath(appPath string) string {
+	workPath := ""
+
+	i := strings.LastIndex(appPath, "/")
+	if i == -1 {
+		workPath = appPath
+	} else {
+		workPath = appPath[:i]
+	}
+
+	// Note: we don't use path.Dir here because it does not handle case
+	//		 which path starts with two "/" in Windows: "//psf/Home/..."
+	return strings.Replace(workPath, "\\", "/", -1)
+}
+
+func checkFormatting(cfg *General) {
+	correctFormat := allInColonFormat(cfg.Users);
+	if !correctFormat {
+		log.Fatal().
+			Msg("Configuration of 'users' is not formatted correctly.")
+
+		os.Exit(1)
+	}
+
+	correctFormat = allInColonFormat(cfg.Clients);
+	if !correctFormat {
+		log.Fatal().
+			Msg("Configuration of 'clients' is not formatted correctly.")
+
+		os.Exit(1)
+	}
+}
+
+func allInColonFormat(items []string) bool {
+	for _, item := range items {
+		pair := strings.SplitN(item, ":", 2)
+
+		if len(pair) != 2 {
+			return false
+		}
+	}
+
+	return true
+}
+
+
+func checkUserClientMapping(cfg *General) {
+	for _, user := range cfg.Users {
+		pair := strings.SplitN(user, ":", 2)
+
+		_, err := cfg.GetClientID(pair[0])
+		if err != nil {
+			log.Fatal().
+				Msg(err.Error())
+
+			os.Exit(1)
+		}
+	}
 }

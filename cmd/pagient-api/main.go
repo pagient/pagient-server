@@ -4,7 +4,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/joho/godotenv"
 	"github.com/pagient/pagient-api/pkg/config"
 	"github.com/pagient/pagient-api/pkg/version"
 	"github.com/rs/zerolog"
@@ -15,16 +14,11 @@ import (
 func main() {
 	cfg := config.New()
 
-	if env := os.Getenv("PAGIENT_ENV_FILE"); env != "" {
-		godotenv.Load(env)
-	}
-
 	app := &cli.App{
 		Name:     "pagient",
 		Version:  version.Version.String(),
 		Usage:    "pagient server",
 		Authors:  authors(cfg),
-		Flags:    flags(cfg),
 		Before:   before(cfg),
 		Commands: command(cfg),
 	}
@@ -55,36 +49,9 @@ func authors(cfg *config.Config) []*cli.Author {
 	}
 }
 
-func flags(cfg *config.Config) []cli.Flag {
-	return []cli.Flag{
-		// logging flags
-		&cli.StringFlag{
-			Name:        "log-level",
-			Value:       "info",
-			Usage:       "set logging level",
-			EnvVars:     []string{"TERRASTATE_LOG_LEVEL"},
-			Destination: &cfg.Logs.Level,
-		},
-		&cli.BoolFlag{
-			Name:        "log-colored",
-			Value:       false,
-			Usage:       "enable colored logging",
-			EnvVars:     []string{"TERRASTATE_LOG_COLORED"},
-			Destination: &cfg.Logs.Colored,
-		},
-		&cli.BoolFlag{
-			Name:        "log-pretty",
-			Value:       false,
-			Usage:       "enable pretty logging",
-			EnvVars:     []string{"TERRASTATE_LOG_PRETTY"},
-			Destination: &cfg.Logs.Pretty,
-		},
-	}
-}
-
 func before(cfg *config.Config) cli.BeforeFunc {
 	return func(c *cli.Context) error {
-		switch strings.ToLower(cfg.Logs.Level) {
+		switch strings.ToLower(cfg.Log.Level) {
 		case "debug":
 			zerolog.SetGlobalLevel(zerolog.DebugLevel)
 		case "info":
@@ -101,11 +68,11 @@ func before(cfg *config.Config) cli.BeforeFunc {
 			zerolog.SetGlobalLevel(zerolog.InfoLevel)
 		}
 
-		if cfg.Logs.Pretty {
+		if cfg.Log.Pretty {
 			log.Logger = log.Output(
 				zerolog.ConsoleWriter{
 					Out:     os.Stderr,
-					NoColor: !cfg.Logs.Colored,
+					NoColor: !cfg.Log.Colored,
 				},
 			)
 		}
