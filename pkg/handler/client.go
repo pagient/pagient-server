@@ -5,6 +5,7 @@ import (
 	"net/http"
 )
 
+// GetClients lists all configured clients
 func GetClients(cfg *config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

@@ -3,25 +3,26 @@ package config
 import (
 	"fmt"
 	"os"
-	"runtime"
 	"os/exec"
+	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
-	"path/filepath"
 
-	_ "github.com/kardianos/minwinsvc"
+	_ "github.com/kardianos/minwinsvc" // import minwinsvc for windows services
 	"github.com/rs/zerolog/log"
 	"gopkg.in/ini.v1"
 	"path"
 )
 
+// enumerates all database provider types
 const (
 	DatabaseProviderFile string = "file"
 )
 
 var (
-	isWindows bool
-	appWorkPath   string
+	isWindows   bool
+	appWorkPath string
 )
 
 // Server defines the server configuration.
@@ -31,18 +32,19 @@ type Server struct {
 	Root          string `ini:"ROOT"`
 	Cert          string `ini:"CERT"`
 	Key           string `ini:"KEY"`
-	StrictCurves  bool `ini:"STRICT_CURVES"`
-	StrictCiphers bool `ini:"STRICT_CIPHERS"`
+	StrictCurves  bool   `ini:"STRICT_CURVES"`
+	StrictCiphers bool   `ini:"STRICT_CIPHERS"`
 }
 
 // General defines the general configuration.
 type General struct {
-	Root    string `ini:"ROOT"`
-	Secret  string `ini:"SECRET"`
+	Root    string   `ini:"ROOT"`
+	Secret  string   `ini:"SECRET"`
 	Users   []string `ini:"USERS,value,omitempty,allowshadow"`
 	Clients []string `ini:"CLIENTS,value,omitempty,allowshadow"`
 }
 
+// GetPassword returns the password of a user
 func (cfg General) GetPassword(name string) (string, error) {
 	for _, user := range cfg.Users {
 		userInfo := strings.SplitN(user, ":", 2)
@@ -54,6 +56,7 @@ func (cfg General) GetPassword(name string) (string, error) {
 	return "", fmt.Errorf("No user named %s is configured", name)
 }
 
+// GetClientID returns the client id of a client
 func (cfg General) GetClientID(name string) (int64, error) {
 	for _, clientMapping := range cfg.Clients {
 		clientInfo := strings.SplitN(clientMapping, ":", 2)
@@ -73,8 +76,8 @@ type Database struct {
 // Log defines the logging configuration.
 type Log struct {
 	Level   string `ini:"LEVEL"`
-	Colored bool `ini:"COLORED"`
-	Pretty  bool `ini:"PRETTY"`
+	Colored bool   `ini:"COLORED"`
+	Pretty  bool   `ini:"PRETTY"`
 }
 
 // Config defines the general configuration.
@@ -86,29 +89,20 @@ type Config struct {
 }
 
 // New prepares a new default configuration.
-func New() *Config {
+func New() (*Config, error) {
 	cfg, err := ini.ShadowLoad(path.Join(appWorkPath, "/conf/app.ini"))
 	if err != nil {
-		log.Fatal().
-			Msg(err.Error())
-
-		os.Exit(1)
+		return nil, err
 	}
 
 	serverCfg := new(Server)
 	if err = cfg.Section("server").MapTo(serverCfg); err != nil {
-		log.Fatal().
-			Msg(err.Error())
-
-		os.Exit(1)
+		return nil, err
 	}
 
 	generalCfg := new(General)
 	if err = cfg.Section("general").MapTo(generalCfg); err != nil {
-		log.Fatal().
-			Msg(err.Error())
-
-		os.Exit(1)
+		return nil, err
 	}
 	generalCfg.Root = path.Join(appWorkPath, generalCfg.Root)
 
@@ -117,18 +111,12 @@ func New() *Config {
 
 	databaseCfg := new(Database)
 	if err = cfg.Section("database").MapTo(databaseCfg); err != nil {
-		log.Error().
-			Msg(err.Error())
-
-		os.Exit(1)
+		return nil, err
 	}
 
 	logCfg := new(Log)
 	if err = cfg.Section("log").MapTo(logCfg); err != nil {
-		log.Fatal().
-			Msg(err.Error())
-
-		os.Exit(1)
+		return nil, err
 	}
 
 	return &Config{
@@ -136,7 +124,7 @@ func New() *Config {
 		General:  *generalCfg,
 		Database: *databaseCfg,
 		Log:      *logCfg,
-	}
+	}, nil
 }
 
 func init() {
@@ -146,7 +134,8 @@ func init() {
 	var err error
 	if appPath, err = getAppPath(); err != nil {
 		log.Fatal().
-			Msg(err.Error())
+			Err(err).
+			Msg("AppPath could not be found")
 
 		os.Exit(1)
 	}
@@ -192,22 +181,18 @@ func getWorkPath(appPath string) string {
 	return strings.Replace(workPath, "\\", "/", -1)
 }
 
-func checkFormatting(cfg *General) {
-	correctFormat := allInColonFormat(cfg.Users);
+func checkFormatting(cfg *General) error {
+	correctFormat := allInColonFormat(cfg.Users)
 	if !correctFormat {
-		log.Fatal().
-			Msg("Configuration of 'users' is not formatted correctly.")
-
-		os.Exit(1)
+		return fmt.Errorf("configuration of 'users' is not formatted correctly")
 	}
 
-	correctFormat = allInColonFormat(cfg.Clients);
+	correctFormat = allInColonFormat(cfg.Clients)
 	if !correctFormat {
-		log.Fatal().
-			Msg("Configuration of 'clients' is not formatted correctly.")
-
-		os.Exit(1)
+		return fmt.Errorf("configuration of 'clients' is not formatted correctly")
 	}
+
+	return nil
 }
 
 func allInColonFormat(items []string) bool {
@@ -222,17 +207,22 @@ func allInColonFormat(items []string) bool {
 	return true
 }
 
-
-func checkUserClientMapping(cfg *General) {
+func checkUserClientMapping(cfg *General) error {
 	for _, user := range cfg.Users {
 		pair := strings.SplitN(user, ":", 2)
 
-		_, err := cfg.GetClientID(pair[0])
-		if err != nil {
-			log.Fatal().
-				Msg(err.Error())
-
-			os.Exit(1)
+		if _, err := cfg.GetClientID(pair[0]); err != nil {
+			return err
 		}
 	}
+
+	for _, client := range cfg.Clients {
+		pair := strings.SplitN(client, ":", 2)
+
+		if _, err := cfg.GetPassword(pair[0]); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

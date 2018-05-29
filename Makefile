@@ -4,10 +4,10 @@ DIST := dist
 
 ifeq ($(OS), Windows_NT)
 	EXECUTABLE := $(NAME).exe
-	HAS_RETOOL := $(shell where retool)
+	HAS_RETOOL := $(shell where retool ;)
 else
 	EXECUTABLE := $(NAME)
-	HAS_RETOOL := $(shell command -v retool)
+	HAS_RETOOL := $(shell command -v retool ;)
 endif
 
 PACKAGES ?= $(shell go list ./... | grep -v /vendor/ | grep -v /_tools/)
