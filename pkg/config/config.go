@@ -40,8 +40,8 @@ type Server struct {
 type General struct {
 	Root    string   `ini:"ROOT"`
 	Secret  string   `ini:"SECRET"`
-	Users   []string `ini:"USERS,value,omitempty,allowshadow"`
-	Clients []string `ini:"CLIENTS,value,omitempty,allowshadow"`
+	Users   []string `ini:"USERS,omitempty,allowshadow"`
+	Clients []string `ini:"CLIENTS,omitempty,allowshadow"`
 }
 
 // GetPassword returns the password of a user
@@ -57,11 +57,11 @@ func (cfg General) GetPassword(name string) (string, error) {
 }
 
 // GetClientID returns the client id of a client
-func (cfg General) GetClientID(name string) (int64, error) {
+func (cfg General) GetClientID(name string) (int, error) {
 	for _, clientMapping := range cfg.Clients {
 		clientInfo := strings.SplitN(clientMapping, ":", 2)
 		if clientInfo[0] == name {
-			return strconv.ParseInt(clientInfo[1], 10, 64)
+			return strconv.Atoi(clientInfo[1])
 		}
 	}
 

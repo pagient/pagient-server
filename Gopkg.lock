@@ -23,6 +23,18 @@
   version = "v3.0.0"
 
 [[projects]]
+  name = "github.com/go-chi/render"
+  packages = ["."]
+  revision = "9f855fadd4b8cde7773f9ef51f6b2705af239519"
+  version = "v1.0.0"
+
+[[projects]]
+  name = "github.com/go-ozzo/ozzo-validation"
+  packages = ["."]
+  revision = "85dcd8368eba387e65a03488b003e233994e87e9"
+  version = "v3.3"
+
+[[projects]]
   branch = "master"
   name = "github.com/jcelliott/lumber"
   packages = ["."]
@@ -121,6 +133,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b0a97ff27422b0d6329bd6c74b71ea7b17fd1de356bc2f3c65e931cd051c36a1"
+  inputs-digest = "e0a7d26d2e5d778a58549d154f43ee3514122eccf5f011fccc9a6cf615969317"
   solver-name = "gps-cdcl"
   solver-version = 1

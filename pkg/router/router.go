@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/render"
 	"github.com/pagient/pagient-api/pkg/config"
 	"github.com/pagient/pagient-api/pkg/context"
 	"github.com/pagient/pagient-api/pkg/handler"
@@ -39,27 +40,28 @@ func Load(cfg *config.Config) http.Handler {
 	mux.Use(middleware.RealIP)
 	mux.Use(middleware.Recoverer)
 	mux.Use(middleware.Timeout(60 * time.Second))
+	mux.Use(render.SetContentType(render.ContentTypeJSON))
 
 	mux.Use(header.Version)
 	mux.Use(header.Cache)
 	mux.Use(header.Secure)
 	mux.Use(header.Options)
 
-	mux.NotFound(handler.Notfound(cfg))
-
 	mux.Route("/", func(root chi.Router) {
 		root.Use(basicauth.Basicauth(cfg))
+		root.Use(context.AuthCtx)
 
 		// Manage patients
-		root.Route("/patients", func(state chi.Router) {
-			state.Get("/", handler.GetPatients(cfg))
-			state.Post("/", handler.AddPatient(cfg))
+		root.Route("/patients", func(r chi.Router) {
+			r.Get("/", handler.GetPatients(cfg))
+			r.Post("/", handler.AddPatient(cfg))
 
-			state.Route("/{patientID}", func(state chi.Router) {
-				state.Use(context.PatientCtx)
+			r.Route("/{patientID}", func(r chi.Router) {
+				r.Use(context.PatientCtx)
 
-				state.Get("/", handler.GetPatient(cfg))
-				state.Post("/", handler.UpdatePatient(cfg))
+				r.Get("/", handler.GetPatient(cfg))
+				r.Post("/", handler.UpdatePatient(cfg))
+				r.Delete("/", handler.DeletePatient(cfg))
 			})
 		})
 

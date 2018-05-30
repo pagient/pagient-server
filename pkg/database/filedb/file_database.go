@@ -39,7 +39,7 @@ func (db *FileDatabase) GetPatient(id uuid.UUID) (*model.Patient, error) {
 	patient := &model.Patient{}
 	if err := db.driver.Read(patientCollection, id.String(), patient); err != nil {
 		if os.IsNotExist(err) {
-			return nil, nil
+			return nil, fmt.Errorf("patient not found")
 		}
 		return nil, err
 	}

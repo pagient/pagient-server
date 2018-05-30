@@ -4,8 +4,8 @@ import "github.com/rs/zerolog/log"
 
 // Pager struct
 type Pager struct {
-	ID   int
-	Name string
+	ID   int    `json:"id"`
+	Name string `json:"name"`
 }
 
 // Call calls the pager and let it vibrate

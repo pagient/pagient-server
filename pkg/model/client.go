@@ -7,8 +7,8 @@ import (
 
 // Client struct
 type Client struct {
-	ID   int
-	Name string
+	ID   int    `json:"id"`
+	Name string `json:"name"`
 }
 
 // GetClients returns all configured clients
@@ -26,4 +26,19 @@ func GetClients() ([]*Client, error) {
 	}
 
 	return clients, nil
+}
+
+// GetClient returns a client by name
+func GetClient(name string) (*Client, error) {
+	clientID, err := cfg.General.GetClientID(name)
+	if err != nil {
+		return nil, err
+	}
+
+	client := &Client{
+		ID:   clientID,
+		Name: name,
+	}
+
+	return client, nil
 }

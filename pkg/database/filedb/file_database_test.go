@@ -57,8 +57,9 @@ func TestFileDatabase_GetPatient(t *testing.T) {
 			resultingErrMsg: assert.AnError.Error(),
 		},
 		"successful but patient or database not found": {
-			patientID:     patientID,
-			patientRetErr: os.ErrNotExist,
+			patientID:       patientID,
+			patientRetErr:   os.ErrNotExist,
+			resultingErrMsg: "patient not found",
 		},
 	}
 
