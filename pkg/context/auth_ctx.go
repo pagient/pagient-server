@@ -1,12 +1,12 @@
 package context
 
 import (
+	"context"
 	"net/http"
 
-	"github.com/pagient/pagient-api/pkg/model"
 	"github.com/go-chi/render"
+	"github.com/pagient/pagient-api/pkg/model"
 	"github.com/pagient/pagient-api/pkg/renderer"
-	"context"
 )
 
 // AuthCtx middleware is used to load a Client object from

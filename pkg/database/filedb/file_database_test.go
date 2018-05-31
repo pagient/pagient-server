@@ -1,14 +1,14 @@
 package filedb
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
 	"github.com/pagient/pagient-api/pkg/model"
+	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/satori/go.uuid"
-	"fmt"
 )
 
 type mockDriver struct {
@@ -129,7 +129,7 @@ func TestFileDatabase_GetPatients(t *testing.T) {
 			resultingErrMsg: "",
 		},
 		"successful with empty database": {
-			readErr:     os.ErrNotExist,
+			readErr: os.ErrNotExist,
 		},
 		"with db error": {
 			readErr:         assert.AnError,
@@ -258,7 +258,7 @@ func TestFileDatabase_UpdatePatient(t *testing.T) {
 		},
 	}
 
-	for name, test := range tests{
+	for name, test := range tests {
 		t.Logf("Running test case: %s", name)
 
 		driver := &mockDriver{}
@@ -319,7 +319,7 @@ func TestFileDatabase_RemovePatient(t *testing.T) {
 		},
 	}
 
-	for name, test := range tests{
+	for name, test := range tests {
 		t.Logf("Running test case: %s", name)
 
 		driver := &mockDriver{}

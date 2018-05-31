@@ -1,12 +1,12 @@
 package renderer
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/go-chi/render"
 	"github.com/pagient/pagient-api/pkg/model"
 	"github.com/satori/go.uuid"
-	"fmt"
 )
 
 // PatientRequest is the request payload for Patient data model.

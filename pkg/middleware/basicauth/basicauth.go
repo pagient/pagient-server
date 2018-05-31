@@ -2,6 +2,7 @@ package basicauth
 
 import (
 	"net/http"
+
 	"github.com/pagient/pagient-api/pkg/config"
 )
 

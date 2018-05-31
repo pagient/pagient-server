@@ -1,9 +1,9 @@
 package model
 
 import (
-	"github.com/satori/go.uuid"
-	"github.com/rs/zerolog/log"
 	"github.com/go-ozzo/ozzo-validation"
+	"github.com/rs/zerolog/log"
+	"github.com/satori/go.uuid"
 )
 
 // PatientState hold the state of the Patient

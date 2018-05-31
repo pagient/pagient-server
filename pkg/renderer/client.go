@@ -1,10 +1,10 @@
 package renderer
 
 import (
-"net/http"
+	"net/http"
 
-"github.com/go-chi/render"
-"github.com/pagient/pagient-api/pkg/model"
+	"github.com/go-chi/render"
+	"github.com/pagient/pagient-api/pkg/model"
 )
 
 // ClientResponse is the response payload for the Client data model.
