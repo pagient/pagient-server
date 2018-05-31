@@ -20,14 +20,12 @@ ROOT    = data/
 ; secret for file encryption
 SECRET  =
 ; users in basic auth notication ({name}:{password})
-; can be specified multiple times
-USERS   = test:hallo
-USERS   = hallo:test
+USERS   = test:hallo, hallo:test
 ; clients in the form {name}:{id}
 ; name has to match with user name
-; can be specified multiple times
-CLIENTS = test:1
-CLIENTS = hallo:2
+CLIENTS = test:1, hallo:2
+; pagers in the form {id}:{name}
+PAGERS = """1:Pager 1""", """2:Pager 2"""
 
 [database]
 ; provider of stored data

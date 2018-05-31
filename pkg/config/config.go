@@ -40,8 +40,9 @@ type Server struct {
 type General struct {
 	Root    string   `ini:"ROOT"`
 	Secret  string   `ini:"SECRET"`
-	Users   []string `ini:"USERS,omitempty,allowshadow"`
-	Clients []string `ini:"CLIENTS,omitempty,allowshadow"`
+	Users   []string `ini:"USERS"`
+	Clients []string `ini:"CLIENTS"`
+	Pagers  []string `ini:"PAGERS"`
 }
 
 // GetPassword returns the password of a user
@@ -68,9 +69,29 @@ func (cfg General) GetClientID(name string) (int, error) {
 	return 0, fmt.Errorf("No client named %s is configured", name)
 }
 
+func (cfg General) GetPagerName(id int) (string, error) {
+	for _, pagerMapping := range cfg.Pagers {
+		pagerInfo := strings.SplitN(pagerMapping, ":", 2)
+		cfgID, err := strconv.Atoi(pagerInfo[0])
+		if err != nil {
+			return "", err
+		}
+		if cfgID == id {
+			return pagerInfo[1], nil
+		}
+	}
+}
+
 // Database defines the database configuration
 type Database struct {
 	Provider string `ini:"PROVIDER"`
+}
+
+// EasyCall defines the easycall pager backend configuration
+type EasyCall struct {
+	Url      string `ini:"URL"`
+	User     string `ini:"USER"`
+	Password string `ini:"PASSWORD"`
 }
 
 // Log defines the logging configuration.
@@ -85,12 +106,13 @@ type Config struct {
 	Server   Server
 	General  General
 	Database Database
+	EasyCall EasyCall
 	Log      Log
 }
 
 // New prepares a new default configuration.
 func New() (*Config, error) {
-	cfg, err := ini.ShadowLoad(path.Join(appWorkPath, "/conf/app.ini"))
+	cfg, err := ini.Load(path.Join(appWorkPath, "/conf/app.ini"))
 	if err != nil {
 		return nil, err
 	}
@@ -114,6 +136,11 @@ func New() (*Config, error) {
 		return nil, err
 	}
 
+	easyCallCfg := new(EasyCall)
+	if err = cfg.Section("easycall").MapTo(easyCallCfg); err != nil {
+		return nil, err
+	}
+
 	logCfg := new(Log)
 	if err = cfg.Section("log").MapTo(logCfg); err != nil {
 		return nil, err
@@ -123,6 +150,7 @@ func New() (*Config, error) {
 		Server:   *serverCfg,
 		General:  *generalCfg,
 		Database: *databaseCfg,
+		EasyCall: *easyCallCfg,
 		Log:      *logCfg,
 	}, nil
 }
@@ -190,6 +218,11 @@ func checkFormatting(cfg *General) error {
 	correctFormat = allInColonFormat(cfg.Clients)
 	if !correctFormat {
 		return fmt.Errorf("configuration of 'clients' is not formatted correctly")
+	}
+
+	correctFormat = allInColonFormat(cfg.Pagers)
+	if !correctFormat {
+		return fmt.Errorf("configuration of 'pagers' is not formatted correctly")
 	}
 
 	return nil

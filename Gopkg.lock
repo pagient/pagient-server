@@ -59,6 +59,12 @@
   version = "v1.0.0"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/pagient/pagient-easy-call-go"
+  packages = ["easycall"]
+  revision = "161d933988bc818a99da515b14a346ca9a355bc2"
+
+[[projects]]
   name = "github.com/pmezard/go-difflib"
   packages = ["difflib"]
   revision = "792786c7400a136282c1664665ae0a8db921c6c2"
@@ -133,6 +139,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "e0a7d26d2e5d778a58549d154f43ee3514122eccf5f011fccc9a6cf615969317"
+  inputs-digest = "b3f5577ae912e4010d30ebf26e068b8cac4072f13ea2d7c5307de9f769a7a5e5"
   solver-name = "gps-cdcl"
   solver-version = 1

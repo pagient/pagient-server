@@ -1,6 +1,12 @@
 package model
 
-import "github.com/rs/zerolog/log"
+import (
+	"strconv"
+	"strings"
+
+	"github.com/pagient/pagient-easy-call-go/easycall"
+	"github.com/rs/zerolog/log"
+)
 
 // Pager struct
 type Pager struct {
@@ -14,16 +20,32 @@ func (pager *Pager) Call() error {
 		Str("pager", pager.Name).
 		Msg("pager has been called")
 
-	// TODO: make call to Pager Webapp
+	client := easycall.NewClient(cfg.EasyCall.Url)
+	client.SetCredentials(cfg.EasyCall.User, cfg.EasyCall.Password)
 
-	return nil
+	err := client.Send(&easycall.SendOptions{
+		Receiver: pager.ID,
+		Message:  "",
+	})
+
+	return err
 }
 
 // GetPagers returns all available pagers
 func GetPagers() ([]*Pager, error) {
-	// TODO: retrieve pagers from Pager Webapp
+	pagers := []*Pager{}
+	for _, pagerInfo := range cfg.General.Pagers {
+		pair := strings.SplitN(pagerInfo, ":", 2)
 
-	return nil, nil
+		id, err := strconv.Atoi(pair[0])
+		if err != nil {
+			return nil, err
+		}
+
+		pagers = append(pagers, &Pager{ID: id, Name: pair[1]})
+	}
+
+	return pagers, nil
 }
 
 // GetPagerByID returns a single pager by ID
