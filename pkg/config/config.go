@@ -69,6 +69,7 @@ func (cfg General) GetClientID(name string) (int, error) {
 	return 0, fmt.Errorf("No client named %s is configured", name)
 }
 
+// GetPagerName returns the name of a pager by id
 func (cfg General) GetPagerName(id int) (string, error) {
 	for _, pagerMapping := range cfg.Pagers {
 		pagerInfo := strings.SplitN(pagerMapping, ":", 2)
@@ -89,7 +90,7 @@ type Database struct {
 
 // EasyCall defines the easycall pager backend configuration
 type EasyCall struct {
-	Url      string `ini:"URL"`
+	URL      string `ini:"URL"`
 	User     string `ini:"USER"`
 	Password string `ini:"PASSWORD"`
 }

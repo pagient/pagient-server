@@ -9,11 +9,12 @@ import (
 	"github.com/satori/go.uuid"
 )
 
-// PatientRequest is the request payload for Patient data model.
+// PatientRequest is the request payload for patient data model
 type PatientRequest struct {
 	*model.Patient
 }
 
+// Bind postprocesses the decoding of the request body
 func (pr *PatientRequest) Bind(r *http.Request) error {
 	var patient *model.Patient
 	if r.Context().Value("patient") != nil {
@@ -32,24 +33,27 @@ func (pr *PatientRequest) Bind(r *http.Request) error {
 	return nil
 }
 
-// PatientResponse is the response payload for the Patient data model.
+// PatientResponse is the response payload for the patient data model
 type PatientResponse struct {
 	*model.Patient
 }
 
+// NewPatientResponse creates a new patient response from patient model
 func NewPatientResponse(patient *model.Patient) *PatientResponse {
 	resp := &PatientResponse{Patient: patient}
 
 	return resp
 }
 
+// Render preprocesses the response before marshalling
 func (pr *PatientResponse) Render(w http.ResponseWriter, r *http.Request) error {
-	// Pre-processing before a response is marshalled and sent across the wire
 	return nil
 }
 
+// PatientListResponse is the list response payload for the patient data model
 type PatientListResponse []*PatientResponse
 
+// NewPatientListResponse creates a new patient list response from multiple patient models
 func NewPatientListResponse(patients []*model.Patient) []render.Renderer {
 	list := []render.Renderer{}
 	for _, patient := range patients {

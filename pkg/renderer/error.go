@@ -7,10 +7,6 @@ import (
 )
 
 // ErrResponse renderer type for handling all sorts of errors.
-//
-// In the best case scenario, the excellent github.com/pkg/errors package
-// helps reveal information on the error, setting it on Err, and in the Render()
-// method, using it to set the application-specific error code in AppCode.
 type ErrResponse struct {
 	Err            error `json:"-"` // low-level runtime error
 	HTTPStatusCode int   `json:"-"` // http renderer status code
@@ -20,11 +16,13 @@ type ErrResponse struct {
 	ErrorText  string `json:"error,omitempty"` // application-level error message, for debugging
 }
 
+// Render renders the ErrResponse
 func (e *ErrResponse) Render(w http.ResponseWriter, r *http.Request) error {
 	render.Status(r, e.HTTPStatusCode)
 	return nil
 }
 
+// ErrInvalidRequest represents a 400 error
 func ErrInvalidRequest(err error) render.Renderer {
 	return &ErrResponse{
 		Err:            err,
@@ -34,6 +32,7 @@ func ErrInvalidRequest(err error) render.Renderer {
 	}
 }
 
+// ErrRender represents a 422 error caused by the renderer
 func ErrRender(err error) render.Renderer {
 	return &ErrResponse{
 		Err:            err,
@@ -43,6 +42,7 @@ func ErrRender(err error) render.Renderer {
 	}
 }
 
+// ErrValidation represents a 422 error caused by validation
 func ErrValidation(err error) render.Renderer {
 	return &ErrResponse{
 		Err:            err,
@@ -52,6 +52,7 @@ func ErrValidation(err error) render.Renderer {
 	}
 }
 
+// ErrInternalServer represents a 500 error
 func ErrInternalServer(err error) render.Renderer {
 	return &ErrResponse{
 		Err:            err,
@@ -61,6 +62,7 @@ func ErrInternalServer(err error) render.Renderer {
 	}
 }
 
+// ErrGateway represents a 504 error caused by unresponsive auxiliary servers
 func ErrGateway(err error) render.Renderer {
 	return &ErrResponse{
 		Err:            err,
@@ -70,4 +72,5 @@ func ErrGateway(err error) render.Renderer {
 	}
 }
 
+// ErrNotFound represents a 404 error
 var ErrNotFound = &ErrResponse{HTTPStatusCode: 404, StatusText: "Resource not found."}

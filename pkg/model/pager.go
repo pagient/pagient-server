@@ -20,7 +20,7 @@ func (pager *Pager) Call() error {
 		Str("pager", pager.Name).
 		Msg("pager has been called")
 
-	client := easycall.NewClient(cfg.EasyCall.Url)
+	client := easycall.NewClient(cfg.EasyCall.URL)
 	client.SetCredentials(cfg.EasyCall.User, cfg.EasyCall.Password)
 
 	err := client.Send(&easycall.SendOptions{
