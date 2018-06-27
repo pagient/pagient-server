@@ -20,6 +20,7 @@ const (
 // Patient struct
 type Patient struct {
 	ID       uuid.UUID    `json:"id"`
+	Ssn      string       `json:"ssn"`
 	Name     string       `json:"name"`
 	PagerID  int          `json:"pager_id,omitempty"`
 	ClientID int          `json:"client_id,omitempty"`
@@ -56,6 +57,7 @@ func (patient *Patient) Validate() error {
 	}
 
 	return validation.ValidateStruct(&patient,
+		validation.Field(&patient.Ssn, validation.Required, validation.Length(10, 10)),
 		validation.Field(&patient.Name, validation.Required, validation.Length(1, 100)),
 		validation.Field(&patient.PagerID, validation.In(pagerIDs)),
 		validation.Field(&patient.Status, validation.In(PatientStatePending, PatientStateCalled)),
