@@ -1,10 +1,12 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/go-chi/render"
 	"github.com/pagient/pagient-api/pkg/config"
+	"github.com/pagient/pagient-api/pkg/context"
 	"github.com/pagient/pagient-api/pkg/model"
 	"github.com/pagient/pagient-api/pkg/renderer"
 )
@@ -27,11 +29,16 @@ func AddPatient(cfg *config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		data := &renderer.PatientRequest{}
 		if err := render.Bind(req, data); err != nil {
-			render.Render(w, req, renderer.ErrInvalidRequest(err))
+			render.Render(w, req, renderer.ErrBadRequest(err))
 			return
 		}
 
 		patient := data.Patient
+
+		// Set clientID to the client that added the patient
+		ctxClient := req.Context().Value(context.ClientKey).(*model.Client)
+		patient.ClientID = ctxClient.ID
+
 		if patient.Status == "" {
 			patient.Status = model.PatientStatePending
 		}
@@ -41,16 +48,14 @@ func AddPatient(cfg *config.Config) http.HandlerFunc {
 			return
 		}
 
-		if err := model.SavePatient(patient); err != nil {
-			render.Render(w, req, renderer.ErrInternalServer(err))
+		if patient, _ := model.GetPatient(patient.ID); patient != nil {
+			render.Render(w, req, renderer.ErrConflict(fmt.Errorf("patient with id %d already exists", patient.ID)))
 			return
 		}
 
-		if patient.Status == model.PatientStateCalled {
-			if err := patient.Call(); err != nil {
-				render.Render(w, req, renderer.ErrGateway(err))
-				return
-			}
+		if err := model.SavePatient(patient); err != nil {
+			render.Render(w, req, renderer.ErrInternalServer(err))
+			return
 		}
 
 		render.Status(req, http.StatusCreated)
@@ -61,7 +66,7 @@ func AddPatient(cfg *config.Config) http.HandlerFunc {
 // GetPatient returns tha patient by specified id
 func GetPatient(cfg *config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
-		ctxPatient := req.Context().Value("patient").(*model.Patient)
+		ctxPatient := req.Context().Value(context.PatientKey).(*model.Patient)
 
 		if err := render.Render(w, req, renderer.NewPatientResponse(ctxPatient)); err != nil {
 			render.Render(w, req, renderer.ErrRender(err))
@@ -72,11 +77,9 @@ func GetPatient(cfg *config.Config) http.HandlerFunc {
 // UpdatePatient updates a patient by specified id
 func UpdatePatient(cfg *config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
-		ctxPatient := *req.Context().Value("patient").(*model.Patient)
-
-		data := &renderer.PatientRequest{Patient: &ctxPatient}
+		data := &renderer.PatientRequest{}
 		if err := render.Bind(req, data); err != nil {
-			render.Render(w, req, renderer.ErrInvalidRequest(err))
+			render.Render(w, req, renderer.ErrBadRequest(err))
 			return
 		}
 
@@ -92,11 +95,12 @@ func UpdatePatient(cfg *config.Config) http.HandlerFunc {
 			return
 		}
 
-		if patient.Status == model.PatientStateCalled {
+		if patient.Status == model.PatientStateCall {
 			if err := patient.Call(); err != nil {
 				render.Render(w, req, renderer.ErrGateway(err))
 				return
 			}
+			patient.Status = model.PatientStateCalled
 		}
 
 		render.Render(w, req, renderer.NewPatientResponse(patient))
@@ -106,10 +110,10 @@ func UpdatePatient(cfg *config.Config) http.HandlerFunc {
 // DeletePatient deletes a patient by specified id
 func DeletePatient(cfg *config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
-		ctxPatient := req.Context().Value("patient").(*model.Patient)
+		ctxPatient := req.Context().Value(context.PatientKey).(*model.Patient)
 
 		if err := model.RemovePatient(ctxPatient); err != nil {
-			render.Render(w, req, renderer.ErrInvalidRequest(err))
+			render.Render(w, req, renderer.ErrBadRequest(err))
 			return
 		}
 

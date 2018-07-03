@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 	"sync"
 
 	"github.com/nanobox-io/golang-scribble"
 	"github.com/pagient/pagient-api/pkg/model"
-	"github.com/satori/go.uuid"
 )
 
 const (
@@ -32,13 +32,13 @@ type FileDatabase struct {
 }
 
 // GetPatient loads a patient by ID
-func (db *FileDatabase) GetPatient(id uuid.UUID) (*model.Patient, error) {
+func (db *FileDatabase) GetPatient(id int) (*model.Patient, error) {
 	lock.Lock()
 	defer lock.Unlock()
 
 	patient := &model.Patient{}
-	if err := db.driver.Read(patientCollection, id.String(), patient); err != nil {
-		if os.IsNotExist(err) {
+	if err := db.driver.Read(patientCollection, strconv.Itoa(id), patient); err != nil {
+		if isNotFoundErr(err) {
 			return nil, fmt.Errorf("patient not found")
 		}
 		return nil, err
@@ -77,32 +77,29 @@ func (db *FileDatabase) AddPatient(patient *model.Patient) error {
 	lock.Lock()
 	defer lock.Unlock()
 
-	patient.ID = uuid.NewV4()
-	if err := db.driver.Write(patientCollection, patient.ID.String(), patient); err != nil {
-		patient.ID = uuid.Nil
+	if err := db.driver.Write(patientCollection, strconv.Itoa(patient.ID), patient); err != nil {
 		return err
 	}
-
 	return nil
 }
 
 // UpdatePatient updates a persistent patient
 func (db *FileDatabase) UpdatePatient(patient *model.Patient) error {
-	if patient.ID == uuid.Nil {
+	if patient.ID == 0 {
 		return fmt.Errorf("Failure trying to update a patient without ID")
 	}
 
 	lock.Lock()
 	defer lock.Unlock()
 
-	if err := db.driver.Delete(patientCollection, patient.ID.String()); err != nil {
-		if os.IsNotExist(err) {
+	if err := db.driver.Delete(patientCollection, strconv.Itoa(patient.ID)); err != nil {
+		if isNotFoundErr(err) {
 			return fmt.Errorf("patient not found")
 		}
 		return err
 	}
 
-	err := db.driver.Write(patientCollection, patient.ID.String(), patient)
+	err := db.driver.Write(patientCollection, strconv.Itoa(patient.ID), patient)
 
 	return err
 }
@@ -112,11 +109,13 @@ func (db *FileDatabase) RemovePatient(patient *model.Patient) error {
 	lock.Lock()
 	defer lock.Unlock()
 
-	err := db.driver.Delete(patientCollection, patient.ID.String())
-	if os.IsNotExist(err) {
-		return fmt.Errorf("patient not found")
+	err := db.driver.Delete(patientCollection, strconv.Itoa(patient.ID))
+	if err != nil {
+		if isNotFoundErr(err) {
+			return fmt.Errorf("patient not found")
+		}
+		return err
 	}
-
 	return err
 }
 

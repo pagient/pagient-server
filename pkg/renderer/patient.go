@@ -6,7 +6,6 @@ import (
 
 	"github.com/go-chi/render"
 	"github.com/pagient/pagient-api/pkg/model"
-	"github.com/satori/go.uuid"
 )
 
 // PatientRequest is the request payload for patient data model
@@ -21,10 +20,8 @@ func (pr *PatientRequest) Bind(r *http.Request) error {
 		patient = r.Context().Value("patient").(*model.Patient)
 
 		if pr.Patient.ID != patient.ID {
-			return fmt.Errorf("id not allowed")
+			return fmt.Errorf("id attribute is not allowed to be updated")
 		}
-	} else if pr.Patient.ID != uuid.Nil {
-		return fmt.Errorf("id not allowed")
 	}
 
 	if pr.Patient.ClientID != 0 {

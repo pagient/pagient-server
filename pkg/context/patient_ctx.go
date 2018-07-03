@@ -3,12 +3,12 @@ package context
 import (
 	"context"
 	"net/http"
+	"strconv"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 	"github.com/pagient/pagient-api/pkg/model"
 	"github.com/pagient/pagient-api/pkg/renderer"
-	"github.com/satori/go.uuid"
 )
 
 // PatientCtx middleware is used to load a Patient object from
@@ -20,8 +20,8 @@ func PatientCtx(next http.Handler) http.Handler {
 		var err error
 
 		if patientID := chi.URLParam(req, "patientID"); patientID != "" {
-			var id uuid.UUID
-			id, err = uuid.FromString(patientID)
+			var id int
+			id, err = strconv.Atoi(patientID)
 
 			if err == nil {
 				patient, err = model.GetPatient(id)
@@ -36,7 +36,7 @@ func PatientCtx(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(req.Context(), patientKey, patient)
+		ctx := context.WithValue(req.Context(), PatientKey, patient)
 		next.ServeHTTP(w, req.WithContext(ctx))
 	})
 }

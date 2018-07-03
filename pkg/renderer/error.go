@@ -4,30 +4,41 @@ import (
 	"net/http"
 
 	"github.com/go-chi/render"
+	"github.com/rs/zerolog/log"
 )
 
 // ErrResponse renderer type for handling all sorts of errors.
 type ErrResponse struct {
 	Err            error `json:"-"` // low-level runtime error
-	HTTPStatusCode int   `json:"-"` // http renderer status code
+	HTTPStatusCode int   `json:"status"` // http renderer status code
 
-	StatusText string `json:"status"`          // user-level status message
+	Message    string `json:"message"`          // user-level status message
 	AppCode    int64  `json:"code,omitempty"`  // application-specific error code
 	ErrorText  string `json:"error,omitempty"` // application-level error message, for debugging
 }
 
 // Render renders the ErrResponse
 func (e *ErrResponse) Render(w http.ResponseWriter, r *http.Request) error {
+	log.Error().Err(e.Err).Msg("")
 	render.Status(r, e.HTTPStatusCode)
 	return nil
 }
 
-// ErrInvalidRequest represents a 400 error
-func ErrInvalidRequest(err error) render.Renderer {
+// ErrBadRequest represents a 400 error
+func ErrBadRequest(err error) render.Renderer {
 	return &ErrResponse{
 		Err:            err,
 		HTTPStatusCode: 400,
-		StatusText:     "Invalid request.",
+		Message:        "Invalid request.",
+		ErrorText:      err.Error(),
+	}
+}
+
+func ErrConflict(err error) render.Renderer {
+	return &ErrResponse{
+		Err:            err,
+		HTTPStatusCode: 409,
+		Message:        "Resouce already exists.",
 		ErrorText:      err.Error(),
 	}
 }
@@ -37,7 +48,7 @@ func ErrRender(err error) render.Renderer {
 	return &ErrResponse{
 		Err:            err,
 		HTTPStatusCode: 422,
-		StatusText:     "Error rendering renderer.",
+		Message:        "Error rendering renderer.",
 		ErrorText:      err.Error(),
 	}
 }
@@ -47,7 +58,7 @@ func ErrValidation(err error) render.Renderer {
 	return &ErrResponse{
 		Err:            err,
 		HTTPStatusCode: 422,
-		StatusText:     "Validation error.",
+		Message:        "Validation error.",
 		ErrorText:      err.Error(),
 	}
 }
@@ -57,7 +68,7 @@ func ErrInternalServer(err error) render.Renderer {
 	return &ErrResponse{
 		Err:            err,
 		HTTPStatusCode: 500,
-		StatusText:     "Internal server error.",
+		Message:        "Internal server error.",
 		ErrorText:      err.Error(),
 	}
 }
@@ -67,10 +78,10 @@ func ErrGateway(err error) render.Renderer {
 	return &ErrResponse{
 		Err:            err,
 		HTTPStatusCode: 504,
-		StatusText:     "Error receiving response from server.",
+		Message:        "Error receiving response from server.",
 		ErrorText:      err.Error(),
 	}
 }
 
 // ErrNotFound represents a 404 error
-var ErrNotFound = &ErrResponse{HTTPStatusCode: 404, StatusText: "Resource not found."}
+var ErrNotFound = &ErrResponse{HTTPStatusCode: 404, Message: "Resource not found."}

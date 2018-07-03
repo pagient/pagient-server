@@ -29,7 +29,7 @@ func AuthCtx(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), clientKey, client)
+		ctx := context.WithValue(r.Context(), ClientKey, client)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

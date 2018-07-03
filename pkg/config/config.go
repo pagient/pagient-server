@@ -81,6 +81,8 @@ func (cfg General) GetPagerName(id int) (string, error) {
 			return pagerInfo[1], nil
 		}
 	}
+
+	return "", nil
 }
 
 // Database defines the database configuration

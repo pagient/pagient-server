@@ -2,6 +2,12 @@
 
 
 [[projects]]
+  name = "github.com/asaskevich/govalidator"
+  packages = ["."]
+  revision = "ccb8e960c48f04d6935e72476ae4a51028f9e22f"
+  version = "v9"
+
+[[projects]]
   name = "github.com/coreos/go-semver"
   packages = ["semver"]
   revision = "8ab6407b697782a06568d4b7f1db25550ec2e4c6"
@@ -30,7 +36,10 @@
 
 [[projects]]
   name = "github.com/go-ozzo/ozzo-validation"
-  packages = ["."]
+  packages = [
+    ".",
+    "is"
+  ]
   revision = "9d6782aa52aad2ec5f3ea5af63b7dc4bc5192c40"
   version = "v3.4.0"
 
@@ -140,6 +149,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b3f5577ae912e4010d30ebf26e068b8cac4072f13ea2d7c5307de9f769a7a5e5"
+  inputs-digest = "498608d14b11c2f1125b1ab42987d8c3e755082b58ba8b3dfcccffea966d99d0"
   solver-name = "gps-cdcl"
   solver-version = 1

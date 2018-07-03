@@ -1,9 +1,11 @@
 package model
 
 import (
+	"regexp"
+
 	"github.com/go-ozzo/ozzo-validation"
+	"github.com/go-ozzo/ozzo-validation/is"
 	"github.com/rs/zerolog/log"
-	"github.com/satori/go.uuid"
 )
 
 // PatientState hold the state of the Patient
@@ -13,13 +15,15 @@ type PatientState string
 const (
 	// PatientStateNew is for when the Patient is Pending
 	PatientStatePending PatientState = "pending"
+	// PatientStateCall is for when the Patient's Pager gets called
+	PatientStateCall PatientState = "call"
 	// PatientStateCalled is for when the Patient's Pager has been called
 	PatientStateCalled PatientState = "called"
 )
 
 // Patient struct
 type Patient struct {
-	ID       uuid.UUID    `json:"id"`
+	ID       int          `json:"id"`
 	Ssn      string       `json:"ssn"`
 	Name     string       `json:"name"`
 	PagerID  int          `json:"pager_id,omitempty"`
@@ -56,10 +60,11 @@ func (patient *Patient) Validate() error {
 		}
 	}
 
-	return validation.ValidateStruct(&patient,
-		validation.Field(&patient.Ssn, validation.Required, validation.Length(10, 10)),
-		validation.Field(&patient.Name, validation.Required, validation.Length(1, 100)),
-		validation.Field(&patient.PagerID, validation.In(pagerIDs)),
+	return validation.ValidateStruct(patient,
+		validation.Field(&patient.ID, validation.Required),
+		validation.Field(&patient.Ssn, validation.Required, is.Digit, validation.Length(10, 10)),
+		validation.Field(&patient.Name, validation.Required, validation.Match(regexp.MustCompile("^[a-zA-Z\u00c0-\u017e\\s]+$")), validation.Length(1, 100)),
+		validation.Field(&patient.PagerID, is.Int, validation.In(pagerIDs)),
 		validation.Field(&patient.Status, validation.In(PatientStatePending, PatientStateCalled)),
 	)
 }
@@ -70,7 +75,7 @@ func GetPatients() ([]*Patient, error) {
 }
 
 // GetPatient returns a patient by ID
-func GetPatient(patientID uuid.UUID) (*Patient, error) {
+func GetPatient(patientID int) (*Patient, error) {
 	return db.GetPatient(patientID)
 }
 
