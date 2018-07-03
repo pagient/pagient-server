@@ -49,7 +49,16 @@ func GetPagers() ([]*Pager, error) {
 
 // GetPagerByID returns a single pager by ID
 func GetPagerByID(id int) (*Pager, error) {
-	// TODO: retrieve pager by id from Pager Webapp
+	pagers, err := GetPagers()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, pager := range pagers {
+		if pager.ID == id {
+			return pager, nil
+		}
+	}
 
 	return nil, nil
 }
