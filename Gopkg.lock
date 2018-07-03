@@ -19,20 +19,20 @@
     ".",
     "middleware"
   ]
-  revision = "967844826e58cf31213a7dfb82455d242ad85101"
-  version = "v3.0.0"
+  revision = "e83ac2304db3c50cf03d96a2fcd39009d458bc35"
+  version = "v3.3.2"
 
 [[projects]]
   name = "github.com/go-chi/render"
   packages = ["."]
-  revision = "9f855fadd4b8cde7773f9ef51f6b2705af239519"
-  version = "v1.0.0"
+  revision = "3215478343fbc559bd3fc08f7031bb134d6bdad5"
+  version = "v1.0.1"
 
 [[projects]]
   name = "github.com/go-ozzo/ozzo-validation"
   packages = ["."]
-  revision = "85dcd8368eba387e65a03488b003e233994e87e9"
-  version = "v3.3"
+  revision = "9d6782aa52aad2ec5f3ea5af63b7dc4bc5192c40"
+  version = "v3.4.0"
 
 [[projects]]
   branch = "master"
@@ -50,7 +50,7 @@
   branch = "master"
   name = "github.com/nanobox-io/golang-scribble"
   packages = ["."]
-  revision = "ced58d671850da57ce8c11315424513b608083d7"
+  revision = "336beac0a992ed9abaf4ef8e7042ba7fe3335c06"
 
 [[projects]]
   name = "github.com/oklog/run"
@@ -62,7 +62,7 @@
   branch = "master"
   name = "github.com/pagient/pagient-easy-call-go"
   packages = ["easycall"]
-  revision = "161d933988bc818a99da515b14a346ca9a355bc2"
+  revision = "c904a5bd37f9566c66a898fbc81af18fab3f125e"
 
 [[projects]]
   name = "github.com/pmezard/go-difflib"
@@ -73,8 +73,8 @@
 [[projects]]
   name = "github.com/rs/xid"
   packages = ["."]
-  revision = "02dd45c33376f85d1064355dc790dcc4850596b1"
-  version = "v1.1"
+  revision = "2c7e97ce663ff82c49656bca3048df0fdd83c5f9"
+  version = "v1.2.0"
 
 [[projects]]
   name = "github.com/rs/zerolog"
@@ -85,8 +85,8 @@
     "internal/json",
     "log"
   ]
-  revision = "fb469685aa8f19d742eff3f56a0bd51a23265829"
-  version = "v1.7.0"
+  revision = "77db4b4f350e31be66a57c332acb7721cf9ff9bb"
+  version = "v1.8.0"
 
 [[projects]]
   name = "github.com/satori/go.uuid"
@@ -97,8 +97,8 @@
 [[projects]]
   name = "github.com/stretchr/objx"
   packages = ["."]
-  revision = "facf9a85c22f48d2f52f2380e4efce1768749a89"
-  version = "v0.1"
+  revision = "477a77ecc69700c7cdeb1fa9e129548e1c1c393c"
+  version = "v0.1.1"
 
 [[projects]]
   name = "github.com/stretchr/testify"
@@ -106,8 +106,8 @@
     "assert",
     "mock"
   ]
-  revision = "12b6f73e6084dad08a7c6e575284b177ecafbc71"
-  version = "v1.2.1"
+  revision = "f35b8ab0b5a2cef36673838d662e249dd9c94686"
+  version = "v1.2.2"
 
 [[projects]]
   name = "github.com/zenazn/goji"
@@ -119,16 +119,17 @@
   branch = "master"
   name = "golang.org/x/sys"
   packages = [
+    "unix",
     "windows",
     "windows/svc"
   ]
-  revision = "31355384c89b50e6faeffdb36f64a77a8210188e"
+  revision = "7138fd3d9dc8335c567ca206f4333fb75eb05d56"
 
 [[projects]]
   name = "gopkg.in/ini.v1"
   packages = ["."]
-  revision = "6529cf7c58879c08d927016dde4477f18a0634cb"
-  version = "v1.36.0"
+  revision = "06f5f3d67269ccec1fe5fe4134ba6e982984f7f5"
+  version = "v1.37.0"
 
 [[projects]]
   branch = "v2"
