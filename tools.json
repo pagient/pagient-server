@@ -23,6 +23,10 @@
     {
       "Repository": "github.com/Unknwon/bra",
       "Commit": "c14c7f7994e36691f39c2443aa6f7be6d111456f"
+    },
+    {
+      "Repository": "github.com/UnnoTed/fileb0x",
+      "Commit": "033c2ecc1c0f93d04afe94186f15193dd4441646"
     }
   ],
   "RetoolVersion": "1.3.7"

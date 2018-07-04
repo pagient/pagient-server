@@ -1,0 +1,54 @@
+# all folders and files are relative to the path
+# where fileb0x was run at!
+
+# default: main
+pkg: assets
+
+# destination
+dest: "../../pkg/assets/"
+
+# gofmt
+# type: bool
+# default: false
+fmt: true
+
+# compress files
+# at the moment, only supports gzip
+#
+# type: object
+compression:
+  # activates the compression
+  #
+  # type: bool
+  # default: false
+  compress: true
+
+# ---------------
+# -- DANGEROUS --
+# ---------------
+#
+# cleans the destination folder (only b0xfiles)
+# you should use this when using the spread function
+# type: bool
+# default: false
+clean: true
+
+# [spread] means it will make a file to hold all fileb0x data
+# and each file into a separated .go file
+#
+# type: bool
+# default: false
+spread: true
+
+# [lcf] log changed files when spread is active
+lcf: true
+
+# type: array of objects
+custom:
+  # type: array of strings
+  - files:
+    - "../../public/dist/"
+
+    # base is the path that will be removed from all files' path
+    # type: string
+    base: "../../public/dist/"

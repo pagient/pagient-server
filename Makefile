@@ -132,10 +132,6 @@ release-check:
 .PHONY: publish
 publish: release
 
-.PHONY: docs
-docs:
-	hugo -s docs/
-
 .PHONY: retool
 retool:
 ifndef HAS_RETOOL

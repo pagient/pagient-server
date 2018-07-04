@@ -7,6 +7,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/render"
+	"github.com/pagient/pagient-api/pkg/assets"
 	"github.com/pagient/pagient-api/pkg/config"
 	"github.com/pagient/pagient-api/pkg/context"
 	"github.com/pagient/pagient-api/pkg/handler"
@@ -22,11 +23,6 @@ func Load(cfg *config.Config, hub *websocket.Hub) http.Handler {
 	mux := chi.NewRouter()
 
 	mux.Use(hlog.NewHandler(log.Logger))
-	mux.Use(hlog.RemoteAddrHandler("ip"))
-	mux.Use(hlog.URLHandler("path"))
-	mux.Use(hlog.MethodHandler("method"))
-	mux.Use(hlog.RequestIDHandler("request_id", "Request-Id"))
-
 	mux.Use(hlog.AccessHandler(func(r *http.Request, status, size int, duration time.Duration) {
 		hlog.FromRequest(r).Debug().
 			Str("method", r.Method).
@@ -36,6 +32,8 @@ func Load(cfg *config.Config, hub *websocket.Hub) http.Handler {
 			Dur("duration", duration).
 			Msg("")
 	}))
+	mux.Use(hlog.RemoteAddrHandler("ip"))
+	mux.Use(hlog.RequestIDHandler("request_id", "Request-Id"))
 
 	mux.Use(middleware.RequestID)
 	mux.Use(middleware.RealIP)
@@ -76,6 +74,14 @@ func Load(cfg *config.Config, hub *websocket.Hub) http.Handler {
 
 		// Serve Websocket
 		root.Get("/ws", handler.ServeWebsocket(cfg, hub))
+
+		// Pagient UI static files
+		root.Get("/*", http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			// static files contain all files from "public/dist/"
+			fs := http.StripPrefix("/", http.FileServer(assets.HTTP))
+
+			fs.ServeHTTP(w, req)
+		}))
 	})
 
 	return mux

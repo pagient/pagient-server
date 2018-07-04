@@ -1,3 +1,5 @@
+//go:generate fileb0x ../../b0x.yml
+
 package main
 
 import (
