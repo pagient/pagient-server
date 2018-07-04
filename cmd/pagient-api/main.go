@@ -5,8 +5,6 @@ import (
 	"strings"
 
 	"github.com/pagient/pagient-api/pkg/config"
-	"github.com/pagient/pagient-api/pkg/database"
-	"github.com/pagient/pagient-api/pkg/model"
 	"github.com/pagient/pagient-api/pkg/version"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -22,15 +20,6 @@ func main() {
 
 		os.Exit(1)
 	}
-	db, err := database.New(cfg)
-	if err != nil {
-		log.Fatal().
-			Err(err).
-			Msg("database initialization failed")
-
-		os.Exit(1)
-	}
-	model.Init(cfg, db)
 
 	app := &cli.App{
 		Name:     "pagient",

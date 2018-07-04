@@ -12,7 +12,7 @@ import (
 func New(cfg *config.Config) (model.Database, error) {
 	switch cfg.Database.Provider {
 	case config.DatabaseProviderFile:
-		return filedb.New(cfg.General.Root)
+		return filedb.NewFileDatabase(cfg.General.Root)
 	default:
 		return nil, fmt.Errorf("no suitable database provider found")
 	}

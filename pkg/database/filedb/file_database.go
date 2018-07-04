@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/nanobox-io/golang-scribble"
 	"github.com/pagient/pagient-api/pkg/model"
+	"github.com/nanobox-io/golang-scribble"
 )
 
 const (
@@ -29,6 +29,20 @@ type driver interface {
 // FileDatabase struct
 type FileDatabase struct {
 	driver driver
+}
+
+// NewFileDatabase creates and returns a new file database connection
+func NewFileDatabase(rootPath string) (*FileDatabase, error) {
+	fileDatabase := new(FileDatabase)
+
+	// Set up scribble json file store
+	db, err := scribble.New(rootPath, nil)
+	if err != nil {
+		return nil, err
+	}
+	fileDatabase.driver = db
+
+	return fileDatabase, nil
 }
 
 // GetPatient loads a patient by ID
@@ -117,20 +131,6 @@ func (db *FileDatabase) RemovePatient(patient *model.Patient) error {
 		return err
 	}
 	return err
-}
-
-// New creates and returns a new file database connection
-func New(rootPath string) (*FileDatabase, error) {
-	fileDatabase := new(FileDatabase)
-
-	// Set up scribble json file store
-	db, err := scribble.New(rootPath, nil)
-	if err != nil {
-		return nil, err
-	}
-	fileDatabase.driver = db
-
-	return fileDatabase, nil
 }
 
 func init() {

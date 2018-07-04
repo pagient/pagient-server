@@ -13,6 +13,9 @@ import (
 	"github.com/pagient/pagient-api/pkg/router"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/urfave/cli.v2"
+	"github.com/pagient/pagient-api/pkg/database"
+	"github.com/pagient/pagient-api/pkg/model"
+	"github.com/pagient/pagient-api/pkg/websocket"
 )
 
 // Server provides the sub-command to start the server.
@@ -33,6 +36,23 @@ func serverBefore(cfg *config.Config) cli.BeforeFunc {
 
 func serverAction(cfg *config.Config) cli.ActionFunc {
 	return func(c *cli.Context) error {
+		// Initialize Database
+		db, err := database.New(cfg)
+		if err != nil {
+			log.Fatal().
+				Err(err).
+				Msg("database initialization failed")
+
+			os.Exit(1)
+		}
+
+		// Initialize Models
+		model.Init(cfg, db)
+
+		// Initialize Websocket hub
+		hub := websocket.NewHub()
+		go hub.Run()
+
 		var gr run.Group
 
 		{
@@ -66,7 +86,7 @@ func serverAction(cfg *config.Config) cli.ActionFunc {
 			{
 				server := &http.Server{
 					Addr:         cfg.Server.Address,
-					Handler:      router.Load(cfg),
+					Handler:      router.Load(cfg, hub),
 					ReadTimeout:  5 * time.Second,
 					WriteTimeout: 10 * time.Second,
 					TLSConfig: &tls.Config{
@@ -108,7 +128,7 @@ func serverAction(cfg *config.Config) cli.ActionFunc {
 		{
 			server := &http.Server{
 				Addr:         cfg.Server.Address,
-				Handler:      router.Load(cfg),
+				Handler:      router.Load(cfg, hub),
 				ReadTimeout:  5 * time.Second,
 				WriteTimeout: 10 * time.Second,
 			}

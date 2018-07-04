@@ -29,6 +29,7 @@ type Patient struct {
 	PagerID  int          `json:"pager_id,omitempty"`
 	ClientID int          `json:"client_id,omitempty"`
 	Status   PatientState `json:"status"`
+	Active   bool         `json:"active"`
 }
 
 // Call calls the pager he is associated with

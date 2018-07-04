@@ -9,6 +9,7 @@ import (
 	"github.com/pagient/pagient-api/pkg/context"
 	"github.com/pagient/pagient-api/pkg/model"
 	"github.com/pagient/pagient-api/pkg/renderer"
+	"github.com/pagient/pagient-api/pkg/websocket"
 )
 
 // GetPatients lists all patients
@@ -25,7 +26,7 @@ func GetPatients(cfg *config.Config) http.HandlerFunc {
 }
 
 // AddPatient adds a patient
-func AddPatient(cfg *config.Config) http.HandlerFunc {
+func AddPatient(cfg *config.Config, hub *websocket.Hub) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		data := &renderer.PatientRequest{}
 		if err := render.Bind(req, data); err != nil {
@@ -39,9 +40,7 @@ func AddPatient(cfg *config.Config) http.HandlerFunc {
 		ctxClient := req.Context().Value(context.ClientKey).(*model.Client)
 		patient.ClientID = ctxClient.ID
 
-		if patient.Status == "" {
-			patient.Status = model.PatientStatePending
-		}
+		patient.Status = model.PatientStatePending
 
 		if err := patient.Validate(); err != nil {
 			render.Render(w, req, renderer.ErrValidation(err))
@@ -56,6 +55,15 @@ func AddPatient(cfg *config.Config) http.HandlerFunc {
 		if err := model.SavePatient(patient); err != nil {
 			render.Render(w, req, renderer.ErrInternalServer(err))
 			return
+		}
+
+		// Broadcast new active patient in websocket hub
+		if patient.Active {
+			err := hub.Broadcast(websocket.MessageTypePatientUpdate, patient)
+			if err != nil {
+				render.Render(w, req, renderer.ErrInternalServer(err))
+				return
+			}
 		}
 
 		render.Status(req, http.StatusCreated)
@@ -75,7 +83,7 @@ func GetPatient(cfg *config.Config) http.HandlerFunc {
 }
 
 // UpdatePatient updates a patient by specified id
-func UpdatePatient(cfg *config.Config) http.HandlerFunc {
+func UpdatePatient(cfg *config.Config, hub *websocket.Hub) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		data := &renderer.PatientRequest{}
 		if err := render.Bind(req, data); err != nil {
@@ -95,12 +103,25 @@ func UpdatePatient(cfg *config.Config) http.HandlerFunc {
 			return
 		}
 
+		// Broadcast patient status in websocket hub
+		if err := hub.Broadcast(websocket.MessageTypePatientUpdate, patient); err != nil {
+			render.Render(w, req, renderer.ErrInternalServer(err))
+			return
+		}
+
 		if patient.Status == model.PatientStateCall {
 			if err := patient.Call(); err != nil {
 				render.Render(w, req, renderer.ErrGateway(err))
 				return
 			}
 			patient.Status = model.PatientStateCalled
+
+			// Broadcast patient status in websocket hub
+			err := hub.Broadcast(websocket.MessageTypePatientUpdate, patient)
+			if err != nil {
+				render.Render(w, req, renderer.ErrInternalServer(err))
+				return
+			}
 		}
 
 		render.Render(w, req, renderer.NewPatientResponse(patient))
@@ -108,12 +129,19 @@ func UpdatePatient(cfg *config.Config) http.HandlerFunc {
 }
 
 // DeletePatient deletes a patient by specified id
-func DeletePatient(cfg *config.Config) http.HandlerFunc {
+func DeletePatient(cfg *config.Config, hub *websocket.Hub) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		ctxPatient := req.Context().Value(context.PatientKey).(*model.Patient)
 
 		if err := model.RemovePatient(ctxPatient); err != nil {
 			render.Render(w, req, renderer.ErrBadRequest(err))
+			return
+		}
+
+		// Broadcast remove patient in websocket hub
+		err := hub.Broadcast(websocket.MessageTypePatientDelete, ctxPatient)
+		if err != nil {
+			render.Render(w, req, renderer.ErrInternalServer(err))
 			return
 		}
 

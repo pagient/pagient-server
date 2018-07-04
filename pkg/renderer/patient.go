@@ -16,11 +16,17 @@ type PatientRequest struct {
 // Bind postprocesses the decoding of the request body
 func (pr *PatientRequest) Bind(r *http.Request) error {
 	var patient *model.Patient
+
+	// Request is an update
 	if r.Context().Value("patient") != nil {
 		patient = r.Context().Value("patient").(*model.Patient)
 
 		if pr.Patient.ID != patient.ID {
 			return fmt.Errorf("id attribute is not allowed to be updated")
+		}
+	} else {
+		if pr.Patient.Status != "" {
+			return fmt.Errorf("status not allowed")
 		}
 	}
 
