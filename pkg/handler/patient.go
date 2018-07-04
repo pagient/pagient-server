@@ -85,6 +85,8 @@ func GetPatient(cfg *config.Config) http.HandlerFunc {
 // UpdatePatient updates a patient by specified id
 func UpdatePatient(cfg *config.Config, hub *websocket.Hub) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
+		ctxPatient := req.Context().Value(context.PatientKey).(*model.Patient)
+
 		data := &renderer.PatientRequest{}
 		if err := render.Bind(req, data); err != nil {
 			render.Render(w, req, renderer.ErrBadRequest(err))
@@ -109,7 +111,8 @@ func UpdatePatient(cfg *config.Config, hub *websocket.Hub) http.HandlerFunc {
 			return
 		}
 
-		if patient.Status == model.PatientStateCall {
+		// Patient status changed from another state to PatientStateCall
+		if patient.Status == model.PatientStateCall && patient.Status != ctxPatient.Status {
 			if err := patient.Call(); err != nil {
 				render.Render(w, req, renderer.ErrGateway(err))
 				return

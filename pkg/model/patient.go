@@ -50,22 +50,21 @@ func (patient *Patient) Call() error {
 
 // Validate validates the patient
 func (patient *Patient) Validate() error {
-	var pagerIDs []int
-	if patient.PagerID != 0 {
-		pagers, err := GetPagers()
-		if err != nil {
-			return err
-		}
-		for _, pager := range pagers {
-			pagerIDs = append(pagerIDs, pager.ID)
-		}
+	// Fetch valid pager IDs
+	pagers, err := GetPagers()
+	if err != nil {
+		return err
+	}
+	pagerIDs := make([]interface{}, len(pagers))
+	for i, pager := range pagers {
+		pagerIDs[i] = pager.ID
 	}
 
 	return validation.ValidateStruct(patient,
 		validation.Field(&patient.ID, validation.Required),
 		validation.Field(&patient.Ssn, validation.Required, is.Digit, validation.Length(10, 10)),
 		validation.Field(&patient.Name, validation.Required, validation.Match(regexp.MustCompile("^[a-zA-Z\u00c0-\u017e\\s]+$")), validation.Length(1, 100)),
-		validation.Field(&patient.PagerID, is.Int, validation.In(pagerIDs)),
+		validation.Field(&patient.PagerID, validation.In(pagerIDs...)),
 		validation.Field(&patient.Status, validation.In(PatientStatePending, PatientStateCall, PatientStateCalled)),
 	)
 }
