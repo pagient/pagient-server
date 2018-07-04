@@ -16,6 +16,12 @@ func ServeWebsocket(cfg *config.Config, hub *websocket.Hub) http.HandlerFunc {
 	upgrader := ws.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
+		CheckOrigin: func(req *http.Request) bool {
+			if cfg.Server.Host == req.Host {
+				return true
+			}
+			return false
+		},
 	}
 
 	return func(w http.ResponseWriter, req *http.Request) {
