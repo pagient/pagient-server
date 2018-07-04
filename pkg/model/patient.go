@@ -66,7 +66,7 @@ func (patient *Patient) Validate() error {
 		validation.Field(&patient.Ssn, validation.Required, is.Digit, validation.Length(10, 10)),
 		validation.Field(&patient.Name, validation.Required, validation.Match(regexp.MustCompile("^[a-zA-Z\u00c0-\u017e\\s]+$")), validation.Length(1, 100)),
 		validation.Field(&patient.PagerID, is.Int, validation.In(pagerIDs)),
-		validation.Field(&patient.Status, validation.In(PatientStatePending, PatientStateCalled)),
+		validation.Field(&patient.Status, validation.In(PatientStatePending, PatientStateCall, PatientStateCalled)),
 	)
 }
 
