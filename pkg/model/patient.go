@@ -5,7 +5,7 @@ import (
 
 	"github.com/go-ozzo/ozzo-validation"
 	"github.com/go-ozzo/ozzo-validation/is"
-	"github.com/rs/zerolog/log"
+	"github.com/pkg/errors"
 )
 
 // PatientState hold the state of the Patient
@@ -32,64 +32,27 @@ type Patient struct {
 	Active   bool         `json:"active"`
 }
 
-// Call calls the pager he is associated with
-func (patient *Patient) Call() error {
-	log.Debug().
-		Str("patient", patient.Name).
-		Msg("patient has been called")
-
-	pager, err := GetPagerByID(patient.PagerID)
-	if err != nil {
-		return err
-	}
-
-	err = pager.Call()
-
-	return err
-}
-
 // Validate validates the patient
-func (patient *Patient) Validate() error {
-	// Fetch valid pager IDs
-	pagers, err := GetPagers()
-	if err != nil {
-		return err
-	}
+func (patient *Patient) Validate(pagers []*Pager) error {
+	// convert pager slice to generic interface slice
 	pagerIDs := make([]interface{}, len(pagers))
 	for i, pager := range pagers {
 		pagerIDs[i] = pager.ID
 	}
 
-	return validation.ValidateStruct(patient,
+	if err := validation.ValidateStruct(patient,
 		validation.Field(&patient.ID, validation.Required),
 		validation.Field(&patient.Ssn, validation.Required, is.Digit, validation.Length(10, 10)),
 		validation.Field(&patient.Name, validation.Required, validation.Match(regexp.MustCompile("^[a-zA-Z\u00c0-\u017e\\s]+$")), validation.Length(1, 100)),
 		validation.Field(&patient.PagerID, validation.In(pagerIDs...)),
 		validation.Field(&patient.Status, validation.In(PatientStatePending, PatientStateCall, PatientStateCalled)),
-	)
-}
+	); err != nil {
+		if e, ok := err.(validation.InternalError); ok {
+			return errors.Wrap(e, "internal validation error occured")
+		}
 
-// GetPatients lists all patients
-func GetPatients() ([]*Patient, error) {
-	return db.GetPatients()
-}
+		return &modelValidationErr{err.Error()}
+	}
 
-// GetPatient returns a patient by ID
-func GetPatient(patientID int) (*Patient, error) {
-	return db.GetPatient(patientID)
-}
-
-// SavePatient stores the values in the database
-func SavePatient(patient *Patient) error {
-	return db.AddPatient(patient)
-}
-
-// UpdatePatient updates the values in the database
-func UpdatePatient(patient *Patient) error {
-	return db.UpdatePatient(patient)
-}
-
-// RemovePatient deletes the values from the database
-func RemovePatient(patient *Patient) error {
-	return db.RemovePatient(patient)
+	return nil
 }

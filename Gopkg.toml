@@ -25,6 +25,10 @@
 #   unused-packages = true
 
 
+[prune]
+  go-tests = true
+  unused-packages = true
+
 [[constraint]]
   name = "github.com/coreos/go-semver"
   version = "0.2.0"
@@ -40,14 +44,6 @@
 [[constraint]]
   branch = "v2"
   name = "gopkg.in/urfave/cli.v2"
-
-[prune]
-  go-tests = true
-  unused-packages = true
-
-[[constraint]]
-  name = "github.com/satori/go.uuid"
-  version = "1.2.0"
 
 [[constraint]]
   name = "github.com/go-ozzo/ozzo-validation"

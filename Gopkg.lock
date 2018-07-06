@@ -80,6 +80,12 @@
   revision = "c904a5bd37f9566c66a898fbc81af18fab3f125e"
 
 [[projects]]
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
+  version = "v0.8.0"
+
+[[projects]]
   name = "github.com/pmezard/go-difflib"
   packages = ["difflib"]
   revision = "792786c7400a136282c1664665ae0a8db921c6c2"
@@ -104,12 +110,6 @@
   version = "v1.8.0"
 
 [[projects]]
-  name = "github.com/satori/go.uuid"
-  packages = ["."]
-  revision = "f58768cc1a7a7e77a3bd49e98cdd21419399b6a3"
-  version = "v1.2.0"
-
-[[projects]]
   name = "github.com/stretchr/objx"
   packages = ["."]
   revision = "477a77ecc69700c7cdeb1fa9e129548e1c1c393c"
@@ -129,6 +129,16 @@
   packages = ["web/mutil"]
   revision = "64eb34159fe53473206c2b3e70fe396a639452f2"
   version = "v1.0"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/net"
+  packages = [
+    "context",
+    "webdav",
+    "webdav/internal/xml"
+  ]
+  revision = "ed29d75add3d7c4bf7ca65aac0c6df3d1420216f"
 
 [[projects]]
   branch = "master"
@@ -155,6 +165,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "42911542b03ed16170c5b545fe31bc52f82b66482e938e925b0d042336bb2d72"
+  inputs-digest = "cb31a45989e19151911d83c2d4c6cde937f6572ac3f9a968865d59a912c0c88c"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -10,12 +10,13 @@ import (
 
 	"github.com/oklog/run"
 	"github.com/pagient/pagient-api/pkg/config"
-	"github.com/pagient/pagient-api/pkg/router"
+	"github.com/pagient/pagient-api/pkg/presenter/handler"
+	"github.com/pagient/pagient-api/pkg/presenter/router"
+	"github.com/pagient/pagient-api/pkg/presenter/websocket"
+	"github.com/pagient/pagient-api/pkg/repository"
+	"github.com/pagient/pagient-api/pkg/service"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/urfave/cli.v2"
-	"github.com/pagient/pagient-api/pkg/database"
-	"github.com/pagient/pagient-api/pkg/model"
-	"github.com/pagient/pagient-api/pkg/websocket"
 )
 
 // Server provides the sub-command to start the server.
@@ -36,22 +37,45 @@ func serverBefore(cfg *config.Config) cli.BeforeFunc {
 
 func serverAction(cfg *config.Config) cli.ActionFunc {
 	return func(c *cli.Context) error {
-		// Initialize Database
-		db, err := database.New(cfg)
+		// Initialize Repositories  (database access)
+		clientRepo, err := repository.GetClientRepositoryInstance(cfg)
 		if err != nil {
 			log.Fatal().
 				Err(err).
-				Msg("database initialization failed")
+				Msg("client repository initialization failed")
+
+			os.Exit(1)
+		}
+		pagerRepo, err := repository.GetPagerRepositoryInstance(cfg)
+		if err != nil {
+			log.Fatal().
+				Err(err).
+				Msg("pager repository initialization failed")
+
+			os.Exit(1)
+		}
+		patientRepo, err := repository.GetPatientRepositoryInstance(cfg)
+		if err != nil {
+			log.Fatal().
+				Err(err).
+				Msg("patient repository initialization failed")
 
 			os.Exit(1)
 		}
 
-		// Initialize Models
-		model.Init(cfg, db)
+		// Initialize Services (business logic)
+		clientService := service.NewClientService(clientRepo)
+		pagerService := service.NewPagerService(pagerRepo)
+		patientService := service.NewPatientService(cfg, patientRepo, pagerRepo)
 
-		// Initialize Websocket hub
+		// Initialize Websocket Hub and Handler (presenter layer)
 		hub := websocket.NewHub()
 		go hub.Run()
+
+		clientHandler := handler.NewClientHandler(clientService)
+		pagerHandler := handler.NewPagerHandler(pagerService)
+		patientHandler := handler.NewPatientHandler(patientService, hub)
+		websocketHandler := handler.NewWebsocketHandler(cfg, hub)
 
 		var gr run.Group
 
@@ -86,7 +110,7 @@ func serverAction(cfg *config.Config) cli.ActionFunc {
 			{
 				server := &http.Server{
 					Addr:         cfg.Server.Address,
-					Handler:      router.Load(cfg, hub),
+					Handler:      router.Load(cfg, clientHandler, pagerHandler, patientHandler, websocketHandler, clientService, patientService),
 					ReadTimeout:  5 * time.Second,
 					WriteTimeout: 10 * time.Second,
 					TLSConfig: &tls.Config{
@@ -128,7 +152,7 @@ func serverAction(cfg *config.Config) cli.ActionFunc {
 		{
 			server := &http.Server{
 				Addr:         cfg.Server.Address,
-				Handler:      router.Load(cfg, hub),
+				Handler:      router.Load(cfg, clientHandler, pagerHandler, patientHandler, websocketHandler, clientService, patientService),
 				ReadTimeout:  5 * time.Second,
 				WriteTimeout: 10 * time.Second,
 			}
