@@ -104,6 +104,10 @@ func (repo *patientFileRepository) Add(patient *model.Patient) error {
 	lock.Lock()
 	defer lock.Unlock()
 
+	if patient.ID == 0 {
+		return &entryNotValidErr{"id: cannot be blank"}
+	}
+
 	pat := &model.Patient{}
 	if err := repo.db.Read(patientCollection, strconv.Itoa(patient.ID), pat); err != nil && !isNotFoundErr(err) {
 		return errors.Wrap(err, "read patient failed")
@@ -120,6 +124,10 @@ func (repo *patientFileRepository) Add(patient *model.Patient) error {
 func (repo *patientFileRepository) Update(patient *model.Patient) error {
 	lock.Lock()
 	defer lock.Unlock()
+
+	if patient.ID == 0 {
+		return &entryNotValidErr{"id: cannot be blank"}
+	}
 
 	if err := repo.db.Read(patientCollection, strconv.Itoa(patient.ID), &model.Patient{}); err != nil {
 		if isNotFoundErr(err) {

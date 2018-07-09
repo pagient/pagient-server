@@ -81,6 +81,10 @@ func (service *DefaultPatientService) Add(patient *model.Patient) error {
 
 	err = service.patientRepository.Add(patient)
 	if err != nil {
+		if isEntryNotValidErr(err) {
+			return &modelValidationErr{err.Error()}
+		}
+
 		if isEntryExistErr(err) {
 			return &modelExistErr{"patient already exists"}
 		}
@@ -126,6 +130,23 @@ func (service *DefaultPatientService) Update(patient *model.Patient) error {
 		return errors.Wrap(err, "get patient failed")
 	}
 
+	err = service.patientRepository.Update(patient)
+	if err != nil {
+		if isEntryNotValidErr(err) {
+			return &modelValidationErr{err.Error()}
+		}
+
+		if isEntryNotExistErr(err) {
+			return &modelNotExistErr{"patient doesn't exist"}
+		}
+
+		log.Error().
+			Err(err).
+			Msg("update patient failed")
+
+		return errors.Wrap(err, "update patient failed")
+	}
+
 	// Patient status changed from another state to PatientStateCall
 	if patient.Status == model.PatientStateCall && patient.Status != patientBeforeUpdate.Status {
 		log.Debug().
@@ -150,18 +171,7 @@ func (service *DefaultPatientService) Update(patient *model.Patient) error {
 		patient.Status = model.PatientStateCalled
 	}
 
-	err = service.patientRepository.Update(patient)
-	if err != nil {
-		if isEntryNotExistErr(err) {
-			return &modelNotExistErr{"patient doesn't exist"}
-		}
-
-		log.Error().
-			Err(err).
-			Msg("update patient failed")
-	}
-
-	return errors.Wrap(err, "update patient failed")
+	return nil
 }
 
 // Remove deletes an existing patient

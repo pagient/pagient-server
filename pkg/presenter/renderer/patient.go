@@ -37,7 +37,7 @@ func (pr *PatientRequest) Bind(r *http.Request) error {
 	if pr.Patient.ClientID != 0 {
 		return errors.New("client_id not allowed")
 	}
-	
+
 	return nil
 }
 

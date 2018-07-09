@@ -29,6 +29,18 @@ func (err *entryExistErr) EntryExist() bool {
 	return true
 }
 
+type entryNotValidErr struct {
+	msg string
+}
+
+func (err *entryNotValidErr) Error() string {
+	return err.msg
+}
+
+func (err *entryNotValidErr) NotValid() bool {
+	return true
+}
+
 func isNotFoundErr(err error) bool {
 	if strings.HasPrefix(err.Error(), "Unable to find file or directory") || os.IsNotExist(err) {
 		return true

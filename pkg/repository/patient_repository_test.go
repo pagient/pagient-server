@@ -8,6 +8,8 @@ import (
 	"github.com/pagient/pagient-api/pkg/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"strconv"
+	"sync"
 )
 
 type mockDriver struct {
@@ -34,7 +36,7 @@ func (d *mockDriver) Delete(c, r string) error {
 	return args.Error(0)
 }
 
-func TestFileDatabase_GetPatient(t *testing.T) {
+func TestPatientFileRepository_Get(t *testing.T) {
 	patientID := 1
 
 	tests := map[string]struct {
@@ -53,12 +55,11 @@ func TestFileDatabase_GetPatient(t *testing.T) {
 		"with db error": {
 			patientID:       patientID,
 			patientRetErr:   assert.AnError,
-			resultingErrMsg: assert.AnError.Error(),
+			resultingErrMsg: "read patient failed: " + assert.AnError.Error(),
 		},
 		"successful but patient or repository not found": {
-			patientID:       patientID,
-			patientRetErr:   os.ErrNotExist,
-			resultingErrMsg: "patient not found",
+			patientID:  patientID,
+			patientRet: &model.Patient{},
 		},
 	}
 
@@ -67,10 +68,10 @@ func TestFileDatabase_GetPatient(t *testing.T) {
 
 		driver := &mockDriver{}
 		driver.
-			On("Read", patientCollection, test.patientID, mock.AnythingOfType("*model.Patient")).
+			On("Read", patientCollection, strconv.Itoa(test.patientID), mock.AnythingOfType("*model.Patient")).
 			Return(test.patientRetErr).
 			Run(func(args mock.Arguments) {
-				if test.patientRetErr == nil {
+				if test.patientRetErr == nil && test.patientRet != nil {
 					arg := args.Get(2).(*model.Patient)
 					arg.ID = test.patientRet.ID
 					arg.Name = test.patientRet.Name
@@ -81,6 +82,8 @@ func TestFileDatabase_GetPatient(t *testing.T) {
 		repository := &patientFileRepository{
 			db: driver,
 		}
+
+		lock = &sync.Mutex{}
 
 		patient, err := repository.Get(test.patientID)
 		assert.Equal(t, test.patientRet, patient)
@@ -93,9 +96,7 @@ func TestFileDatabase_GetPatient(t *testing.T) {
 	}
 }
 
-func TestFileDatabase_GetPatients(t *testing.T) {
-	patientID := 1
-
+func TestPatientFileRepository_GetAll(t *testing.T) {
 	tests := map[string]struct {
 		patientsStr     []string
 		patients        []*model.Patient
@@ -104,42 +105,40 @@ func TestFileDatabase_GetPatients(t *testing.T) {
 	}{
 		"successful": {
 			patientsStr: []string{
-				fmt.Sprintf("{ \"ID\":\"%s\", \"Name\":\"test1\" }", patientID),
-				fmt.Sprintf("{ \"ID\":\"%s\", \"Name\":\"test2\" }", patientID),
-				fmt.Sprintf("{ \"ID\":\"%s\", \"Name\":\"test3\" }", patientID),
-				fmt.Sprintf("{ \"ID\":\"%s\", \"Name\":\"test4\" }", patientID),
+				fmt.Sprintf("{ \"ID\": %d, \"Name\": \"%s\" }", 1, "test1"),
+				fmt.Sprintf("{ \"ID\": %d, \"Name\": \"%s\" }", 2, "test2"),
+				fmt.Sprintf("{ \"ID\": %d, \"Name\": \"%s\" }", 3, "test3"),
+				fmt.Sprintf("{ \"ID\": %d, \"Name\": \"%s\" }", 4, "test4"),
 			},
 			patients: []*model.Patient{
 				{
-					ID:   patientID,
+					ID:   1,
 					Name: "test1",
 				}, {
-					ID:   patientID,
+					ID:   2,
 					Name: "test2",
 				}, {
-					ID:   patientID,
+					ID:   3,
 					Name: "test3",
 				}, {
-					ID:   patientID,
+					ID:   4,
 					Name: "test4",
 				},
 			},
-			readErr:         nil,
-			resultingErrMsg: "",
 		},
 		"successful with empty repository": {
 			readErr: os.ErrNotExist,
 		},
 		"with db error": {
 			readErr:         assert.AnError,
-			resultingErrMsg: assert.AnError.Error(),
+			resultingErrMsg: "read patients failed: " + assert.AnError.Error(),
 		},
 		"with unmarshal error": {
 			patientsStr: []string{
-				"{ \"ID\":1, \"Name\":\"test1\"",
-				"{ \"ID\":2, \"Name\":\"test2\", \"NonExistentField\": \"empty\" }",
+				fmt.Sprintf("{ \"ID\": %d, \"Name\": \"%s\"", 1, "test1"),
+				fmt.Sprintf("{ \"ID\": %d, \"Name\": \"%s\", \"NonExistentField\": \"empty\" }", 2, "test2"),
 			},
-			resultingErrMsg: "unexpected end of JSON input",
+			resultingErrMsg: "json unmarshal failed: unexpected end of JSON input",
 		},
 	}
 
@@ -156,6 +155,8 @@ func TestFileDatabase_GetPatients(t *testing.T) {
 			db: driver,
 		}
 
+		lock = &sync.Mutex{}
+
 		patients, err := repository.GetAll()
 		assert.Equal(t, test.patients, patients)
 		if test.resultingErrMsg != "" {
@@ -167,26 +168,29 @@ func TestFileDatabase_GetPatients(t *testing.T) {
 	}
 }
 
-func TestFileDatabase_AddPatient(t *testing.T) {
+func TestPatientFileRepository_Add(t *testing.T) {
 	tests := map[string]struct {
 		patient         *model.Patient
-		patientID       int
+		patientRet      *model.Patient
+		readPatErr      error
 		writePatErr     error
 		resultingErrMsg string
 	}{
 		"successful": {
 			patient: &model.Patient{
+				ID:       1,
 				Name:     "test",
 				ClientID: 1,
 			},
 		},
 		"with write patient error": {
 			patient: &model.Patient{
+				ID:       2,
 				Name:     "test4",
 				ClientID: 2,
 			},
 			writePatErr:     assert.AnError,
-			resultingErrMsg: assert.AnError.Error(),
+			resultingErrMsg: "write patient failed: " + assert.AnError.Error(),
 		},
 	}
 
@@ -196,81 +200,21 @@ func TestFileDatabase_AddPatient(t *testing.T) {
 		driver := &mockDriver{}
 
 		driver.
-			On("Write", patientCollection, mock.AnythingOfType("string"), mock.AnythingOfType("*model.Patient")).
-			Return(test.writePatErr).
+			On("Read", patientCollection, strconv.Itoa(test.patient.ID), mock.AnythingOfType("*model.Patient")).
+			Return(test.readPatErr).
+			Run(func(args mock.Arguments) {
+				if test.readPatErr == nil && test.patientRet != nil {
+					arg := args.Get(2).(*model.Patient)
+					arg.ID = test.patientRet.ID
+					arg.Name = test.patientRet.Name
+				}
+			}).
 			Once()
 
-		repository := &patientFileRepository{
-			db: driver,
-		}
-
-		patient := new(model.Patient)
-		*patient = *test.patient
-		err := repository.Add(patient)
-		if test.resultingErrMsg != "" {
-			assert.EqualError(t, err, test.resultingErrMsg)
-			assert.Equal(t, patient.ID, 0)
-		} else {
-			assert.Equal(t, nil, err)
-			assert.NotEqual(t, patient.ID, 0)
-		}
-		driver.AssertExpectations(t)
-	}
-}
-
-func TestFileDatabase_UpdatePatient(t *testing.T) {
-	tests := map[string]struct {
-		patient         *model.Patient
-		deleteErr       error
-		writeErr        error
-		resultingErrMsg string
-	}{
-		"successful": {
-			patient: &model.Patient{
-				ID:   1,
-				Name: "test1",
-			},
-		},
-		"with db error on delete": {
-			patient: &model.Patient{
-				ID:   2,
-				Name: "test2",
-			},
-			deleteErr:       assert.AnError,
-			resultingErrMsg: assert.AnError.Error(),
-		},
-		"with patient or repository not found": {
-			patient: &model.Patient{
-				ID:   3,
-				Name: "test3",
-			},
-			deleteErr:       os.ErrNotExist,
-			resultingErrMsg: "patient not found",
-		},
-		"with db error on write": {
-			patient: &model.Patient{
-				ID:   4,
-				Name: "test4",
-			},
-			writeErr:        assert.AnError,
-			resultingErrMsg: assert.AnError.Error(),
-		},
-	}
-
-	for name, test := range tests {
-		t.Logf("Running test case: %s", name)
-
-		driver := &mockDriver{}
-
-		driver.
-			On("Delete", patientCollection, test.patient.ID).
-			Return(test.deleteErr).
-			Once()
-
-		if test.deleteErr == nil {
+		if test.patientRet == nil && test.readPatErr == nil {
 			driver.
-				On("Write", patientCollection, test.patient.ID, test.patient).
-				Return(test.writeErr).
+				On("Write", patientCollection, strconv.Itoa(test.patient.ID), test.patient).
+				Return(test.writePatErr).
 				Once()
 		}
 
@@ -278,8 +222,12 @@ func TestFileDatabase_UpdatePatient(t *testing.T) {
 			db: driver,
 		}
 
-		err := repository.Update(test.patient)
-		if test.deleteErr != nil || test.writeErr != nil {
+		lock = &sync.Mutex{}
+
+		patient := new(model.Patient)
+		*patient = *test.patient
+		err := repository.Add(patient)
+		if test.resultingErrMsg != "" {
 			assert.EqualError(t, err, test.resultingErrMsg)
 		} else {
 			assert.Equal(t, nil, err)
@@ -288,7 +236,87 @@ func TestFileDatabase_UpdatePatient(t *testing.T) {
 	}
 }
 
-func TestFileDatabase_RemovePatient(t *testing.T) {
+func TestPatientFileRepository_Update(t *testing.T) {
+	tests := map[string]struct {
+		patient         *model.Patient
+		patientRet      *model.Patient
+		readPatErr      error
+		writePatErr     error
+		resultingErrMsg string
+	}{
+		"successful": {
+			patient: &model.Patient{
+				ID:   1,
+				Name: "test1",
+			},
+		},
+		"with db error on read": {
+			patient: &model.Patient{
+				ID:   2,
+				Name: "test2",
+			},
+			readPatErr:      assert.AnError,
+			resultingErrMsg: "read patient failed: " + assert.AnError.Error(),
+		},
+		"with patient or repository not found": {
+			patient: &model.Patient{
+				ID:   3,
+				Name: "test3",
+			},
+			readPatErr:      os.ErrNotExist,
+			resultingErrMsg: "patient not found",
+		},
+		"with db error on write": {
+			patient: &model.Patient{
+				ID:   4,
+				Name: "test4",
+			},
+			writePatErr:     assert.AnError,
+			resultingErrMsg: "write patient failed: " + assert.AnError.Error(),
+		},
+	}
+
+	for name, test := range tests {
+		t.Logf("Running test case: %s", name)
+
+		driver := &mockDriver{}
+
+		driver.
+			On("Read", patientCollection, strconv.Itoa(test.patient.ID), mock.AnythingOfType("*model.Patient")).
+			Return(test.readPatErr).
+			Run(func(args mock.Arguments) {
+				if test.readPatErr == nil && test.patientRet != nil {
+					arg := args.Get(2).(*model.Patient)
+					arg.ID = test.patientRet.ID
+					arg.Name = test.patientRet.Name
+				}
+			}).
+			Once()
+
+		if test.patientRet == nil && test.readPatErr == nil {
+			driver.
+				On("Write", patientCollection, strconv.Itoa(test.patient.ID), test.patient).
+				Return(test.writePatErr).
+				Once()
+		}
+
+		repository := &patientFileRepository{
+			db: driver,
+		}
+
+		lock = &sync.Mutex{}
+
+		err := repository.Update(test.patient)
+		if test.readPatErr != nil || test.writePatErr != nil {
+			assert.EqualError(t, err, test.resultingErrMsg)
+		} else {
+			assert.Equal(t, nil, err)
+		}
+		driver.AssertExpectations(t)
+	}
+}
+
+func TestPatientFileRepository_Remove(t *testing.T) {
 	tests := map[string]struct {
 		patient         *model.Patient
 		deleteErr       error
@@ -314,7 +342,7 @@ func TestFileDatabase_RemovePatient(t *testing.T) {
 				Name: "test2",
 			},
 			deleteErr:       assert.AnError,
-			resultingErrMsg: assert.AnError.Error(),
+			resultingErrMsg: "delete patient failed: " + assert.AnError.Error(),
 		},
 	}
 
@@ -324,13 +352,15 @@ func TestFileDatabase_RemovePatient(t *testing.T) {
 		driver := &mockDriver{}
 
 		driver.
-			On("Delete", patientCollection, test.patient.ID).
+			On("Delete", patientCollection, strconv.Itoa(test.patient.ID)).
 			Return(test.deleteErr).
 			Once()
 
 		repository := &patientFileRepository{
 			db: driver,
 		}
+
+		lock = &sync.Mutex{}
 
 		err := repository.Remove(test.patient)
 		if test.deleteErr != nil {

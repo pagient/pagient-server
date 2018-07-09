@@ -43,3 +43,12 @@ func isEntryNotExistErr(err error) bool {
 	ne, ok := errors.Cause(err).(entryNotExistErr)
 	return ok && ne.EntryNotExist()
 }
+
+type entryNotValidErr interface {
+	NotValid() bool
+}
+
+func isEntryNotValidErr(err error) bool {
+	nv, ok := errors.Cause(err).(entryNotValidErr)
+	return ok && nv.NotValid()
+}
