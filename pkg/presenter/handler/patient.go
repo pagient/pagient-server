@@ -13,6 +13,7 @@ import (
 
 // PatientHandler struct
 type PatientHandler struct {
+	clientService  service.ClientService
 	patientService service.PatientService
 	wsHub          *websocket.Hub
 }
@@ -47,8 +48,13 @@ func (handler *PatientHandler) AddPatient(w http.ResponseWriter, req *http.Reque
 	patient := data.Patient
 
 	// Set clientID to the client that added the patient
-	ctxClient := req.Context().Value("client").(*model.Client)
-	patient.ClientID = ctxClient.ID
+	ctxUser := req.Context().Value("user").(*model.User)
+	client, err := handler.clientService.GetByUser(ctxUser)
+	if err != nil {
+		render.Render(w, req, renderer.ErrInternalServer(err))
+		return
+	}
+	patient.ClientID = client.ID
 
 	if err := handler.patientService.Add(patient); err != nil {
 		if service.IsModelExistErr(err) {

@@ -62,16 +62,35 @@ func serverAction(cfg *config.Config) cli.ActionFunc {
 
 			os.Exit(1)
 		}
+		tokenRepo, err := repository.GetTokenRepositoryInstance(cfg)
+		if err != nil {
+			log.Fatal().
+				Err(err).
+				Msg("token repository initialization failed")
+
+			os.Exit(1)
+		}
+		userRepo, err := repository.GetUserRepositoryInstance(cfg)
+		if err != nil {
+			log.Fatal().
+				Err(err).
+				Msg("user repository initialization failed")
+
+			os.Exit(1)
+		}
 
 		// Initialize Services (business logic)
 		clientService := service.NewClientService(clientRepo)
 		pagerService := service.NewPagerService(pagerRepo)
 		patientService := service.NewPatientService(cfg, patientRepo, pagerRepo)
+		tokenService := service.NewTokenService(cfg, tokenRepo)
+		userService := service.NewUserService(cfg, userRepo)
 
 		// Initialize Websocket Hub and Handler (presenter layer)
 		hub := websocket.NewHub()
 		go hub.Run()
 
+		authHandler := handler.NewAuthHandler(cfg, userService, tokenService)
 		clientHandler := handler.NewClientHandler(clientService)
 		pagerHandler := handler.NewPagerHandler(pagerService)
 		patientHandler := handler.NewPatientHandler(patientService, hub)
@@ -110,7 +129,7 @@ func serverAction(cfg *config.Config) cli.ActionFunc {
 			{
 				server := &http.Server{
 					Addr:         cfg.Server.Address,
-					Handler:      router.Load(cfg, clientHandler, pagerHandler, patientHandler, websocketHandler, clientService, patientService),
+					Handler:      router.Load(cfg, authHandler, clientHandler, pagerHandler, patientHandler, websocketHandler, patientService, tokenService, userService),
 					ReadTimeout:  5 * time.Second,
 					WriteTimeout: 10 * time.Second,
 					TLSConfig: &tls.Config{
@@ -152,7 +171,7 @@ func serverAction(cfg *config.Config) cli.ActionFunc {
 		{
 			server := &http.Server{
 				Addr:         cfg.Server.Address,
-				Handler:      router.Load(cfg, clientHandler, pagerHandler, patientHandler, websocketHandler, clientService, patientService),
+				Handler:      router.Load(cfg, authHandler, clientHandler, pagerHandler, patientHandler, websocketHandler, patientService, tokenService, userService),
 				ReadTimeout:  5 * time.Second,
 				WriteTimeout: 10 * time.Second,
 			}

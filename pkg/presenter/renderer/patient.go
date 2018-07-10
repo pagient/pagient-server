@@ -25,17 +25,21 @@ func (pr *PatientRequest) Bind(r *http.Request) error {
 			return errors.New("id attribute is not allowed to be updated")
 		}
 
+		if pr.Patient.ClientID != patient.ClientID {
+			return errors.New("client_id attribute is not allowed to be updated")
+		}
+
 		if pr.Patient.PagerID == 0 && pr.Patient.Status == model.PatientStateCall {
 			return errors.New("patient call state can only be set if a pager is assigned")
 		}
 	} else {
+		if pr.Patient.ClientID != 0 {
+			return errors.New("client_id not allowed")
+		}
+
 		if pr.Patient.Status != "" {
 			return errors.New("status not allowed")
 		}
-	}
-
-	if pr.Patient.ClientID != 0 {
-		return errors.New("client_id not allowed")
 	}
 
 	return nil

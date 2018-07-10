@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/pagient/pagient-api/pkg/config"
 	"github.com/pagient/pagient-api/pkg/version"
 )
 
@@ -19,35 +20,39 @@ func Cache(next http.Handler) http.Handler {
 }
 
 // Options writes required option headers to all requests.
-func Options(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != "OPTIONS" {
-			next.ServeHTTP(w, r)
-		} else {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "authorization, origin, content-type, accept")
-			w.Header().Set("Allow", "HEAD, GET, POST, PUT, PATCH, DELETE, OPTIONS")
+func Options(cfg *config.Config) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Method != "OPTIONS" {
+				next.ServeHTTP(w, r)
+			} else {
+				w.Header().Set("Access-Control-Allow-Origin", cfg.Server.Host)
+				w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
+				w.Header().Set("Access-Control-Allow-Headers", "authorization, origin, content-type, accept")
+				w.Header().Set("Allow", "HEAD, GET, POST, PUT, PATCH, DELETE, OPTIONS")
 
-			w.WriteHeader(http.StatusOK)
-		}
-	})
+				w.WriteHeader(http.StatusOK)
+			}
+		})
+	}
 }
 
 // Secure writes required access headers to all requests.
-func Secure(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("X-Frame-Options", "DENY")
-		w.Header().Set("X-Content-Type-Options", "nosniff")
-		w.Header().Set("X-XSS-Protection", "1; mode=block")
+func Secure(cfg *config.Config) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Access-Control-Allow-Origin", cfg.Server.Host)
+			w.Header().Set("X-Frame-Options", "DENY")
+			w.Header().Set("X-Content-Type-Options", "nosniff")
+			w.Header().Set("X-XSS-Protection", "1; mode=block")
 
-		if r.TLS != nil {
-			w.Header().Set("Strict-Transport-Security", "max-age=31536000")
-		}
+			if r.TLS != nil {
+				w.Header().Set("Strict-Transport-Security", "max-age=31536000")
+			}
 
-		next.ServeHTTP(w, r)
-	})
+			next.ServeHTTP(w, r)
+		})
+	}
 }
 
 // Version writes the current API version to the headers.

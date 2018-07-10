@@ -6,11 +6,12 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/jwtauth"
 	"github.com/go-chi/render"
 	"github.com/pagient/pagient-api/pkg/assets"
 	"github.com/pagient/pagient-api/pkg/config"
 	"github.com/pagient/pagient-api/pkg/presenter/handler"
-	"github.com/pagient/pagient-api/pkg/presenter/router/middleware/basicauth"
+	"github.com/pagient/pagient-api/pkg/presenter/router/middleware/auth"
 	"github.com/pagient/pagient-api/pkg/presenter/router/middleware/context"
 	"github.com/pagient/pagient-api/pkg/presenter/router/middleware/header"
 	"github.com/pagient/pagient-api/pkg/service"
@@ -19,8 +20,8 @@ import (
 )
 
 // Load initializes the routing of the application.
-func Load(cfg *config.Config, clientHandler *handler.ClientHandler, pagerHandler *handler.PagerHandler, patientHandler *handler.PatientHandler,
-	websocketHandler *handler.WebsocketHandler, clientService service.ClientService, patientService service.PatientService) http.Handler {
+func Load(cfg *config.Config, authHandler *handler.AuthHandler, clientHandler *handler.ClientHandler, pagerHandler *handler.PagerHandler, patientHandler *handler.PatientHandler,
+	websocketHandler *handler.WebsocketHandler, patientService service.PatientService, tokenService service.TokenService, userService service.UserService) http.Handler {
 
 	mux := chi.NewRouter()
 
@@ -44,38 +45,48 @@ func Load(cfg *config.Config, clientHandler *handler.ClientHandler, pagerHandler
 
 	mux.Use(header.Version)
 	mux.Use(header.Cache)
-	mux.Use(header.Secure)
-	mux.Use(header.Options)
+	mux.Use(header.Secure(cfg))
+	mux.Use(header.Options(cfg))
+
+	tokenAuth := jwtauth.New("HS256", []byte(cfg.Server.SecretKey), nil)
 
 	mux.Route("/", func(root chi.Router) {
-		root.Use(basicauth.Basicauth(cfg))
+		root.Group(func(r chi.Router) {
+			r.Use(jwtauth.Verifier(tokenAuth))
+			r.Use(auth.Authenticator(tokenService))
 
-		root.Route("/api", func(r chi.Router) {
-			r.Use(render.SetContentType(render.ContentTypeJSON))
-			r.Use(context.AuthCtx(clientService))
+			r.Route("/api", func(r chi.Router) {
+				r.Use(render.SetContentType(render.ContentTypeJSON))
+				r.Use(context.AuthCtx(userService))
 
-			// Manage patients
-			r.Route("/patients", func(r chi.Router) {
-				r.Get("/", patientHandler.GetPatients)
-				r.Post("/", patientHandler.AddPatient)
+				// Manage patients
+				r.Route("/patients", func(r chi.Router) {
+					r.Get("/", patientHandler.GetPatients)
+					r.Post("/", patientHandler.AddPatient)
 
-				r.Route("/{patientID}", func(r chi.Router) {
-					r.Use(context.PatientCtx(patientService))
+					r.Route("/{patientID}", func(r chi.Router) {
+						r.Use(context.PatientCtx(patientService))
 
-					r.Get("/", patientHandler.GetPatient)
-					r.Post("/", patientHandler.UpdatePatient)
-					r.Delete("/", patientHandler.DeletePatient)
+						r.Get("/", patientHandler.GetPatient)
+						r.Post("/", patientHandler.UpdatePatient)
+						r.Delete("/", patientHandler.DeletePatient)
+					})
 				})
+
+				// List pagers
+				r.Get("/pagers", pagerHandler.GetPagers)
+				// List clients
+				r.Get("/clients", clientHandler.GetClients)
 			})
 
-			// List pagers
-			r.Get("/pagers", pagerHandler.GetPagers)
-			// List clients
-			r.Get("/clients", clientHandler.GetClients)
+			// Serve Websocket
+			r.Get("/ws", websocketHandler.ServeWebsocket)
 		})
 
-		// Serve Websocket
-		root.Get("/ws", websocketHandler.ServeWebsocket)
+		root.Route("/oauth", func(r chi.Router) {
+			r.Post("/token", authHandler.CreateToken)
+			r.With(jwtauth.Verifier(tokenAuth), auth.Authenticator(tokenService)).Delete("/token", authHandler.DeleteToken)
+		})
 
 		// Pagient UI static files
 		root.Get("/*", http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {

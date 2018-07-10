@@ -13,19 +13,24 @@ KEY            =
 STRICT_CURVES  = false
 ; use strict ssl ciphers
 STRICT_CIPHERS = false
+; secret key for signing tokens
+SECRET_KEY     = my_secret_key
 
 [general]
 ; root path of stored data
 ROOT    = data/
 ; secret for file encryption
 SECRET  =
-; users in basic auth notication ({name}:{password})
-USERS   = test:hallo, hallo:test
-; clients in the form {name}:{id}
+; users in the form {username}:{password}
+USERS   = pc_links:password, pc_rechts:password
+; clients in the form {id}:{name}
 ; name has to match with user name
-CLIENTS = test:1, hallo:2
+CLIENTS = """1:linker PC, 2:rechter PC"""
+; user_client maps a user to a client
+; it is given in the form of {username}:{client_id}
+USER_CLIENT = pc_links:1, pc_rechts:2
 ; pagers in the form {id}:{name}
-PAGERS = """1:Pager 1""", """2:Pager 2"""
+PAGERS = """1:Pager 1, 2:Pager 2, 3:Pager 3, 4:Pager 4"""
 
 [database]
 ; provider of stored data

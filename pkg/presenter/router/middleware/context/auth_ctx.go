@@ -4,39 +4,41 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/go-chi/render"
-	"github.com/pagient/pagient-api/pkg/model"
-	"github.com/pagient/pagient-api/pkg/presenter/renderer"
 	"github.com/pagient/pagient-api/pkg/service"
 	"github.com/rs/zerolog/log"
+	"github.com/go-chi/jwtauth"
 )
 
-// AuthCtx middleware is used to load a Client object from
+// AuthCtx middleware is used to load a User object from
 // the basic auth headers passed through as the request. In case
-// the Client could not be found, we stop here and return a 500.
-func AuthCtx(clientService service.ClientService) func(http.Handler) http.Handler {
+// the User could not be found, we stop here and return a 500.
+func AuthCtx(userService service.UserService) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			var client *model.Client
-			var err error
-
-			username, _, ok := r.BasicAuth()
-			if !ok {
-				http.Error(w, http.StatusText(http.StatusUnauthorized), 401)
-			}
-
-			client, err = clientService.GetByName(username)
+		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			_, claims, err := jwtauth.FromContext(req.Context())
 			if err != nil {
-				log.Fatal().
-					Err(err).
-					Msg("get client failed")
-
-				render.Render(w, r, renderer.ErrInternalServer(err))
+				http.Error(w, http.StatusText(http.StatusUnauthorized), 401)
 				return
 			}
 
-			ctx := context.WithValue(r.Context(), "client", client)
-			next.ServeHTTP(w, r.WithContext(ctx))
+			username, ok := claims.Get("user")
+			if !ok {
+				http.Error(w, http.StatusText(http.StatusUnauthorized), 401)
+				return
+			}
+
+			user, err := userService.Get(username.(string))
+			if err != nil {
+				log.Error().
+					Err(err).
+					Msg("get user failed")
+
+				http.Error(w, http.StatusText(500), 500)
+				return
+			}
+
+			ctx := context.WithValue(req.Context(), "user", user)
+			next.ServeHTTP(w, req.WithContext(ctx))
 		})
 	}
 }

@@ -62,6 +62,10 @@ func (service *DefaultPatientService) Get(id int) (*model.Patient, error) {
 func (service *DefaultPatientService) Add(patient *model.Patient) error {
 	patient.Status = model.PatientStatePending
 
+	if patient.ClientID == 0 {
+		return &invalidArgumentErr{"client_id: cannot be blank"}
+	}
+
 	pagers, err := service.pagerRepository.GetAll()
 	if err != nil {
 		return errors.Wrap(err, "get all pagers failed")
@@ -69,7 +73,7 @@ func (service *DefaultPatientService) Add(patient *model.Patient) error {
 
 	if err := patient.Validate(pagers); err != nil {
 		if model.IsValidationErr(err) {
-			return errors.Wrap(err, "patient not valid")
+			return &modelValidationErr{err.Error()}
 		}
 
 		log.Error().
@@ -110,7 +114,7 @@ func (service *DefaultPatientService) Update(patient *model.Patient) error {
 
 	if err := patient.Validate(pagers); err != nil {
 		if model.IsValidationErr(err) {
-			return errors.Wrap(err, "patient not valid")
+			return &modelValidationErr{err.Error()}
 		}
 
 		log.Error().
@@ -129,6 +133,9 @@ func (service *DefaultPatientService) Update(patient *model.Patient) error {
 
 		return errors.Wrap(err, "get patient failed")
 	}
+
+	// Prevent accidental overriding of clientID
+	patient.ClientID = patientBeforeUpdate.ClientID
 
 	err = service.patientRepository.Update(patient)
 	if err != nil {

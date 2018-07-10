@@ -13,19 +13,18 @@ type ErrResponse struct {
 	HTTPStatusCode int   `json:"status"` // http renderer status code
 
 	Message   string `json:"message"`         // user-level status message
-	AppCode   int64  `json:"code,omitempty"`  // application-specific error code
 	ErrorText string `json:"error,omitempty"` // application-level error message, for debugging
 }
 
 // Render renders the ErrResponse
-func (e *ErrResponse) Render(w http.ResponseWriter, r *http.Request) error {
+func (e *ErrResponse) Render(w http.ResponseWriter, req *http.Request) error {
 	if e.HTTPStatusCode == 500 {
 		log.Error().
 			Err(e.Err).
 			Msg("")
 	}
 
-	render.Status(r, e.HTTPStatusCode)
+	render.Status(req, e.HTTPStatusCode)
 	return nil
 }
 
@@ -45,7 +44,6 @@ func ErrConflict(err error) render.Renderer {
 		Err:            err,
 		HTTPStatusCode: 409,
 		Message:        "Resouce already exists.",
-		ErrorText:      err.Error(),
 	}
 }
 
@@ -65,7 +63,6 @@ func ErrInternalServer(err error) render.Renderer {
 		Err:            err,
 		HTTPStatusCode: 500,
 		Message:        "Internal server error.",
-		ErrorText:      err.Error(),
 	}
 }
 
@@ -75,7 +72,6 @@ func ErrGateway(err error) render.Renderer {
 		Err:            err,
 		HTTPStatusCode: 504,
 		Message:        "Error receiving response from server.",
-		ErrorText:      err.Error(),
 	}
 }
 

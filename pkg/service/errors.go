@@ -89,3 +89,24 @@ func IsExternalServiceErr(err error) bool {
 	es, ok := errors.Cause(err).(serviceErr)
 	return ok && es.Service()
 }
+
+type invalidArgErr interface {
+	InvalidArgument() bool
+}
+
+type invalidArgumentErr struct {
+	msg string
+}
+
+func (err *invalidArgumentErr) Error() string {
+	return err.msg
+}
+
+func (err *invalidArgumentErr) InvalidArgument() bool {
+	return true
+}
+
+func IsInvalidArgumentErr(err error) bool {
+	ia, ok := errors.Cause(err).(invalidArgErr)
+	return ok && ia.InvalidArgument()
+}

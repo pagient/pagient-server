@@ -20,6 +20,12 @@
   version = "v1.1.0"
 
 [[projects]]
+  name = "github.com/dgrijalva/jwt-go"
+  packages = ["."]
+  revision = "06ea1031745cb8b3dab3f6a236daf2b0aa468b7e"
+  version = "v3.2.0"
+
+[[projects]]
   name = "github.com/go-chi/chi"
   packages = [
     ".",
@@ -27,6 +33,12 @@
   ]
   revision = "e83ac2304db3c50cf03d96a2fcd39009d458bc35"
   version = "v3.3.2"
+
+[[projects]]
+  name = "github.com/go-chi/jwtauth"
+  packages = ["."]
+  revision = "53a0a4877a0ead48e149be6b4ec9dd1b3c075eba"
+  version = "v3.3.0"
 
 [[projects]]
   name = "github.com/go-chi/render"
@@ -165,6 +177,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "cb31a45989e19151911d83c2d4c6cde937f6572ac3f9a968865d59a912c0c88c"
+  inputs-digest = "815ed616b4266ebfa4cd3ff777c1284faffcc0a2345de469dd4fd9f4c966c91d"
   solver-name = "gps-cdcl"
   solver-version = 1

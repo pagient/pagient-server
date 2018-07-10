@@ -5,7 +5,6 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	_ "github.com/kardianos/minwinsvc" // import minwinsvc for windows services
@@ -33,15 +32,17 @@ type Server struct {
 	Key           string `ini:"KEY"`
 	StrictCurves  bool   `ini:"STRICT_CURVES"`
 	StrictCiphers bool   `ini:"STRICT_CIPHERS"`
+	SecretKey     string `ini:"SECRET_KEY"`
 }
 
 // General defines the general configuration.
 type General struct {
-	Root    string   `ini:"ROOT"`
-	Secret  string   `ini:"SECRET"`
-	Users   []string `ini:"USERS"`
-	Clients []string `ini:"CLIENTS"`
-	Pagers  []string `ini:"PAGERS"`
+	Root       string   `ini:"ROOT"`
+	Secret     string   `ini:"SECRET"`
+	Users      []string `ini:"USERS"`
+	Clients    []string `ini:"CLIENTS"`
+	UserClient []string `ini:"USER_CLIENT"`
+	Pagers     []string `ini:"PAGERS"`
 }
 
 // Database defines the repository configuration
@@ -126,9 +127,6 @@ func New() (*Config, error) {
 	if err := checkFormat(cfg); err != nil {
 		return nil, errors.Wrap(err, "check format failed")
 	}
-	if err := checkUserClientMap(cfg); err != nil {
-		return nil, errors.Wrap(err, "check user client map failed")
-	}
 
 	return cfg, nil
 }
@@ -172,42 +170,69 @@ func getWorkPath(appPath string) string {
 }
 
 func checkFormat(cfg *Config) error {
-	if !allInColonFormat(cfg.General.Users) {
+	if !itemsInColonNotation(cfg.General.Users) || !itemsUniqueByColonNotationSide(cfg.General.Users, 0) {
 		return errors.New("configuration of 'users' is not formatted correctly")
 	}
 
-	if !allInColonFormat(cfg.General.Clients) {
+	if !itemsInColonNotation(cfg.General.Clients) || !itemsUniqueByColonNotationSide(cfg.General.Clients, 0) {
 		return errors.New("configuration of 'clients' is not formatted correctly")
 	}
 
-	if !allInColonFormat(cfg.General.Pagers) {
+	if !itemsInColonNotation(cfg.General.UserClient) || !itemsUniqueByColonNotationSide(cfg.General.UserClient, 0) || !itemsUniqueByColonNotationSide(cfg.General.UserClient, 1) {
+		return errors.New("configuration of 'user_client' is not formatted correctly")
+	}
+
+	if !itemsInColonNotation(cfg.General.Pagers) || !itemsUniqueByColonNotationSide(cfg.General.Pagers, 0) {
 		return errors.New("configuration of 'pagers' is not formatted correctly")
+	}
+
+	if err := checkUserClientMap(cfg); err != nil {
+		return errors.Wrap(err, "configuration of 'user_client' is incorrect")
 	}
 
 	return nil
 }
 
 func checkUserClientMap(cfg *Config) error {
-	for _, user := range cfg.General.Users {
-		pair := strings.SplitN(user, ":", 2)
+	// check that every mapping has a valid user
+UserClientLoop:
+	for _, userClientInfo := range cfg.General.UserClient {
+		userClientPair := strings.SplitN(userClientInfo, ":", 2)
 
-		if _, err := getClientID(cfg, pair[0]); err != nil {
-			return errors.Wrap(err, "get client id failed")
+		for _, userInfo := range cfg.General.Users {
+			userPair := strings.SplitN(userInfo, ":", 2)
+
+			if userClientPair[0] == userPair[0] {
+				continue UserClientLoop
+			}
 		}
+		return errors.Errorf("No user is configured for user client mapping %s", userClientPair[0])
 	}
 
-	for _, client := range cfg.General.Clients {
-		pair := strings.SplitN(client, ":", 2)
+	// check that every client is mentioned in the mapping
+	if len(cfg.General.Clients) != len(cfg.General.UserClient) {
+		return errors.New("client and user_client configuration is not valid")
+	}
 
-		if _, err := getPassword(cfg, pair[0]); err != nil {
-			return errors.Wrap(err, "get password failed")
+ClientLoop:
+	for _, clientInfo := range cfg.General.Clients {
+		clientPair := strings.SplitN(clientInfo, ":", 2)
+
+		for _, userClientInfo := range cfg.General.UserClient {
+			userClientPair := strings.SplitN(userClientInfo, ":", 2)
+
+			if clientPair[0] == userClientPair[1] {
+				continue ClientLoop
+			}
 		}
+		return errors.Errorf("No client user mapping is configured for client %s", clientPair[0])
 	}
 
 	return nil
 }
 
-func allInColonFormat(items []string) bool {
+// checks whether items are in colon notation e.g. {id}:{name}
+func itemsInColonNotation(items []string) bool {
 	for _, item := range items {
 		pair := strings.SplitN(item, ":", 2)
 
@@ -219,25 +244,23 @@ func allInColonFormat(items []string) bool {
 	return true
 }
 
-func getClientID(cfg *Config, name string) (int, error) {
-	for _, clientMapping := range cfg.General.Clients {
-		clientInfo := strings.SplitN(clientMapping, ":", 2)
-		if clientInfo[0] == name {
-			id, err := strconv.Atoi(clientInfo[1])
-			return id, errors.Wrap(err, "integer string conversion failed")
+// checks whether items aren't unique on the given side of the split
+func itemsUniqueByColonNotationSide(items []string, side int) bool {
+	for i, item := range items {
+		pair := strings.SplitN(item, ":", 2)
+
+		for y, otherItem := range items {
+			otherPair := strings.SplitN(otherItem, ":", 2)
+
+			if i == y {
+				continue
+			}
+
+			if pair[side] == otherPair[side] {
+				return false
+			}
 		}
 	}
 
-	return 0, errors.Errorf("No client named %s is configured", name)
-}
-
-func getPassword(cfg *Config, name string) (string, error) {
-	for _, user := range cfg.General.Users {
-		userInfo := strings.SplitN(user, ":", 2)
-		if userInfo[0] == name {
-			return userInfo[1], nil
-		}
-	}
-
-	return "", errors.Errorf("No user named %s is configured", name)
+	return true
 }

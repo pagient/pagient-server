@@ -31,46 +31,50 @@ type clientCfgRepository struct {
 
 // GetAll returns all configured clients
 func (repo *clientCfgRepository) GetAll() ([]*model.Client, error) {
-	var clients []*model.Client
-	for _, clientInfo := range repo.cfg.General.Clients {
+	clients := make([]*model.Client, len(repo.cfg.General.Clients))
+	for i, clientInfo := range repo.cfg.General.Clients {
 		pair := strings.SplitN(clientInfo, ":", 2)
 
-		id, err := strconv.Atoi(pair[1])
+		id, err := strconv.Atoi(pair[0])
 		if err != nil {
 			return nil, errors.Wrap(err, "integer string conversion failed")
 		}
 
-		clients = append(clients, &model.Client{ID: id, Name: pair[0]})
+		clients[i] = &model.Client{ID: id, Name: pair[1]}
 	}
 
 	return clients, nil
 }
 
-// GetByName returns a client by name
-func (repo *clientCfgRepository) GetByName(name string) (*model.Client, error) {
-	clientID, err := repo.getClientID(name)
+// Get returns a client by it's id
+func (repo *clientCfgRepository) Get(id int) (*model.Client, error) {
+	clients, err := repo.GetAll()
 	if err != nil {
-		return nil, errors.Wrap(err, "get client id failed")
+		return nil, errors.Wrap(err, "get clients failed")
 	}
 
-	if clientID == 0 {
-		return nil, nil
-	}
-
-	return &model.Client{
-		ID:   clientID,
-		Name: name,
-	}, nil
-}
-
-func (repo *clientCfgRepository) getClientID(name string) (int, error) {
-	for _, clientMapping := range repo.cfg.General.Clients {
-		clientInfo := strings.SplitN(clientMapping, ":", 2)
-		if clientInfo[0] == name {
-			id, err := strconv.Atoi(clientInfo[1])
-			return id, errors.Wrap(err, "integer string conversion failed")
+	for _, client := range clients {
+		if client.ID == id {
+			return client, nil
 		}
 	}
 
-	return 0, nil
+	return nil, nil
+}
+
+func (repo *clientCfgRepository) GetByUser(user *model.User) (*model.Client, error) {
+	for _, userClientInfo := range repo.cfg.General.UserClient {
+		pair := strings.SplitN(userClientInfo, ":", 2)
+
+		if pair[0] == user.Username {
+			id, err := strconv.Atoi(pair[0])
+			if err != nil {
+				return nil, errors.Wrap(err, "integer string conversion failed")
+			}
+
+			return repo.Get(id)
+		}
+	}
+
+	return nil, nil
 }

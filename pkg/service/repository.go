@@ -8,7 +8,8 @@ import (
 // ClientRepository interface
 type ClientRepository interface {
 	GetAll() ([]*model.Client, error)
-	GetByName(string) (*model.Client, error)
+	Get(int) (*model.Client, error)
+	GetByUser(*model.User) (*model.Client, error)
 }
 
 // PagerRepository interface
@@ -24,6 +25,19 @@ type PatientRepository interface {
 	Add(*model.Patient) error
 	Update(*model.Patient) error
 	Remove(*model.Patient) error
+}
+
+// TokenRepository interface
+type TokenRepository interface {
+	Get(string) (*model.Token, error)
+	Add(string, *model.Token) error
+	Remove(string) error
+}
+
+// UserRepository interface
+type UserRepository interface {
+	GetAll() ([]*model.User, error)
+	Get(string) (*model.User, error)
 }
 
 type entryExistErr interface {

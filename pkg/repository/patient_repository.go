@@ -18,18 +18,9 @@ const (
 )
 
 var (
-	lock *sync.Mutex
-
 	patientRepositoryOnce     sync.Once
 	patientRepositoryInstance service.PatientRepository
 )
-
-type driver interface {
-	Write(string, string, interface{}) error
-	Read(string, string, interface{}) error
-	ReadAll(string string) ([]string, error)
-	Delete(string, string) error
-}
 
 // GetPatientRepositoryInstance creates and returns a new PatientFileRepository
 func GetPatientRepositoryInstance(cfg *config.Config) (service.PatientRepository, error) {
@@ -37,12 +28,11 @@ func GetPatientRepositoryInstance(cfg *config.Config) (service.PatientRepository
 
 	patientRepositoryOnce.Do(func() {
 		// Set up scribble json file store
-		var db driver
+		var db fileDriver
 		db, err = scribble.New(cfg.General.Root, nil)
 
-		lock = &sync.Mutex{}
-
 		patientRepositoryInstance = &patientFileRepository{
+			lock: &sync.Mutex{},
 			db: db,
 		}
 	})
@@ -55,13 +45,14 @@ func GetPatientRepositoryInstance(cfg *config.Config) (service.PatientRepository
 }
 
 type patientFileRepository struct {
-	db driver
+	lock *sync.Mutex
+	db   fileDriver
 }
 
 // GetAll lists all patients
 func (repo *patientFileRepository) GetAll() ([]*model.Patient, error) {
-	lock.Lock()
-	defer lock.Unlock()
+	repo.lock.Lock()
+	defer repo.lock.Unlock()
 
 	records, err := repo.db.ReadAll(patientCollection)
 	if err != nil {
@@ -85,8 +76,8 @@ func (repo *patientFileRepository) GetAll() ([]*model.Patient, error) {
 
 // Get returns a patient by ID
 func (repo *patientFileRepository) Get(id int) (*model.Patient, error) {
-	lock.Lock()
-	defer lock.Unlock()
+	repo.lock.Lock()
+	defer repo.lock.Unlock()
 
 	patient := &model.Patient{}
 	if err := repo.db.Read(patientCollection, strconv.Itoa(id), patient); err != nil {
@@ -101,8 +92,8 @@ func (repo *patientFileRepository) Get(id int) (*model.Patient, error) {
 
 // Add stores the values in the repository
 func (repo *patientFileRepository) Add(patient *model.Patient) error {
-	lock.Lock()
-	defer lock.Unlock()
+	repo.lock.Lock()
+	defer repo.lock.Unlock()
 
 	if patient.ID == 0 {
 		return &entryNotValidErr{"id: cannot be blank"}
@@ -122,8 +113,8 @@ func (repo *patientFileRepository) Add(patient *model.Patient) error {
 
 // Update updates the values in the repository
 func (repo *patientFileRepository) Update(patient *model.Patient) error {
-	lock.Lock()
-	defer lock.Unlock()
+	repo.lock.Lock()
+	defer repo.lock.Unlock()
 
 	if patient.ID == 0 {
 		return &entryNotValidErr{"id: cannot be blank"}
@@ -142,8 +133,8 @@ func (repo *patientFileRepository) Update(patient *model.Patient) error {
 
 // Remove deletes the values from the repository
 func (repo *patientFileRepository) Remove(patient *model.Patient) error {
-	lock.Lock()
-	defer lock.Unlock()
+	repo.lock.Lock()
+	defer repo.lock.Unlock()
 
 	err := repo.db.Delete(patientCollection, strconv.Itoa(patient.ID))
 	if err != nil {
@@ -152,5 +143,6 @@ func (repo *patientFileRepository) Remove(patient *model.Patient) error {
 		}
 		return errors.Wrap(err, "delete patient failed")
 	}
+
 	return nil
 }
