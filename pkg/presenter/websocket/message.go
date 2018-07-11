@@ -4,6 +4,8 @@ package websocket
 type MessageType string
 
 const (
+	// MessageTypePatientAdd marks a message that originates from a patient add operation
+	MessageTypePatientAdd MessageType = "patient_add"
 	// MessageTypePatientUpdate marks a message that originates from a patient update operation
 	MessageTypePatientUpdate MessageType = "patient_update"
 	// MessageTypePatientDelete marks a message that originates from a patient delete operation

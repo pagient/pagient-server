@@ -75,7 +75,7 @@ func (handler *PatientHandler) AddPatient(w http.ResponseWriter, req *http.Reque
 
 	// Broadcast new active patient in websocket hub
 	if patient.Active {
-		err := handler.wsHub.Broadcast(websocket.MessageTypePatientUpdate, patient)
+		err := handler.wsHub.Broadcast(websocket.MessageTypePatientAdd, patient)
 		if err != nil {
 			log.Error().
 				Err(err).
