@@ -67,7 +67,7 @@ func (repo *clientCfgRepository) GetByUser(user *model.User) (*model.Client, err
 		pair := strings.SplitN(userClientInfo, ":", 2)
 
 		if pair[0] == user.Username {
-			id, err := strconv.Atoi(pair[0])
+			id, err := strconv.Atoi(pair[1])
 			if err != nil {
 				return nil, errors.Wrap(err, "integer string conversion failed")
 			}
