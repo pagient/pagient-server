@@ -26,8 +26,8 @@ type Patient struct {
 	ID       int          `json:"id"`
 	Ssn      string       `json:"ssn"`
 	Name     string       `json:"name"`
-	PagerID  int          `json:"pager_id,omitempty"`
-	ClientID int          `json:"client_id,omitempty"`
+	PagerID  int          `json:"pagerId,omitempty"`
+	ClientID int          `json:"clientId,omitempty"`
 	Status   PatientState `json:"status"`
 	Active   bool         `json:"active"`
 }
