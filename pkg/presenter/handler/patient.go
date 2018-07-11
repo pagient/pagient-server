@@ -107,6 +107,15 @@ func (handler *PatientHandler) UpdatePatient(w http.ResponseWriter, req *http.Re
 
 	patient := data.Patient
 
+	// Set clientID to the client that updated the patient
+	ctxUser := req.Context().Value("user").(*model.User)
+	client, err := handler.clientService.GetByUser(ctxUser)
+	if err != nil {
+		render.Render(w, req, renderer.ErrInternalServer(err))
+		return
+	}
+	patient.ClientID = client.ID
+
 	if err := handler.patientService.Update(patient); err != nil {
 		if service.IsModelValidationErr(err) {
 			render.Render(w, req, renderer.ErrValidation(err))
@@ -124,7 +133,7 @@ func (handler *PatientHandler) UpdatePatient(w http.ResponseWriter, req *http.Re
 	}
 
 	// Broadcast patient status in websocket hub
-	err := handler.wsHub.Broadcast(websocket.MessageTypePatientUpdate, patient)
+	err = handler.wsHub.Broadcast(websocket.MessageTypePatientUpdate, patient)
 	if err != nil {
 		log.Error().
 			Err(err).
