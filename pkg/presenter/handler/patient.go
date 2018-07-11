@@ -19,8 +19,9 @@ type PatientHandler struct {
 }
 
 // NewPatientHandler initializes a PatientHandler
-func NewPatientHandler(patientService service.PatientService, hub *websocket.Hub) *PatientHandler {
+func NewPatientHandler(clientService service.ClientService, patientService service.PatientService, hub *websocket.Hub) *PatientHandler {
 	return &PatientHandler{
+		clientService:  clientService,
 		patientService: patientService,
 		wsHub:          hub,
 	}
