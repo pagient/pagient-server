@@ -5,7 +5,8 @@ module.exports = {
   outputDir: "public/dist",
 
   chainWebpack: config => {
-    config.entry("app")
+    config
+      .entry("app")
       .clear()
       .add("./public/src/main.js");
 
@@ -14,7 +15,7 @@ module.exports = {
     config.plugin("html").tap(args => {
       args[0].template = path.resolve(__dirname, "./public/public/index.html");
       return args;
-    })
+    });
 
     config.plugin("copy").tap(args => {
       args[0][0].from = path.resolve(__dirname, "./public/public");

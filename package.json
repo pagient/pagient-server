@@ -9,9 +9,14 @@
     "test:unit": "vue-cli-service test:unit"
   },
   "dependencies": {
+    "axios": "^0.18.0",
+    "lodash.clone": "^4.5.0",
     "material-design-icons-iconfont": "^3.0.3",
     "vue": "^2.5.16",
-    "vuetify": "^1.1.1"
+    "vue-router": "^3.0.1",
+    "vuelidate": "^0.7.4",
+    "vuetify": "^1.1.1",
+    "vuex": "^3.0.1"
   },
   "devDependencies": {
     "@babel/polyfill": "^7.0.0-beta.49",
