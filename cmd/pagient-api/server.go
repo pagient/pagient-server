@@ -90,7 +90,7 @@ func serverAction(cfg *config.Config) cli.ActionFunc {
 		hub := websocket.NewHub()
 		go hub.Run()
 
-		authHandler := handler.NewAuthHandler(cfg, userService, tokenService)
+		authHandler := handler.NewAuthHandler(cfg, userService, tokenService, hub)
 		clientHandler := handler.NewClientHandler(clientService)
 		pagerHandler := handler.NewPagerHandler(pagerService)
 		patientHandler := handler.NewPatientHandler(patientService, hub)

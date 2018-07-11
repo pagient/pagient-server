@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 
+	"github.com/go-chi/jwtauth"
 	"github.com/go-chi/render"
 	ws "github.com/gorilla/websocket"
 	"github.com/pagient/pagient-api/pkg/config"
@@ -50,7 +51,13 @@ func (handler *WebsocketHandler) ServeWebsocket(w http.ResponseWriter, req *http
 		return
 	}
 
-	client := websocket.NewClient(handler.wsHub, conn)
+	token, _, err := jwtauth.FromContext(req.Context())
+	if err != nil {
+		render.Render(w, req, renderer.ErrInternalServer(err))
+		return
+	}
+
+	client := websocket.NewClient(token.Signature, handler.wsHub, conn)
 	handler.wsHub.Register <- client
 
 	// Allow collection of memory referenced by the caller by doing all work in

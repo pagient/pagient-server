@@ -1,17 +1,17 @@
 package service
 
 import (
-	"github.com/pagient/pagient-api/pkg/model"
 	"github.com/pagient/pagient-api/pkg/config"
+	"github.com/pagient/pagient-api/pkg/model"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
 
 // TokenService interface
 type TokenService interface {
-	Get(string) (*model.Token, error)
-	Add(string, *model.Token) error
-	Remove(string) error
+	Get(string) ([]*model.Token, error)
+	Add(*model.Token) error
+	Remove(*model.Token) error
 }
 
 // DefaultTokenService struct
@@ -28,8 +28,8 @@ func NewTokenService(cfg *config.Config, tokenRepository TokenRepository) TokenS
 	}
 }
 
-func (service *DefaultTokenService) Get(username string) (*model.Token, error) {
-	token, err := service.tokenRepository.Get(username)
+func (service *DefaultTokenService) Get(username string) ([]*model.Token, error) {
+	tokens, err := service.tokenRepository.Get(username)
 	if err != nil {
 		log.Error().
 			Err(err).
@@ -37,16 +37,12 @@ func (service *DefaultTokenService) Get(username string) (*model.Token, error) {
 			Msg("get token failed")
 	}
 
-	return token, errors.Wrap(err, "get token failed")
+	return tokens, errors.Wrap(err, "get token failed")
 }
 
-func (service *DefaultTokenService) Add(username string, token *model.Token) error {
-	err := service.tokenRepository.Add(username, token)
+func (service *DefaultTokenService) Add(token *model.Token) error {
+	err := service.tokenRepository.Add(token)
 	if err != nil {
-		if isEntryExistErr(err) {
-			return &modelExistErr{"token already exists"}
-		}
-
 		log.Error().
 			Err(err).
 			Msg("add token failed")
@@ -55,8 +51,8 @@ func (service *DefaultTokenService) Add(username string, token *model.Token) err
 	return errors.Wrap(err, "add token failed")
 }
 
-func (service *DefaultTokenService) Remove(username string) error {
-	if err := service.tokenRepository.Remove(username); err != nil {
+func (service *DefaultTokenService) Remove(token *model.Token) error {
+	if err := service.tokenRepository.Remove(token); err != nil {
 		if isEntryNotExistErr(err) {
 			return &modelNotExistErr{"token doesn't exist"}
 		}

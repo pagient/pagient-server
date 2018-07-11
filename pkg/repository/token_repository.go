@@ -46,50 +46,58 @@ type tokenFileRepository struct {
 	db   fileDriver
 }
 
-func (repo *tokenFileRepository) Get(username string) (*model.Token, error) {
+func (repo *tokenFileRepository) Get(username string) ([]*model.Token, error) {
 	repo.lock.Lock()
 	defer repo.lock.Unlock()
 
-	token := &model.Token{}
-	if err := repo.db.Read(tokenCollection, username, token); err != nil {
-		if isNotFoundErr(err) {
-			return nil, nil
-		}
+	tokens := &[]*model.Token{}
+	if err := repo.db.Read(tokenCollection, username, tokens); err != nil && !isNotFoundErr(err) {
 		return nil, errors.Wrap(err, "read token failed")
 	}
 
-	return token, nil
+	return *tokens, nil
 }
 
-func (repo *tokenFileRepository) Add(username string, token *model.Token) error {
+func (repo *tokenFileRepository) Add(token *model.Token) error {
 	repo.lock.Lock()
 	defer repo.lock.Unlock()
 
-	tok := &model.Token{}
-	if err := repo.db.Read(tokenCollection, username, tok); err != nil && !isNotFoundErr(err) {
+	tokens := &[]*model.Token{}
+	if err := repo.db.Read(tokenCollection, token.User, tokens); err != nil && !isNotFoundErr(err) {
 		return errors.Wrap(err, "read token failed")
 	}
-	if tok.Token != "" {
-		return &entryExistErr{"token already exists"}
-	}
 
-	err := repo.db.Write(tokenCollection, username, token)
+	*tokens = append(*tokens, token)
+
+	err := repo.db.Write(tokenCollection, token.User, tokens)
 	return errors.Wrap(err, "write token failed")
 }
 
-func (repo *tokenFileRepository) Remove(username string) error {
+func (repo *tokenFileRepository) Remove(token *model.Token) error {
 	repo.lock.Lock()
 	defer repo.lock.Unlock()
 
-	err := repo.db.Delete(tokenCollection, username)
-	if err != nil {
+	tokens := &[]*model.Token{}
+	if err := repo.db.Read(tokenCollection, token.User, tokens); err != nil && !isNotFoundErr(err) {
 		if isNotFoundErr(err) {
 			return &entryNotExistErr{"token not found"}
 		}
-		return errors.Wrap(err, "delete token failed")
+		return errors.Wrap(err, "read token failed")
 	}
 
-	return nil
+	for i, tok := range *tokens {
+		if tok.Token == token.Token {
+			*tokens = append((*tokens)[:i], (*tokens)[i+1:]...)
+			break
+		}
+	}
+
+	var err error
+	if len(*tokens) == 0 {
+		err = repo.db.Delete(tokenCollection, token.User)
+	} else {
+		err = repo.db.Write(tokenCollection, token.User, tokens)
+	}
+
+	return errors.Wrap(err, "delete token failed")
 }
-
-

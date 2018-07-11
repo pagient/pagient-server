@@ -3,8 +3,8 @@ package auth
 import (
 	"net/http"
 
-	"github.com/pagient/pagient-api/pkg/service"
 	"github.com/go-chi/jwtauth"
+	"github.com/pagient/pagient-api/pkg/service"
 )
 
 func Authenticator(tokenService service.TokenService) func(http.Handler) http.Handler {
@@ -28,14 +28,22 @@ func Authenticator(tokenService service.TokenService) func(http.Handler) http.Ha
 				return
 			}
 
-			invalidToken, err := tokenService.Get(username.(string))
-			if err != nil || invalidToken != nil {
+			tokens, err := tokenService.Get(username.(string))
+			if err != nil {
 				http.Error(w, http.StatusText(http.StatusUnauthorized), 401)
 				return
 			}
 
-			// Token is authenticated, pass it through
-			next.ServeHTTP(w, req)
+			for _, tok := range tokens {
+				if tok.Token == token.Raw {
+					// Token is authenticated, pass it through
+					next.ServeHTTP(w, req)
+					return
+				}
+			}
+
+			http.Error(w, http.StatusText(http.StatusUnauthorized), 401)
+			return
 		})
 	}
 }

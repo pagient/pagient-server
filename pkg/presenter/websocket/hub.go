@@ -76,3 +76,11 @@ func (h *Hub) Broadcast(msgType MessageType, data interface{}) error {
 
 	return nil
 }
+
+func (h *Hub) Disconnect(id string) {
+	for client := range h.clients {
+		if client.id == id {
+			h.Unregister <- client
+		}
+	}
+}

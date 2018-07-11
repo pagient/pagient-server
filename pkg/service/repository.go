@@ -29,9 +29,9 @@ type PatientRepository interface {
 
 // TokenRepository interface
 type TokenRepository interface {
-	Get(string) (*model.Token, error)
-	Add(string, *model.Token) error
-	Remove(string) error
+	Get(string) ([]*model.Token, error)
+	Add(*model.Token) error
+	Remove(*model.Token) error
 }
 
 // UserRepository interface

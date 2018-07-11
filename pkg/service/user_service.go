@@ -63,5 +63,5 @@ func (service *DefaultUserService) Login(username, password string) (bool, error
 		return false, err
 	}
 
-	return user.Password == password, nil
+	return user != nil && user.Password == password, nil
 }

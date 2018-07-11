@@ -27,6 +27,8 @@ var (
 
 // Client is a middleman between the websocket connection and the hub.
 type Client struct {
+	id string
+
 	hub *Hub
 
 	// The websocket connection.
@@ -37,8 +39,9 @@ type Client struct {
 }
 
 // NewClient initializes a websocket Client
-func NewClient(hub *Hub, conn *ws.Conn) *Client {
+func NewClient(id string, hub *Hub, conn *ws.Conn) *Client {
 	return &Client{
+		id:   id,
 		hub:  hub,
 		conn: conn,
 		send: make(chan []byte, 256),

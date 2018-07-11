@@ -4,9 +4,9 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/go-chi/jwtauth"
 	"github.com/pagient/pagient-api/pkg/service"
 	"github.com/rs/zerolog/log"
-	"github.com/go-chi/jwtauth"
 )
 
 // AuthCtx middleware is used to load a User object from

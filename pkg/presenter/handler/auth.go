@@ -9,6 +9,7 @@ import (
 	"github.com/pagient/pagient-api/pkg/config"
 	"github.com/pagient/pagient-api/pkg/model"
 	"github.com/pagient/pagient-api/pkg/presenter/renderer"
+	"github.com/pagient/pagient-api/pkg/presenter/websocket"
 	"github.com/pagient/pagient-api/pkg/service"
 )
 
@@ -17,14 +18,16 @@ type AuthHandler struct {
 	cfg          *config.Config
 	userService  service.UserService
 	tokenService service.TokenService
+	wsHub        *websocket.Hub
 }
 
 // NewAuthHandler initializes a AuthHandler
-func NewAuthHandler(cfg *config.Config, userService service.UserService, tokenService service.TokenService) *AuthHandler {
+func NewAuthHandler(cfg *config.Config, userService service.UserService, tokenService service.TokenService, hub *websocket.Hub) *AuthHandler {
 	return &AuthHandler{
 		cfg:          cfg,
 		userService:  userService,
 		tokenService: tokenService,
+		wsHub:        hub,
 	}
 }
 
@@ -44,31 +47,34 @@ func (handler *AuthHandler) CreateToken(w http.ResponseWriter, req *http.Request
 	}
 
 	if !valid {
-		render.Render(w, req, renderer.ErrBadRequest(err))
+		http.Error(w, http.StatusText(401), 401)
 		return
 	}
 
 	tokenAuth := jwtauth.New("HS256", []byte(handler.cfg.Server.SecretKey), nil)
 	_, tokenString, err := tokenAuth.Encode(jwtauth.Claims{
 		"user": user.Username,
-		"exp": jwtauth.ExpireIn(12 * time.Hour),
+		"exp":  jwtauth.ExpireIn(12 * time.Hour),
 	})
 	if err != nil {
 		render.Render(w, req, renderer.ErrInternalServer(err))
 		return
 	}
 
-	err = handler.tokenService.Remove(user.Username)
+	err = handler.tokenService.Add(&model.Token{
+		Token: tokenString,
+		User:  user.Username,
+	})
 	if err != nil && !service.IsModelNotExistErr(err) {
 		render.Render(w, req, renderer.ErrInternalServer(err))
 		return
 	}
 
 	http.SetCookie(w, &http.Cookie{
-		Name: "jwt",
-		Value: tokenString,
-		Path: "/",
-		Expires: time.Now().Add(12 * time.Hour),
+		Name:     "jwt",
+		Value:    tokenString,
+		Path:     "/",
+		Expires:  time.Now().Add(12 * time.Hour),
 		HttpOnly: true,
 	})
 
@@ -91,19 +97,22 @@ func (handler *AuthHandler) DeleteToken(w http.ResponseWriter, req *http.Request
 		return
 	}
 
-	err = handler.tokenService.Add(username.(string), &model.Token{
+	err = handler.tokenService.Remove(&model.Token{
 		Token: token.Raw,
+		User:  username.(string),
 	})
 	if err != nil {
 		render.Render(w, req, renderer.ErrInternalServer(err))
 		return
 	}
 
+	handler.wsHub.Disconnect(token.Signature)
+
 	http.SetCookie(w, &http.Cookie{
-		Name: "jwt",
-		Value: "",
-		Path: "/",
-		Expires: time.Now(),
+		Name:     "jwt",
+		Value:    "",
+		Path:     "/",
+		Expires:  time.Now(),
 		HttpOnly: true,
 	})
 
