@@ -13,15 +13,13 @@ import (
 
 // PatientHandler struct
 type PatientHandler struct {
-	clientService  service.ClientService
 	patientService service.PatientService
 	wsHub          *websocket.Hub
 }
 
 // NewPatientHandler initializes a PatientHandler
-func NewPatientHandler(clientService service.ClientService, patientService service.PatientService, hub *websocket.Hub) *PatientHandler {
+func NewPatientHandler(patientService service.PatientService, hub *websocket.Hub) *PatientHandler {
 	return &PatientHandler{
-		clientService:  clientService,
 		patientService: patientService,
 		wsHub:          hub,
 	}
@@ -49,13 +47,12 @@ func (handler *PatientHandler) AddPatient(w http.ResponseWriter, req *http.Reque
 	patient := data.Patient
 
 	// Set clientID to the client that added the patient
-	ctxUser := req.Context().Value("user").(*model.User)
-	client, err := handler.clientService.GetByUser(ctxUser)
-	if err != nil {
-		render.Render(w, req, renderer.ErrInternalServer(err))
+	ctxClient := req.Context().Value("client").(*model.Client)
+	if ctxClient == nil {
+		http.Error(w, http.StatusText(http.StatusUnauthorized), 401)
 		return
 	}
-	patient.ClientID = client.ID
+	patient.ClientID = ctxClient.ID
 
 	if err := handler.patientService.Add(patient); err != nil {
 		if service.IsModelExistErr(err) {
@@ -108,13 +105,10 @@ func (handler *PatientHandler) UpdatePatient(w http.ResponseWriter, req *http.Re
 	patient := data.Patient
 
 	// Set clientID to the client that updated the patient
-	ctxUser := req.Context().Value("user").(*model.User)
-	client, err := handler.clientService.GetByUser(ctxUser)
-	if err != nil {
-		render.Render(w, req, renderer.ErrInternalServer(err))
-		return
+	ctxClient := req.Context().Value("client").(*model.Client)
+	if ctxClient != nil {
+		patient.ClientID = ctxClient.ID
 	}
-	patient.ClientID = client.ID
 
 	if err := handler.patientService.Update(patient); err != nil {
 		if service.IsModelValidationErr(err) {
@@ -133,7 +127,7 @@ func (handler *PatientHandler) UpdatePatient(w http.ResponseWriter, req *http.Re
 	}
 
 	// Broadcast patient status in websocket hub
-	err = handler.wsHub.Broadcast(websocket.MessageTypePatientUpdate, patient)
+	err := handler.wsHub.Broadcast(websocket.MessageTypePatientUpdate, patient)
 	if err != nil {
 		log.Error().
 			Err(err).

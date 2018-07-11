@@ -129,7 +129,7 @@ func serverAction(cfg *config.Config) cli.ActionFunc {
 			{
 				server := &http.Server{
 					Addr:         cfg.Server.Address,
-					Handler:      router.Load(cfg, authHandler, clientHandler, pagerHandler, patientHandler, websocketHandler, patientService, tokenService, userService),
+					Handler:      router.Load(cfg, authHandler, clientHandler, pagerHandler, patientHandler, websocketHandler, clientService, patientService, tokenService, userService),
 					ReadTimeout:  5 * time.Second,
 					WriteTimeout: 10 * time.Second,
 					TLSConfig: &tls.Config{
@@ -171,7 +171,7 @@ func serverAction(cfg *config.Config) cli.ActionFunc {
 		{
 			server := &http.Server{
 				Addr:         cfg.Server.Address,
-				Handler:      router.Load(cfg, authHandler, clientHandler, pagerHandler, patientHandler, websocketHandler, patientService, tokenService, userService),
+				Handler:      router.Load(cfg, authHandler, clientHandler, pagerHandler, patientHandler, websocketHandler, clientService, patientService, tokenService, userService),
 				ReadTimeout:  5 * time.Second,
 				WriteTimeout: 10 * time.Second,
 			}

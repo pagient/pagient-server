@@ -21,7 +21,7 @@ import (
 
 // Load initializes the routing of the application.
 func Load(cfg *config.Config, authHandler *handler.AuthHandler, clientHandler *handler.ClientHandler, pagerHandler *handler.PagerHandler, patientHandler *handler.PatientHandler,
-	websocketHandler *handler.WebsocketHandler, patientService service.PatientService, tokenService service.TokenService, userService service.UserService) http.Handler {
+	websocketHandler *handler.WebsocketHandler, clientService service.ClientService, patientService service.PatientService, tokenService service.TokenService, userService service.UserService) http.Handler {
 
 	mux := chi.NewRouter()
 
@@ -62,13 +62,13 @@ func Load(cfg *config.Config, authHandler *handler.AuthHandler, clientHandler *h
 				// Manage patients
 				r.Route("/patients", func(r chi.Router) {
 					r.Get("/", patientHandler.GetPatients)
-					r.Post("/", patientHandler.AddPatient)
+					r.With(context.ClientCtx(clientService)).Post("/", patientHandler.AddPatient)
 
 					r.Route("/{patientID}", func(r chi.Router) {
 						r.Use(context.PatientCtx(patientService))
 
 						r.Get("/", patientHandler.GetPatient)
-						r.Post("/", patientHandler.UpdatePatient)
+						r.With(context.ClientCtx(clientService)).Post("/", patientHandler.UpdatePatient)
 						r.Delete("/", patientHandler.DeletePatient)
 					})
 				})
