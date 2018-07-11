@@ -6,4 +6,3 @@ type fileDriver interface {
 	ReadAll(string string) ([]string, error)
 	Delete(string, string) error
 }
-

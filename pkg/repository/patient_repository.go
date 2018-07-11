@@ -33,7 +33,7 @@ func GetPatientRepositoryInstance(cfg *config.Config) (service.PatientRepository
 
 		patientRepositoryInstance = &patientFileRepository{
 			lock: &sync.Mutex{},
-			db: db,
+			db:   db,
 		}
 	})
 
