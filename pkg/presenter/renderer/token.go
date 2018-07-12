@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/pagient/pagient-api/pkg/model"
+	"github.com/go-chi/render"
 )
 
 // TokenResponse is the response payload for the token data model
@@ -21,4 +22,16 @@ func NewTokenResponse(token *model.Token) *TokenResponse {
 // Render preprocesses the response before marshalling
 func (cr *TokenResponse) Render(w http.ResponseWriter, req *http.Request) error {
 	return nil
+}
+
+// TokenListResponse is the list response payload for the token data model
+type TokenListResponse []*TokenResponse
+
+// NewTokenListResponse creates a new token list response from multiple token models
+func NewTokenListResponse(tokens []*model.Token) []render.Renderer {
+	list := make([]render.Renderer, len(tokens))
+	for i, token := range tokens {
+		list[i] = NewTokenResponse(token)
+	}
+	return list
 }

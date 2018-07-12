@@ -85,7 +85,14 @@ func Load(cfg *config.Config, authHandler *handler.AuthHandler, clientHandler *h
 
 		root.Route("/oauth", func(r chi.Router) {
 			r.Post("/token", authHandler.CreateToken)
-			r.With(jwtauth.Verifier(tokenAuth), auth.Authenticator(tokenService)).Delete("/token", authHandler.DeleteToken)
+
+			r.Route("/", func(r chi.Router) {
+				r.Use(jwtauth.Verifier(tokenAuth))
+				r.Use(auth.Authenticator(tokenService))
+
+				r.Delete("/token", authHandler.DeleteToken)
+				r.Get("/sessions", authHandler.GetSessions)
+			})
 		})
 
 		// Pagient UI static files

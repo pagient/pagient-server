@@ -118,3 +118,26 @@ func (handler *AuthHandler) DeleteToken(w http.ResponseWriter, req *http.Request
 
 	w.WriteHeader(http.StatusNoContent)
 }
+
+// GetSessions returns all jwt tokens from a user
+func (handler *AuthHandler) GetSessions(w http.ResponseWriter, req *http.Request) {
+	_, claims, err := jwtauth.FromContext(req.Context())
+	if err != nil {
+		render.Render(w, req, renderer.ErrInternalServer(err))
+		return
+	}
+
+	username, ok := claims.Get("user")
+	if !ok {
+		render.Render(w, req, renderer.ErrInternalServer(err))
+		return
+	}
+
+	tokens, err := handler.tokenService.Get(username.(string))
+	if err != nil {
+		render.Render(w, req, renderer.ErrInternalServer(err))
+		return
+	}
+
+	render.RenderList(w, req, renderer.NewTokenListResponse(tokens))
+}
