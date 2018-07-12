@@ -17,7 +17,7 @@
 
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn @click.stop="callPatient(pager.patient)" :disabled="!pager.patient" icon large>
+          <v-btn @click.stop="callPatient(pager.patient)" :disabled="!pager.patient" :color="isPagerCalled(pager) ? 'primary' : undefined" :dark="isPagerCalled(pager)" icon large>
             <v-icon medium>vibration</v-icon>
           </v-btn>
           <v-btn @click.stop="assignPager({ patient: pager.patient, pager: null })" :disabled="!pager.patient" icon large>
@@ -33,7 +33,12 @@
 import { mapActions, mapGetters } from "vuex";
 
 export default {
-  methods: mapActions(["assignPager", "callPatient"]),
+  methods: {
+    ...mapActions(["assignPager", "callPatient"]),
+    isPagerCalled(pager) {
+      return pager.patient && pager.patient.status === "called";
+    }
+  },
   computed: mapGetters(["pagers", "currentPatient"]),
   mounted() {
     this.$store.dispatch("getAllPagers");
