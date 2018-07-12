@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/pagient/pagient-api/pkg/model"
+	"github.com/pagient/pagient-server/pkg/model"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )

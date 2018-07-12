@@ -3,7 +3,7 @@ package renderer
 import (
 	"net/http"
 
-	"github.com/pagient/pagient-api/pkg/model"
+	"github.com/pagient/pagient-server/pkg/model"
 	"github.com/go-chi/render"
 )
 

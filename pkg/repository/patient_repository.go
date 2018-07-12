@@ -7,9 +7,9 @@ import (
 	"sync"
 
 	"github.com/nanobox-io/golang-scribble"
-	"github.com/pagient/pagient-api/pkg/config"
-	"github.com/pagient/pagient-api/pkg/model"
-	"github.com/pagient/pagient-api/pkg/service"
+	"github.com/pagient/pagient-server/pkg/config"
+	"github.com/pagient/pagient-server/pkg/model"
+	"github.com/pagient/pagient-server/pkg/service"
 	"github.com/pkg/errors"
 )
 

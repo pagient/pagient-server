@@ -9,12 +9,12 @@ import (
 	"time"
 
 	"github.com/oklog/run"
-	"github.com/pagient/pagient-api/pkg/config"
-	"github.com/pagient/pagient-api/pkg/presenter/handler"
-	"github.com/pagient/pagient-api/pkg/presenter/router"
-	"github.com/pagient/pagient-api/pkg/presenter/websocket"
-	"github.com/pagient/pagient-api/pkg/repository"
-	"github.com/pagient/pagient-api/pkg/service"
+	"github.com/pagient/pagient-server/pkg/config"
+	"github.com/pagient/pagient-server/pkg/presenter/handler"
+	"github.com/pagient/pagient-server/pkg/presenter/router"
+	"github.com/pagient/pagient-server/pkg/presenter/websocket"
+	"github.com/pagient/pagient-server/pkg/repository"
+	"github.com/pagient/pagient-server/pkg/service"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/urfave/cli.v2"
 )

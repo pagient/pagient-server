@@ -1,4 +1,4 @@
-NAME := pagient-api
+NAME := pagient-server
 IMPORT := github.com/pagient/$(NAME)
 DIST := dist
 

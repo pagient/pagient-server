@@ -4,10 +4,10 @@ import (
 	"net/http"
 
 	"github.com/go-chi/render"
-	"github.com/pagient/pagient-api/pkg/model"
-	"github.com/pagient/pagient-api/pkg/presenter/renderer"
-	"github.com/pagient/pagient-api/pkg/presenter/websocket"
-	"github.com/pagient/pagient-api/pkg/service"
+	"github.com/pagient/pagient-server/pkg/model"
+	"github.com/pagient/pagient-server/pkg/presenter/renderer"
+	"github.com/pagient/pagient-server/pkg/presenter/websocket"
+	"github.com/pagient/pagient-server/pkg/service"
 	"github.com/rs/zerolog/log"
 )
 

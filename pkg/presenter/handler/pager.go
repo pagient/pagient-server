@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/go-chi/render"
-	"github.com/pagient/pagient-api/pkg/presenter/renderer"
-	"github.com/pagient/pagient-api/pkg/service"
+	"github.com/pagient/pagient-server/pkg/presenter/renderer"
+	"github.com/pagient/pagient-server/pkg/service"
 )
 
 // PagerHandler struct

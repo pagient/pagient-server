@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/pagient/pagient-api/pkg/config"
-	"github.com/pagient/pagient-api/pkg/version"
+	"github.com/pagient/pagient-server/pkg/config"
+	"github.com/pagient/pagient-server/pkg/version"
 )
 
 // Cache writes required cache headers to all requests.

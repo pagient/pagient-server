@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/pagient/pagient-api/pkg/model"
+	"github.com/pagient/pagient-server/pkg/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"strconv"

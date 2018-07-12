@@ -4,8 +4,8 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/pagient/pagient-api/pkg/model"
-	"github.com/pagient/pagient-api/pkg/service"
+	"github.com/pagient/pagient-server/pkg/model"
+	"github.com/pagient/pagient-server/pkg/service"
 	"github.com/rs/zerolog/log"
 )
 

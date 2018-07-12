@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/render"
-	"github.com/pagient/pagient-api/pkg/model"
+	"github.com/pagient/pagient-server/pkg/model"
 	"github.com/pkg/errors"
 )
 

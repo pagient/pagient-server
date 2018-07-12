@@ -6,11 +6,11 @@ import (
 
 	"github.com/go-chi/jwtauth"
 	"github.com/go-chi/render"
-	"github.com/pagient/pagient-api/pkg/config"
-	"github.com/pagient/pagient-api/pkg/model"
-	"github.com/pagient/pagient-api/pkg/presenter/renderer"
-	"github.com/pagient/pagient-api/pkg/presenter/websocket"
-	"github.com/pagient/pagient-api/pkg/service"
+	"github.com/pagient/pagient-server/pkg/config"
+	"github.com/pagient/pagient-server/pkg/model"
+	"github.com/pagient/pagient-server/pkg/presenter/renderer"
+	"github.com/pagient/pagient-server/pkg/presenter/websocket"
+	"github.com/pagient/pagient-server/pkg/service"
 )
 
 // AuthHandler struct

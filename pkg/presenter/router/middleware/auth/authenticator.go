@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/jwtauth"
-	"github.com/pagient/pagient-api/pkg/service"
+	"github.com/pagient/pagient-server/pkg/service"
 )
 
 func Authenticator(tokenService service.TokenService) func(http.Handler) http.Handler {

@@ -6,8 +6,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/pagient/pagient-api/pkg/config"
-	"github.com/pagient/pagient-api/pkg/version"
+	"github.com/pagient/pagient-server/pkg/config"
+	"github.com/pagient/pagient-server/pkg/version"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/urfave/cli.v2"
