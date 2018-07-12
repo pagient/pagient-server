@@ -100,6 +100,7 @@ func (service *DefaultPatientService) Update(patient *model.Patient) error {
 		return errors.WithStack(err)
 	}
 
+	// load patient's old state to compare changed properties
 	patientBeforeUpdate, err := service.patientRepository.Get(patient.ID)
 	if err != nil {
 		log.Error().

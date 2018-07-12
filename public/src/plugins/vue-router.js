@@ -20,6 +20,7 @@ const router = new VueRouter({
   routes // short for `routes: routes`
 });
 
+// requiresAuth checker
 router.beforeEach((to, from, next) => {
   if (to.matched.some(record => record.meta.requiresAuth)) {
     // this route requires auth, check if logged in
@@ -34,6 +35,7 @@ router.beforeEach((to, from, next) => {
   next();
 });
 
+// guestOnly checker
 router.beforeEach((to, from, next) => {
   if (to.matched.some(record => record.meta.guestOnly)) {
     // this route requires to be not authenticated, check if logged in
