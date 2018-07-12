@@ -111,9 +111,6 @@ func (service *DefaultPatientService) Update(patient *model.Patient) error {
 		return errors.Wrap(err, "get patient failed")
 	}
 
-	// Prevent accidental overriding of clientID
-	patient.ClientID = patientBeforeUpdate.ClientID
-
 	err = service.patientRepository.Update(patient)
 	if err != nil {
 		if isEntryNotValidErr(err) {
@@ -166,6 +163,8 @@ func (service *DefaultPatientService) Update(patient *model.Patient) error {
 
 // Remove deletes an existing patient
 func (service *DefaultPatientService) Remove(patient *model.Patient) error {
+	// TODO: only remove if doesn't have a pager
+
 	if err := service.patientRepository.Remove(patient); err != nil {
 		if isEntryNotExistErr(err) {
 			return &modelNotExistErr{"patient doesn't exist"}
