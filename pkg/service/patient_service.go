@@ -63,7 +63,7 @@ func (service *DefaultPatientService) Add(patient *model.Patient) error {
 	patient.Status = model.PatientStatePending
 
 	if patient.ClientID == 0 {
-		return &invalidArgumentErr{"client_id: cannot be blank"}
+		return &invalidArgumentErr{"clientId: cannot be blank"}
 	}
 
 	if err := service.validatePatient(patient); err != nil {
