@@ -45,7 +45,6 @@
 <script>
 import { validationMixin } from "vuelidate";
 import { required } from "vuelidate/lib/validators";
-import createWebSocketPlugin from "@/store/plugins/websocket";
 
 export default {
   mixins: [validationMixin],
@@ -94,8 +93,6 @@ export default {
         .dispatch("login", this.credentials)
         .then(() => {
           // success
-          createWebSocketPlugin()(this.$store);
-
           const redirect = this.$route.query.redirect
             ? this.$route.query.redirect
             : "/";

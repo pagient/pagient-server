@@ -1,7 +1,5 @@
-export default function createWebSocketPlugin() {
+export default function createWebSocketPlugin(socket) {
   return store => {
-    const socket = connectWebsocket(store);
-
     socket.addEventListener("open", () => {
       store
         .dispatch("getAllClients")
@@ -28,11 +26,5 @@ export default function createWebSocketPlugin() {
           });
         });
     });
-
-    function connectWebsocket(store) {
-      return new WebSocket(
-        process.env.VUE_APP_WEBSOCKET_ROOT + `?jwt=${store.getters.authToken}`
-      );
-    }
   };
 }
