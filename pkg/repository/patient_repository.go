@@ -146,3 +146,72 @@ func (repo *patientFileRepository) Remove(patient *model.Patient) error {
 
 	return nil
 }
+
+// MarkAllClientInactive sets active to false for every patient by that client
+func (repo *patientFileRepository) MarkAllInactiveByClient(patient *model.Patient) error {
+	repo.lock.Lock()
+	defer repo.lock.Unlock()
+
+	records, err := repo.db.ReadAll(patientCollection)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return errors.Wrap(err, "read patients failed")
+	}
+
+	patients := make([]*model.Patient, len(records))
+	for i, p := range records {
+		patient := &model.Patient{}
+		if err := json.Unmarshal([]byte(p), patient); err != nil {
+			return errors.Wrap(err, "json unmarshal failed")
+		}
+		patients[i] = patient
+	}
+
+	for _, pat := range patients {
+		if pat.ClientID == patient.ClientID && pat.ID != patient.ID && pat.Active {
+			pat.Active = false
+
+			if err := repo.db.Write(patientCollection, strconv.Itoa(pat.ID), pat); err != nil {
+				return errors.Wrap(err, "write patient failed")
+			}
+		}
+	}
+
+	return nil
+}
+
+// RemoveAllInactiveNoPagerByClient deletes the patients that are inactive, have no pager assigned and are from that client
+func (repo *patientFileRepository) RemoveAllInactiveNoPagerByClient(patient *model.Patient) error {
+	repo.lock.Lock()
+	defer repo.lock.Unlock()
+
+	records, err := repo.db.ReadAll(patientCollection)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return errors.Wrap(err, "read patients failed")
+	}
+
+	patients := make([]*model.Patient, len(records))
+	for i, p := range records {
+		patient := &model.Patient{}
+		if err := json.Unmarshal([]byte(p), patient); err != nil {
+			return errors.Wrap(err, "json unmarshal failed")
+		}
+		patients[i] = patient
+	}
+
+	for _, pat := range patients {
+		if pat.ClientID == patient.ClientID && pat.ID != patient.ID && !pat.Active && pat.PagerID == 0 {
+			err := repo.db.Delete(patientCollection, strconv.Itoa(pat.ID))
+			if err != nil && !isNotFoundErr(err) {
+				return errors.Wrap(err, "delete patient failed")
+			}
+		}
+	}
+
+	return nil
+}

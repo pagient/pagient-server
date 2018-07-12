@@ -25,6 +25,8 @@ type PatientRepository interface {
 	Add(*model.Patient) error
 	Update(*model.Patient) error
 	Remove(*model.Patient) error
+	MarkAllInactiveByClient(*model.Patient) error
+	RemoveAllInactiveNoPagerByClient(*model.Patient) error
 }
 
 // TokenRepository interface

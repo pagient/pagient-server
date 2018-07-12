@@ -98,6 +98,12 @@ func (service *DefaultPatientService) Add(patient *model.Patient) error {
 			Msg("add patient failed")
 	}
 
+	if patient.Active {
+		if err := service.cleanupPatients(patient); err != nil {
+			return errors.WithStack(err)
+		}
+	}
+
 	return errors.Wrap(err, "add patient failed")
 }
 
@@ -154,6 +160,12 @@ func (service *DefaultPatientService) Update(patient *model.Patient) error {
 		return errors.Wrap(err, "update patient failed")
 	}
 
+	if patientBeforeUpdate.Active != patient.Active && patient.Active {
+		if err := service.cleanupPatients(patient); err != nil {
+			return errors.WithStack(err)
+		}
+	}
+
 	// Patient status changed from another state to PatientStateCall
 	if patient.Status == model.PatientStateCall && patient.Status != patientBeforeUpdate.Status {
 		log.Debug().
@@ -193,6 +205,28 @@ func (service *DefaultPatientService) Remove(patient *model.Patient) error {
 			Msg("remove patient failed")
 
 		return errors.Wrap(err, "remove patient failed")
+	}
+
+	return nil
+}
+
+func (service *DefaultPatientService) cleanupPatients(patient *model.Patient) error {
+	// mark all patients as inactive
+	if err := service.patientRepository.MarkAllInactiveByClient(patient); err != nil {
+		log.Error().
+			Err(err).
+			Msg("mark all patients as inactive failed")
+
+		return errors.Wrap(err, "mark all patients as inactive failed")
+	}
+
+	// remove all inactive patients that have no pager assigned
+	if err := service.patientRepository.RemoveAllInactiveNoPagerByClient(patient); err != nil {
+		log.Error().
+			Err(err).
+			Msg("remove all inactive patients without pager failed")
+
+		return errors.Wrap(err, "remove all inactive patients without pager failed")
 	}
 
 	return nil
