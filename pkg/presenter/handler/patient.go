@@ -145,6 +145,11 @@ func (handler *PatientHandler) DeletePatient(w http.ResponseWriter, req *http.Re
 	ctxPatient := req.Context().Value("patient").(*model.Patient)
 
 	if err := handler.patientService.Remove(ctxPatient); err != nil {
+		if service.IsInvalidArgumentErr(err) {
+			render.Render(w, req, renderer.ErrBadRequest(err))
+			return
+		}
+
 		render.Render(w, req, renderer.ErrInternalServer(err))
 		return
 	}

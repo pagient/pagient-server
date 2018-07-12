@@ -163,7 +163,9 @@ func (service *DefaultPatientService) Update(patient *model.Patient) error {
 
 // Remove deletes an existing patient
 func (service *DefaultPatientService) Remove(patient *model.Patient) error {
-	// TODO: only remove if doesn't have a pager
+	if patient.PagerID != 0 {
+		return &invalidArgumentErr{"pagerId: cannot be set"}
+	}
 
 	if err := service.patientRepository.Remove(patient); err != nil {
 		if isEntryNotExistErr(err) {
