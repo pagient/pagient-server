@@ -66,24 +66,11 @@ func (service *DefaultPatientService) Add(patient *model.Patient) error {
 		return &invalidArgumentErr{"client_id: cannot be blank"}
 	}
 
-	pagers, err := service.pagerRepository.GetAll()
-	if err != nil {
-		return errors.Wrap(err, "get all pagers failed")
+	if err := service.validatePatient(patient); err != nil {
+		return errors.WithStack(err)
 	}
 
-	if err := patient.Validate(pagers); err != nil {
-		if model.IsValidationErr(err) {
-			return &modelValidationErr{err.Error()}
-		}
-
-		log.Error().
-			Err(err).
-			Msg("validate patient failed")
-
-		return errors.Wrap(err, "validate patient failed")
-	}
-
-	err = service.patientRepository.Add(patient)
+	err := service.patientRepository.Add(patient)
 	if err != nil {
 		if isEntryNotValidErr(err) {
 			return &modelValidationErr{err.Error()}
@@ -109,25 +96,8 @@ func (service *DefaultPatientService) Add(patient *model.Patient) error {
 
 // Update updates an existing patient if given model is valid
 func (service *DefaultPatientService) Update(patient *model.Patient) error {
-	pagers, err := service.pagerRepository.GetAll()
-	if err != nil {
-		log.Error().
-			Err(err).
-			Msg("get all pagers failed")
-
-		return errors.Wrap(err, "get all pagers failed")
-	}
-
-	if err := patient.Validate(pagers); err != nil {
-		if model.IsValidationErr(err) {
-			return &modelValidationErr{err.Error()}
-		}
-
-		log.Error().
-			Err(err).
-			Msg("validate patient failed")
-
-		return errors.Wrap(err, "validate patient failed")
+	if err := service.validatePatient(patient); err != nil {
+		return errors.WithStack(err)
 	}
 
 	patientBeforeUpdate, err := service.patientRepository.Get(patient.ID)
@@ -205,6 +175,33 @@ func (service *DefaultPatientService) Remove(patient *model.Patient) error {
 			Msg("remove patient failed")
 
 		return errors.Wrap(err, "remove patient failed")
+	}
+
+	return nil
+}
+
+func (service *DefaultPatientService) validatePatient(patient *model.Patient) error {
+	// load pagers to validate if pager sent with request is valid
+	pagers, err := service.pagerRepository.GetAll()
+	if err != nil {
+		log.Error().
+			Err(err).
+			Msg("get all pagers failed")
+
+		return errors.Wrap(err, "get all pagers failed")
+	}
+
+	// validate patient
+	if err := patient.Validate(pagers); err != nil {
+		if model.IsValidationErr(err) {
+			return &modelValidationErr{err.Error()}
+		}
+
+		log.Error().
+			Err(err).
+			Msg("validate patient failed")
+
+		return errors.Wrap(err, "validate patient failed")
 	}
 
 	return nil
