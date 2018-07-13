@@ -6,8 +6,9 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"time"
+	"path"
 	"strings"
+	"time"
 
 	"github.com/oklog/run"
 	"github.com/pagient/pagient-server/pkg/config"
@@ -58,13 +59,24 @@ func Server() *cli.Command {
 				zerolog.SetGlobalLevel(zerolog.InfoLevel)
 			}
 
+			logFile, err := os.OpenFile(path.Join(cfg.General.Root, "pagient.log") , os.O_CREATE | os.O_APPEND | os.O_RDWR, 0666)
+			if err != nil {
+				log.Fatal().
+					Err(err).
+					Msg("logfile could not be opened")
+
+				os.Exit(1)
+			}
+
 			if cfg.Log.Pretty {
 				log.Logger = log.Output(
 					zerolog.ConsoleWriter{
-						Out:     os.Stderr,
+						Out:     logFile,
 						NoColor: !cfg.Log.Colored,
 					},
 				)
+			} else {
+				log.Logger = log.Output(logFile)
 			}
 
 			// Initialize Repositories  (database access)

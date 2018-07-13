@@ -105,7 +105,13 @@ func New() (*Config, error) {
 	if err = config.Section("general").MapTo(generalCfg); err != nil {
 		return nil, errors.Wrap(err, "read config general section failed")
 	}
-	generalCfg.Root = path.Join(appWorkPath, generalCfg.Root)
+
+	if !filepath.IsAbs(generalCfg.Root) {
+		generalCfg.Root = path.Join(appWorkPath, generalCfg.Root)
+	}
+	if err := os.MkdirAll(generalCfg.Root, os.ModePerm); err != nil {
+		return nil, errors.Wrap(err, "create folders for storage root failed")
+	}
 
 	databaseCfg := new(Database)
 	if err = config.Section("repository").MapTo(databaseCfg); err != nil {
