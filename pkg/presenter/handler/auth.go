@@ -51,7 +51,7 @@ func (handler *AuthHandler) CreateToken(w http.ResponseWriter, req *http.Request
 		return
 	}
 
-	tokenAuth := jwtauth.New("HS256", []byte(handler.cfg.Server.SecretKey), nil)
+	tokenAuth := jwtauth.New("HS256", []byte(handler.cfg.General.Secret), nil)
 	_, tokenString, err := tokenAuth.Encode(jwtauth.Claims{
 		"user": user.Username,
 		"exp":  jwtauth.ExpireIn(12 * time.Hour),

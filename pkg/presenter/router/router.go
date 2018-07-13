@@ -48,7 +48,7 @@ func Load(cfg *config.Config, authHandler *handler.AuthHandler, clientHandler *h
 	mux.Use(header.Secure(cfg))
 	mux.Use(header.Options(cfg))
 
-	tokenAuth := jwtauth.New("HS256", []byte(cfg.Server.SecretKey), nil)
+	tokenAuth := jwtauth.New("HS256", []byte(cfg.General.Secret), nil)
 
 	mux.Route("/", func(root chi.Router) {
 		root.Group(func(r chi.Router) {

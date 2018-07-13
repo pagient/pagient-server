@@ -34,7 +34,6 @@ type Server struct {
 	Key           string `ini:"KEY"`
 	StrictCurves  bool   `ini:"STRICT_CURVES"`
 	StrictCiphers bool   `ini:"STRICT_CIPHERS"`
-	SecretKey     string `ini:"SECRET_KEY"`
 }
 
 // General defines the general configuration.
