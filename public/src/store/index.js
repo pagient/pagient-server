@@ -39,11 +39,16 @@ const state = {
   }
 };
 
+const plugins = [];
+if (process.env.NODE_ENV !== "production") {
+  plugins.push(createLogger());
+}
+
 export default new Vuex.Store({
   state,
   getters,
   actions,
   mutations,
-  plugins: [process.env.NODE_ENV !== "production" ? createLogger() : null],
+  plugins: plugins,
   strict: process.env.NODE_ENV !== "production"
 });

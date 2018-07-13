@@ -1,6 +1,9 @@
 import axios from "axios";
 
-let base = process.env.VUE_APP_API_ROOT + "api/pagers";
+const base =
+  process.env.NODE_ENV === "production"
+    ? "/api/pagers"
+    : `${process.env.VUE_APP_API_ROOT}/api/pagers`;
 
 export function getAllPagers() {
   return axios.get(base);

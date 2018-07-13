@@ -22,9 +22,11 @@ export default {
     };
 
     const connectWebsocket = token => {
-      const socket = new WebSocket(
-        process.env.VUE_APP_WEBSOCKET_ROOT + `?jwt=${token}`
-      );
+      const websocketUrl =
+        process.env.NODE_ENV === "production"
+          ? `ws://${location.host}/ws`
+          : process.env.VUE_APP_WEBSOCKET_ROOT;
+      const socket = new WebSocket(`${websocketUrl}?jwt=${token}`);
 
       socket.onclose = evt => {
         if (evt.code === 1006) {

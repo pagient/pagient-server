@@ -1,6 +1,9 @@
 import axios from "axios";
 
-let base = process.env.VUE_APP_API_ROOT + "api/patients";
+const base =
+  process.env.NODE_ENV === "production"
+    ? "/api/patients"
+    : `${process.env.VUE_APP_API_ROOT} /api/patients`;
 
 export function getAllPatients() {
   return axios.get(base);
