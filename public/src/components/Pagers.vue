@@ -39,10 +39,7 @@ export default {
       return pager.patient && pager.patient.status === "called";
     }
   },
-  computed: mapGetters(["pagers", "currentPatient"]),
-  mounted() {
-    this.$store.dispatch("getAllPagers");
-  }
+  computed: mapGetters(["pagers", "currentPatient"])
 };
 </script>
 

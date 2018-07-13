@@ -18,9 +18,6 @@ import { mapActions, mapGetters } from "vuex";
 
 export default {
   methods: mapActions(["selectClient"]),
-  computed: mapGetters(["clients", "currentClient"]),
-  mounted() {
-    this.$store.dispatch("getAllClients");
-  }
+  computed: mapGetters(["clients", "currentClient"])
 };
 </script>

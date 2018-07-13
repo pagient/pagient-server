@@ -12,20 +12,44 @@ import createWebSocketPlugin from "@/store/plugins/websocket";
 export default {
   name: "app",
   mounted() {
-    const unsubscribe = this.$store.subscribe((mutation, state) => {
-      if (mutation.type === "login" || state.isLoggedIn) {
-        connectWebsocket(state.authToken);
-        unsubscribe();
-      }
-    });
+    const subscribeStore = () => {
+      const unsubscribe = this.$store.subscribe((mutation, state) => {
+        if (mutation.type === "login" || state.isLoggedIn) {
+          connectWebsocket(state.authToken);
+          unsubscribe();
+        }
+      });
+    };
 
     const connectWebsocket = token => {
       const socket = new WebSocket(
         process.env.VUE_APP_WEBSOCKET_ROOT + `?jwt=${token}`
       );
 
+      socket.onclose = evt => {
+        if (evt.code === 1006) {
+          subscribeStore();
+          this.$store.commit("logout");
+
+          if (this.$router.currentRoute.path !== "/login") {
+            this.$router.push({
+              path: "/login",
+              query: { redirect: this.$router.currentRoute.fullPath }
+            });
+          }
+          return;
+        }
+      };
+
       createWebSocketPlugin(socket)(this.$store);
     };
+
+    if (this.$store.getters.isLoggedIn) {
+      connectWebsocket(this.$store.getters.authToken);
+      return;
+    }
+
+    subscribeStore();
   }
 };
 </script>

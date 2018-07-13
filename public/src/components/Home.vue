@@ -14,9 +14,6 @@ export default {
   components: {
     "da-clients": ClientsComponent,
     "da-pagers": PagersComponent
-  },
-  mounted() {
-    this.$store.dispatch("getAllPatients");
   }
 };
 </script>
