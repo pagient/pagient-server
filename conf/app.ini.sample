@@ -34,6 +34,16 @@ PAGERS = """1:Pager 1, 2:Pager 2, 3:Pager 3, 4:Pager 4"""
 ; provider of stored data
 PROVIDER = file
 
+[easycall]
+; easycall url
+URL      = http://localhost:8080/
+; easycall user
+USER     = user
+; easycall password
+PASSWORD = password
+; easycall port
+PORT     = COM1
+
 [log]
 ; set logging level
 LEVEL   = info

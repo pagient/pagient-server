@@ -140,11 +140,12 @@ func (service *DefaultPatientService) Update(patient *model.Patient) error {
 			Int("pager", patient.PagerID).
 			Msg("pager gets called")
 
-		client := easycall.NewClient(service.cfg.EasyCall.URL, service.cfg.EasyCall.User, service.cfg.EasyCall.Password)
+		client := easycall.NewClient(service.cfg.EasyCall.Url, service.cfg.EasyCall.User, service.cfg.EasyCall.Password)
 
 		if err := client.Send(&easycall.SendOptions{
 			Receiver: patient.PagerID,
 			Message:  "",
+			Port:     service.cfg.EasyCall.Port,
 		}); err != nil {
 			log.Error().
 				Err(err).

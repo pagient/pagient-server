@@ -53,9 +53,10 @@ type Database struct {
 
 // EasyCall defines the easycall pager backend configuration
 type EasyCall struct {
-	URL      string `ini:"URL"`
+	Url      string `ini:"URL"`
 	User     string `ini:"USER"`
 	Password string `ini:"PASSWORD"`
+	Port     string `ini:"PORT"`
 }
 
 // Log defines the logging configuration.
@@ -121,6 +122,8 @@ func New() (*Config, error) {
 	if err = config.Section("easycall").MapTo(easyCallCfg); err != nil {
 		return nil, errors.Wrap(err, "read config easycall section failed")
 	}
+
+	easyCallCfg.Url = strings.TrimSuffix(easyCallCfg.Url, "/")
 
 	logCfg := new(Log)
 	if err = config.Section("log").MapTo(logCfg); err != nil {
