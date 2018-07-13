@@ -147,8 +147,8 @@ func (repo *patientFileRepository) Remove(patient *model.Patient) error {
 	return nil
 }
 
-// MarkAllClientInactive sets active to false for every patient by that client
-func (repo *patientFileRepository) MarkAllInactiveByClient(patient *model.Patient) error {
+// MarkAllExceptPatientInactiveByPatientClient sets active to false for every patient by that client
+func (repo *patientFileRepository) MarkAllExceptPatientInactiveByPatientClient(patient *model.Patient) error {
 	repo.lock.Lock()
 	defer repo.lock.Unlock()
 
@@ -182,8 +182,8 @@ func (repo *patientFileRepository) MarkAllInactiveByClient(patient *model.Patien
 	return nil
 }
 
-// RemoveAllInactiveNoPagerByClient deletes the patients that are inactive, have no pager assigned and are from that client
-func (repo *patientFileRepository) RemoveAllInactiveNoPagerByClient(patient *model.Patient) error {
+// RemoveAllExceptPatientInactiveNoPagerByPatientClient deletes the patients that are inactive, have no pager assigned and are from that client
+func (repo *patientFileRepository) RemoveAllExceptPatientInactiveNoPagerByPatientClient(patient *model.Patient) error {
 	repo.lock.Lock()
 	defer repo.lock.Unlock()
 

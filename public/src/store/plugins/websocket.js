@@ -12,12 +12,6 @@ export default function createWebSocketPlugin(socket) {
               case "patient_add":
               case "patient_update":
                 store.commit("receivePatient", message.data);
-                if (
-                  message.data.active &&
-                  store.patient[message.data.id].active !== message.data.active
-                ) {
-                  store.dispatch("getAllPatients");
-                }
                 break;
               case "patient_delete":
                 store.commit("deletePatient", message.data);

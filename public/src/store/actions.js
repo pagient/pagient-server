@@ -44,7 +44,11 @@ export const assignPager = (_, { patient, pager }) => {
   // Copy patient to prevent direct state mutation
   patient = clone(patient);
   patient.pagerId = pager ? pager.id : null;
-  return api.updatePatient(patient);
+  return api.updatePatient(patient).then(() => {
+    if (!patient.active && !patient.pagerId) {
+      return api.deletePatient(patient);
+    }
+  });
 };
 
 export const selectClient = ({ commit }, client) => {

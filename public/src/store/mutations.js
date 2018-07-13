@@ -39,6 +39,12 @@ export default {
       setCurrentClient(state, patient.clientId);
     }
   },
+  deletePatient(state, patient) {
+    const patients = state.patients;
+    delete patients[patient.id];
+
+    state.patients = { ...patients };
+  },
   switchClient(state, client) {
     setCurrentClient(state, client.id);
   }
