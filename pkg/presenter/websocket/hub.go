@@ -4,12 +4,6 @@
 
 package websocket
 
-import (
-	"encoding/json"
-
-	"github.com/pkg/errors"
-)
-
 // Hub maintains the set of active clients and broadcasts messages to the
 // clients.
 type Hub struct {
@@ -17,7 +11,7 @@ type Hub struct {
 	clients map[*Client]bool
 
 	// Inbound messages from the clients.
-	broadcast chan []byte
+	broadcast chan *Message
 
 	// Register requests from the clients.
 	Register chan *Client
@@ -31,7 +25,7 @@ func NewHub() *Hub {
 	return &Hub{
 		Register:   make(chan *Client),
 		Unregister: make(chan *Client),
-		broadcast:  make(chan []byte),
+		broadcast:  make(chan *Message),
 		clients:    make(map[*Client]bool),
 	}
 }
@@ -62,14 +56,9 @@ func (h *Hub) Run() {
 
 // Broadcast creates a message and adds it to the broadcast channel
 func (h *Hub) Broadcast(msgType MessageType, data interface{}) error {
-	patientMsg := &Message{
+	msg := &Message{
 		Type: msgType,
 		Data: data,
-	}
-
-	msg, err := json.Marshal(patientMsg)
-	if err != nil {
-		return errors.Wrap(err, "json marshal failed")
 	}
 
 	h.broadcast <- msg

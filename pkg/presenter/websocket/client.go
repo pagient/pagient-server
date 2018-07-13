@@ -35,7 +35,7 @@ type Client struct {
 	conn *ws.Conn
 
 	// Buffered channel of outbound messages.
-	send chan []byte
+	send chan *Message
 }
 
 // NewClient initializes a websocket Client
@@ -44,7 +44,7 @@ func NewClient(id string, hub *Hub, conn *ws.Conn) *Client {
 		id:   id,
 		hub:  hub,
 		conn: conn,
-		send: make(chan []byte, 256),
+		send: make(chan *Message, 256),
 	}
 }
 
@@ -69,20 +69,7 @@ func (c *Client) WritePump() {
 				return
 			}
 
-			w, err := c.conn.NextWriter(ws.TextMessage)
-			if err != nil {
-				return
-			}
-			w.Write(message)
-
-			// Add queued messages to the current websocket message.
-			n := len(c.send)
-			for i := 0; i < n; i++ {
-				w.Write(newline)
-				w.Write(<-c.send)
-			}
-
-			if err := w.Close(); err != nil {
+			if err := c.conn.WriteJSON(message); err != nil {
 				return
 			}
 		case <-ticker.C:
