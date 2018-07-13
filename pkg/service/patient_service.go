@@ -153,10 +153,26 @@ func (service *DefaultPatientService) Update(patient *model.Patient) (*model.Pat
 				Int("pager ID", patient.PagerID).
 				Msg("call pager failed")
 
-			return &externalServiceErr{"easycall pager call failed"}
+			patient.Status = model.PatientStatePending
+			if err := service.patientRepository.Update(patient); err != nil {
+				log.Error().
+					Err(err).
+					Msg("update patient failed")
+
+				return nil, errors.Wrap(err, "update patient failed")
+			}
+
+			return nil, &externalServiceErr{"pager call failed"}
 		}
 
 		patient.Status = model.PatientStateCalled
+		if err := service.patientRepository.Update(patient); err != nil {
+			log.Error().
+				Err(err).
+				Msg("update patient failed")
+
+			return nil, errors.Wrap(err, "update patient failed")
+		}
 	}
 
 	return patient, nil
