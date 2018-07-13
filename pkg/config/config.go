@@ -19,6 +19,8 @@ const (
 )
 
 var (
+	Path string
+
 	isWindows   bool
 	appWorkPath string
 )
@@ -85,7 +87,11 @@ func New() (*Config, error) {
 
 	appWorkPath = getWorkPath(appPath)
 
-	config, err := ini.Load(path.Join(appWorkPath, "/conf/app.ini"))
+	if !filepath.IsAbs(Path) {
+		Path = path.Join(appWorkPath, Path)
+	}
+
+	config, err := ini.Load(Path)
 	if err != nil {
 		return nil, errors.Wrap(err, "load config ini file failed")
 	}

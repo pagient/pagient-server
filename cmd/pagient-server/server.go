@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"time"
+	"strings"
 
 	"github.com/oklog/run"
 	"github.com/pagient/pagient-server/pkg/config"
@@ -15,115 +16,186 @@ import (
 	"github.com/pagient/pagient-server/pkg/presenter/websocket"
 	"github.com/pagient/pagient-server/pkg/repository"
 	"github.com/pagient/pagient-server/pkg/service"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/urfave/cli.v2"
 )
 
 // Server provides the sub-command to start the server.
-func Server(cfg *config.Config) *cli.Command {
+func Server() *cli.Command {
 	return &cli.Command{
 		Name:   "server",
 		Usage:  "start the integrated server",
-		Before: serverBefore(cfg),
-		Action: serverAction(cfg),
-	}
-}
 
-func serverBefore(cfg *config.Config) cli.BeforeFunc {
-	return func(c *cli.Context) error {
-		return nil
-	}
-}
+		Before: func(c *cli.Context) error {
+			return nil
+		},
 
-func serverAction(cfg *config.Config) cli.ActionFunc {
-	return func(c *cli.Context) error {
-		// Initialize Repositories  (database access)
-		clientRepo, err := repository.GetClientRepositoryInstance(cfg)
-		if err != nil {
-			log.Fatal().
-				Err(err).
-				Msg("client repository initialization failed")
-
-			os.Exit(1)
-		}
-		pagerRepo, err := repository.GetPagerRepositoryInstance(cfg)
-		if err != nil {
-			log.Fatal().
-				Err(err).
-				Msg("pager repository initialization failed")
-
-			os.Exit(1)
-		}
-		patientRepo, err := repository.GetPatientRepositoryInstance(cfg)
-		if err != nil {
-			log.Fatal().
-				Err(err).
-				Msg("patient repository initialization failed")
-
-			os.Exit(1)
-		}
-		tokenRepo, err := repository.GetTokenRepositoryInstance(cfg)
-		if err != nil {
-			log.Fatal().
-				Err(err).
-				Msg("token repository initialization failed")
-
-			os.Exit(1)
-		}
-		userRepo, err := repository.GetUserRepositoryInstance(cfg)
-		if err != nil {
-			log.Fatal().
-				Err(err).
-				Msg("user repository initialization failed")
-
-			os.Exit(1)
-		}
-
-		// Initialize Services (business logic)
-		clientService := service.NewClientService(clientRepo)
-		pagerService := service.NewPagerService(pagerRepo)
-		patientService := service.NewPatientService(cfg, patientRepo, pagerRepo)
-		tokenService := service.NewTokenService(cfg, tokenRepo)
-		userService := service.NewUserService(cfg, userRepo)
-
-		// Initialize Websocket Hub and Handler (presenter layer)
-		hub := websocket.NewHub()
-		go hub.Run()
-
-		authHandler := handler.NewAuthHandler(cfg, userService, tokenService, hub)
-		clientHandler := handler.NewClientHandler(clientService)
-		pagerHandler := handler.NewPagerHandler(pagerService)
-		patientHandler := handler.NewPatientHandler(patientService, hub)
-		websocketHandler := handler.NewWebsocketHandler(cfg, hub)
-
-		var gr run.Group
-
-		{
-			stop := make(chan os.Signal, 1)
-
-			gr.Add(func() error {
-				signal.Notify(stop, os.Interrupt)
-
-				<-stop
-
-				return nil
-			}, func(err error) {
-				close(stop)
-			})
-		}
-
-		if cfg.Server.Cert != "" && cfg.Server.Key != "" {
-			cert, err := tls.LoadX509KeyPair(
-				cfg.Server.Cert,
-				cfg.Server.Key,
-			)
-
+		Action: func(c *cli.Context) error {
+			cfg, err := config.New()
 			if err != nil {
-				log.Info().
+				log.Fatal().
 					Err(err).
-					Msg("failed to load certificates")
+					Msg("config could not be loaded")
 
-				return err
+				os.Exit(1)
+			}
+
+			switch strings.ToLower(cfg.Log.Level) {
+			case "debug":
+				zerolog.SetGlobalLevel(zerolog.DebugLevel)
+			case "info":
+				zerolog.SetGlobalLevel(zerolog.InfoLevel)
+			case "warn":
+				zerolog.SetGlobalLevel(zerolog.WarnLevel)
+			case "error":
+				zerolog.SetGlobalLevel(zerolog.ErrorLevel)
+			case "fatal":
+				zerolog.SetGlobalLevel(zerolog.FatalLevel)
+			case "panic":
+				zerolog.SetGlobalLevel(zerolog.PanicLevel)
+			default:
+				zerolog.SetGlobalLevel(zerolog.InfoLevel)
+			}
+
+			if cfg.Log.Pretty {
+				log.Logger = log.Output(
+					zerolog.ConsoleWriter{
+						Out:     os.Stderr,
+						NoColor: !cfg.Log.Colored,
+					},
+				)
+			}
+
+			// Initialize Repositories  (database access)
+			clientRepo, err := repository.GetClientRepositoryInstance(cfg)
+			if err != nil {
+				log.Fatal().
+					Err(err).
+					Msg("client repository initialization failed")
+
+				os.Exit(1)
+			}
+			pagerRepo, err := repository.GetPagerRepositoryInstance(cfg)
+			if err != nil {
+				log.Fatal().
+					Err(err).
+					Msg("pager repository initialization failed")
+
+				os.Exit(1)
+			}
+			patientRepo, err := repository.GetPatientRepositoryInstance(cfg)
+			if err != nil {
+				log.Fatal().
+					Err(err).
+					Msg("patient repository initialization failed")
+
+				os.Exit(1)
+			}
+			tokenRepo, err := repository.GetTokenRepositoryInstance(cfg)
+			if err != nil {
+				log.Fatal().
+					Err(err).
+					Msg("token repository initialization failed")
+
+				os.Exit(1)
+			}
+			userRepo, err := repository.GetUserRepositoryInstance(cfg)
+			if err != nil {
+				log.Fatal().
+					Err(err).
+					Msg("user repository initialization failed")
+
+				os.Exit(1)
+			}
+
+			// Initialize Services (business logic)
+			clientService := service.NewClientService(clientRepo)
+			pagerService := service.NewPagerService(pagerRepo)
+			patientService := service.NewPatientService(cfg, patientRepo, pagerRepo)
+			tokenService := service.NewTokenService(cfg, tokenRepo)
+			userService := service.NewUserService(cfg, userRepo)
+
+			// Initialize Websocket Hub and Handler (presenter layer)
+			hub := websocket.NewHub()
+			go hub.Run()
+
+			authHandler := handler.NewAuthHandler(cfg, userService, tokenService, hub)
+			clientHandler := handler.NewClientHandler(clientService)
+			pagerHandler := handler.NewPagerHandler(pagerService)
+			patientHandler := handler.NewPatientHandler(patientService, hub)
+			websocketHandler := handler.NewWebsocketHandler(cfg, hub)
+
+			var gr run.Group
+
+			{
+				stop := make(chan os.Signal, 1)
+
+				gr.Add(func() error {
+					signal.Notify(stop, os.Interrupt)
+
+					<-stop
+
+					return nil
+				}, func(err error) {
+					close(stop)
+				})
+			}
+
+			if cfg.Server.Cert != "" && cfg.Server.Key != "" {
+				cert, err := tls.LoadX509KeyPair(
+					cfg.Server.Cert,
+					cfg.Server.Key,
+				)
+
+				if err != nil {
+					log.Info().
+						Err(err).
+						Msg("failed to load certificates")
+
+					return err
+				}
+
+				{
+					server := &http.Server{
+						Addr:         cfg.Server.Address,
+						Handler:      router.Load(cfg, authHandler, clientHandler, pagerHandler, patientHandler, websocketHandler, clientService, patientService, tokenService, userService),
+						ReadTimeout:  5 * time.Second,
+						WriteTimeout: 10 * time.Second,
+						TLSConfig: &tls.Config{
+							PreferServerCipherSuites: true,
+							MinVersion:               tls.VersionTLS12,
+							CurvePreferences:         curves(cfg),
+							CipherSuites:             ciphers(cfg),
+							Certificates:             []tls.Certificate{cert},
+						},
+					}
+
+					gr.Add(func() error {
+						log.Info().
+							Str("addr", cfg.Server.Address).
+							Msg("starting https server")
+
+						return server.ListenAndServeTLS("", "")
+					}, func(reason error) {
+						ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+						defer cancel()
+
+						if err := server.Shutdown(ctx); err != nil {
+							log.Info().
+								Err(err).
+								Msg("failed to stop https server gracefully")
+
+							return
+						}
+
+						log.Info().
+							Err(reason).
+							Msg("https server stopped gracefully")
+					})
+				}
+
+				return gr.Run()
 			}
 
 			{
@@ -132,21 +204,14 @@ func serverAction(cfg *config.Config) cli.ActionFunc {
 					Handler:      router.Load(cfg, authHandler, clientHandler, pagerHandler, patientHandler, websocketHandler, clientService, patientService, tokenService, userService),
 					ReadTimeout:  5 * time.Second,
 					WriteTimeout: 10 * time.Second,
-					TLSConfig: &tls.Config{
-						PreferServerCipherSuites: true,
-						MinVersion:               tls.VersionTLS12,
-						CurvePreferences:         curves(cfg),
-						CipherSuites:             ciphers(cfg),
-						Certificates:             []tls.Certificate{cert},
-					},
 				}
 
 				gr.Add(func() error {
 					log.Info().
 						Str("addr", cfg.Server.Address).
-						Msg("starting https server")
+						Msg("starting http server")
 
-					return server.ListenAndServeTLS("", "")
+					return server.ListenAndServe()
 				}, func(reason error) {
 					ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 					defer cancel()
@@ -154,53 +219,19 @@ func serverAction(cfg *config.Config) cli.ActionFunc {
 					if err := server.Shutdown(ctx); err != nil {
 						log.Info().
 							Err(err).
-							Msg("failed to stop https server gracefully")
+							Msg("failed to stop http server gracefully")
 
 						return
 					}
 
 					log.Info().
 						Err(reason).
-						Msg("https server stopped gracefully")
+						Msg("http server stopped gracefully")
 				})
 			}
 
 			return gr.Run()
-		}
-
-		{
-			server := &http.Server{
-				Addr:         cfg.Server.Address,
-				Handler:      router.Load(cfg, authHandler, clientHandler, pagerHandler, patientHandler, websocketHandler, clientService, patientService, tokenService, userService),
-				ReadTimeout:  5 * time.Second,
-				WriteTimeout: 10 * time.Second,
-			}
-
-			gr.Add(func() error {
-				log.Info().
-					Str("addr", cfg.Server.Address).
-					Msg("starting http server")
-
-				return server.ListenAndServe()
-			}, func(reason error) {
-				ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-				defer cancel()
-
-				if err := server.Shutdown(ctx); err != nil {
-					log.Info().
-						Err(err).
-						Msg("failed to stop http server gracefully")
-
-					return
-				}
-
-				log.Info().
-					Err(reason).
-					Msg("http server stopped gracefully")
-			})
-		}
-
-		return gr.Run()
+		},
 	}
 }
 

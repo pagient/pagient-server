@@ -4,32 +4,43 @@ package main
 
 import (
 	"os"
-	"strings"
+	"time"
 
 	"github.com/pagient/pagient-server/pkg/config"
 	"github.com/pagient/pagient-server/pkg/version"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 	"gopkg.in/urfave/cli.v2"
 )
 
 func main() {
-	cfg, err := config.New()
-	if err != nil {
-		log.Fatal().
-			Err(err).
-			Msg("config could not be loaded")
-
-		os.Exit(1)
-	}
-
 	app := &cli.App{
 		Name:     "pagient",
 		Version:  version.Version.String(),
 		Usage:    "pagient server",
-		Authors:  authors(cfg),
-		Before:   before(cfg),
-		Commands: command(cfg),
+		Compiled: time.Now(),
+
+		Authors:  []*cli.Author{
+			{
+				Name:  "David Schneiderbauer",
+				Email: "david.schneiderbauer@dschneiderbauer.me",
+			},
+		},
+
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:        "config",
+				Value:       "/conf/app.ini",
+				Usage:       "set config path",
+				Destination: &config.Path,
+			},
+		},
+
+		Before:   func(c *cli.Context) error {
+			return nil
+		},
+
+		Commands: []*cli.Command{
+			Server(),
+		},
 	}
 
 	cli.HelpFlag = &cli.BoolFlag{
@@ -46,52 +57,5 @@ func main() {
 
 	if err := app.Run(os.Args); err != nil {
 		os.Exit(1)
-	}
-}
-
-func authors(cfg *config.Config) []*cli.Author {
-	return []*cli.Author{
-		{
-			Name:  "David Schneiderbauer",
-			Email: "david.schneiderbauer@dschneiderbauer.me",
-		},
-	}
-}
-
-func before(cfg *config.Config) cli.BeforeFunc {
-	return func(c *cli.Context) error {
-		switch strings.ToLower(cfg.Log.Level) {
-		case "debug":
-			zerolog.SetGlobalLevel(zerolog.DebugLevel)
-		case "info":
-			zerolog.SetGlobalLevel(zerolog.InfoLevel)
-		case "warn":
-			zerolog.SetGlobalLevel(zerolog.WarnLevel)
-		case "error":
-			zerolog.SetGlobalLevel(zerolog.ErrorLevel)
-		case "fatal":
-			zerolog.SetGlobalLevel(zerolog.FatalLevel)
-		case "panic":
-			zerolog.SetGlobalLevel(zerolog.PanicLevel)
-		default:
-			zerolog.SetGlobalLevel(zerolog.InfoLevel)
-		}
-
-		if cfg.Log.Pretty {
-			log.Logger = log.Output(
-				zerolog.ConsoleWriter{
-					Out:     os.Stderr,
-					NoColor: !cfg.Log.Colored,
-				},
-			)
-		}
-
-		return nil
-	}
-}
-
-func command(cfg *config.Config) []*cli.Command {
-	return []*cli.Command{
-		Server(cfg),
 	}
 }
