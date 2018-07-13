@@ -33,9 +33,15 @@ export default {
     });
   },
   receivePatient(state, patient) {
+    const patientBeforeUpdate = state.patients[patient.id];
     createPatient(state, patient.id, patient);
 
-    if (patient.active) {
+    // changes originate from pagient-cli
+    if (
+      patientBeforeUpdate.ssn !== patient.ssn ||
+      patientBeforeUpdate.name !== patient.name ||
+      patientBeforeUpdate.clientId !== patient.clientId
+    ) {
       setCurrentClient(state, patient.clientId);
     }
   },
