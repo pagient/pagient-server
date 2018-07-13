@@ -10,6 +10,7 @@ import (
 	"github.com/pagient/pagient-server/pkg/presenter/renderer"
 	"github.com/pagient/pagient-server/pkg/presenter/websocket"
 	"github.com/rs/zerolog/log"
+	"net/url"
 )
 
 // WebsocketHandler struct
@@ -25,7 +26,12 @@ func NewWebsocketHandler(cfg *config.Config, hub *websocket.Hub) *WebsocketHandl
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 		CheckOrigin: func(req *http.Request) bool {
-			if cfg.Server.Host == req.Host {
+			hostUrl, err := url.Parse(cfg.Server.Host)
+			if err != nil {
+				return false
+			}
+
+			if hostUrl.String() == req.Header.Get("Origin") && hostUrl.Host == req.Host {
 				return true
 			}
 			return false
