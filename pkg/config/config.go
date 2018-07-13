@@ -114,7 +114,7 @@ func New() (*Config, error) {
 	}
 
 	databaseCfg := new(Database)
-	if err = config.Section("repository").MapTo(databaseCfg); err != nil {
+	if err = config.Section("database").MapTo(databaseCfg); err != nil {
 		return nil, errors.Wrap(err, "read config repository section failed")
 	}
 
