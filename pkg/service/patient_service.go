@@ -12,8 +12,8 @@ import (
 type PatientService interface {
 	GetAll() ([]*model.Patient, error)
 	Get(int) (*model.Patient, error)
-	Add(*model.Patient) error
-	Update(*model.Patient) error
+	Add(*model.Patient) (*model.Patient, error)
+	Update(*model.Patient) (*model.Patient, error)
 	Remove(*model.Patient) error
 }
 
@@ -59,25 +59,25 @@ func (service *DefaultPatientService) Get(id int) (*model.Patient, error) {
 }
 
 // Add adds a new patient if given model is valid and not already existing
-func (service *DefaultPatientService) Add(patient *model.Patient) error {
+func (service *DefaultPatientService) Add(patient *model.Patient) (*model.Patient, error) {
 	patient.Status = model.PatientStatePending
 
 	if patient.ClientID == 0 {
-		return &invalidArgumentErr{"clientId: cannot be blank"}
+		return nil, &invalidArgumentErr{"clientId: cannot be blank"}
 	}
 
 	if err := service.validatePatient(patient); err != nil {
-		return errors.WithStack(err)
+		return nil, errors.WithStack(err)
 	}
 
 	err := service.patientRepository.Add(patient)
 	if err != nil {
 		if isEntryNotValidErr(err) {
-			return &modelValidationErr{err.Error()}
+			return nil, &modelValidationErr{err.Error()}
 		}
 
 		if isEntryExistErr(err) {
-			return &modelExistErr{"patient already exists"}
+			return nil, &modelExistErr{"patient already exists"}
 		}
 
 		log.Error().
@@ -87,17 +87,17 @@ func (service *DefaultPatientService) Add(patient *model.Patient) error {
 
 	if patient.Active {
 		if err := service.cleanupPatients(patient); err != nil {
-			return errors.WithStack(err)
+			return nil, errors.WithStack(err)
 		}
 	}
 
-	return errors.Wrap(err, "add patient failed")
+	return patient, errors.Wrap(err, "add patient failed")
 }
 
 // Update updates an existing patient if given model is valid
-func (service *DefaultPatientService) Update(patient *model.Patient) error {
+func (service *DefaultPatientService) Update(patient *model.Patient) (*model.Patient, error) {
 	if err := service.validatePatient(patient); err != nil {
-		return errors.WithStack(err)
+		return nil, errors.WithStack(err)
 	}
 
 	// load patient's old state to compare changed properties
@@ -108,29 +108,29 @@ func (service *DefaultPatientService) Update(patient *model.Patient) error {
 			Int("patient ID", patient.ID).
 			Msg("get patient failed")
 
-		return errors.Wrap(err, "get patient failed")
+		return nil, errors.Wrap(err, "get patient failed")
 	}
 
 	err = service.patientRepository.Update(patient)
 	if err != nil {
 		if isEntryNotValidErr(err) {
-			return &modelValidationErr{err.Error()}
+			return nil, &modelValidationErr{err.Error()}
 		}
 
 		if isEntryNotExistErr(err) {
-			return &modelNotExistErr{"patient doesn't exist"}
+			return nil, &modelNotExistErr{"patient doesn't exist"}
 		}
 
 		log.Error().
 			Err(err).
 			Msg("update patient failed")
 
-		return errors.Wrap(err, "update patient failed")
+		return nil, errors.Wrap(err, "update patient failed")
 	}
 
 	if patient.Active || (patient.PagerID == 0 && patient.PagerID != patientBeforeUpdate.PagerID) {
 		if err := service.cleanupPatients(patient); err != nil {
-			return errors.WithStack(err)
+			return nil, errors.WithStack(err)
 		}
 	}
 
@@ -159,7 +159,7 @@ func (service *DefaultPatientService) Update(patient *model.Patient) error {
 		patient.Status = model.PatientStateCalled
 	}
 
-	return nil
+	return patient, nil
 }
 
 // Remove deletes an existing patient

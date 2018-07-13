@@ -61,7 +61,8 @@ func (handler *PatientHandler) AddPatient(w http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	if err := handler.patientService.Add(patient); err != nil {
+	patient, err = handler.patientService.Add(patient)
+	if err != nil {
 		if service.IsModelExistErr(err) {
 			render.Render(w, req, renderer.ErrConflict(err))
 			return
@@ -132,7 +133,8 @@ func (handler *PatientHandler) UpdatePatient(w http.ResponseWriter, req *http.Re
 		return
 	}
 
-	if err := handler.patientService.Update(patient); err != nil {
+	patient, err = handler.patientService.Update(patient)
+	if err != nil {
 		if service.IsModelValidationErr(err) {
 			render.Render(w, req, renderer.ErrValidation(err))
 			return
