@@ -19,7 +19,7 @@ func ClientCtx(clientService service.ClientService) func(http.Handler) http.Hand
 					Err(err).
 					Msg("get client failed")
 
-				http.Error(w, http.StatusText(500), 500)
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 				return
 			}
 

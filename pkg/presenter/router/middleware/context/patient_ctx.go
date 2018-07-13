@@ -23,7 +23,7 @@ func PatientCtx(patientService service.PatientService) func(http.Handler) http.H
 			if patientID := chi.URLParam(req, "patientID"); patientID != "" {
 				id, err := strconv.Atoi(patientID)
 				if err != nil {
-					http.Error(w, "patient id not an integer", 400)
+					http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 					return
 				}
 
@@ -33,12 +33,12 @@ func PatientCtx(patientService service.PatientService) func(http.Handler) http.H
 						Err(err).
 						Msg("get patient failed")
 
-					http.Error(w, http.StatusText(500), 500)
+					http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 					return
 				}
 
 				if patient == nil {
-					http.Error(w, http.StatusText(404), 404)
+					http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 					return
 				}
 
@@ -52,7 +52,7 @@ func PatientCtx(patientService service.PatientService) func(http.Handler) http.H
 				Err(err).
 				Msg("patient id parameter missing in url")
 
-			http.Error(w, http.StatusText(500), 500)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		})
 	}
 }

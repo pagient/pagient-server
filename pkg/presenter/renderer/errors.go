@@ -33,7 +33,7 @@ func ErrBadRequest(err error) render.Renderer {
 	return &ErrResponse{
 		Err:            err,
 		HTTPStatusCode: 400,
-		Message:        "Invalid request.",
+		Message:        http.StatusText(http.StatusBadRequest),
 		ErrorText:      err.Error(),
 	}
 }
@@ -43,7 +43,7 @@ func ErrConflict(err error) render.Renderer {
 	return &ErrResponse{
 		Err:            err,
 		HTTPStatusCode: 409,
-		Message:        "Resouce already exists.",
+		Message:        http.StatusText(http.StatusConflict),
 	}
 }
 
@@ -52,7 +52,7 @@ func ErrValidation(err error) render.Renderer {
 	return &ErrResponse{
 		Err:            err,
 		HTTPStatusCode: 422,
-		Message:        "Validation error.",
+		Message:        http.StatusText(http.StatusUnprocessableEntity),
 		ErrorText:      err.Error(),
 	}
 }
@@ -62,7 +62,7 @@ func ErrInternalServer(err error) render.Renderer {
 	return &ErrResponse{
 		Err:            err,
 		HTTPStatusCode: 500,
-		Message:        "Internal server error.",
+		Message:        http.StatusText(http.StatusInternalServerError),
 	}
 }
 
@@ -71,9 +71,9 @@ func ErrGateway(err error) render.Renderer {
 	return &ErrResponse{
 		Err:            err,
 		HTTPStatusCode: 504,
-		Message:        "Error receiving response from server.",
+		Message:        http.StatusText(http.StatusGatewayTimeout),
 	}
 }
 
 // ErrNotFound represents a 404 error
-var ErrNotFound = &ErrResponse{HTTPStatusCode: 404, Message: "Resource not found."}
+var ErrNotFound = &ErrResponse{HTTPStatusCode: 404, Message: http.StatusText(http.StatusNotFound)}

@@ -13,24 +13,24 @@ func Authenticator(tokenService service.TokenService) func(http.Handler) http.Ha
 			token, claims, err := jwtauth.FromContext(req.Context())
 
 			if err != nil {
-				http.Error(w, http.StatusText(401), 401)
+				http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 				return
 			}
 
 			if token == nil || !token.Valid {
-				http.Error(w, http.StatusText(401), 401)
+				http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 				return
 			}
 
 			username, ok := claims.Get("user")
 			if !ok {
-				http.Error(w, http.StatusText(http.StatusUnauthorized), 401)
+				http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 				return
 			}
 
 			tokens, err := tokenService.Get(username.(string))
 			if err != nil {
-				http.Error(w, http.StatusText(http.StatusUnauthorized), 401)
+				http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 				return
 			}
 
@@ -42,7 +42,7 @@ func Authenticator(tokenService service.TokenService) func(http.Handler) http.Ha
 				}
 			}
 
-			http.Error(w, http.StatusText(http.StatusUnauthorized), 401)
+			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
 		})
 	}

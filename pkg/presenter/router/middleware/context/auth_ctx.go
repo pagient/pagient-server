@@ -17,13 +17,13 @@ func AuthCtx(userService service.UserService) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			_, claims, err := jwtauth.FromContext(req.Context())
 			if err != nil {
-				http.Error(w, http.StatusText(http.StatusUnauthorized), 401)
+				http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 				return
 			}
 
 			username, ok := claims.Get("user")
 			if !ok {
-				http.Error(w, http.StatusText(http.StatusUnauthorized), 401)
+				http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 				return
 			}
 
@@ -33,7 +33,7 @@ func AuthCtx(userService service.UserService) func(http.Handler) http.Handler {
 					Err(err).
 					Msg("get user failed")
 
-				http.Error(w, http.StatusText(500), 500)
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 				return
 			}
 
