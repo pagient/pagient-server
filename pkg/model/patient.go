@@ -1,8 +1,6 @@
 package model
 
 import (
-	"regexp"
-
 	"github.com/go-ozzo/ozzo-validation"
 	"github.com/go-ozzo/ozzo-validation/is"
 	"github.com/pkg/errors"
@@ -43,7 +41,7 @@ func (patient *Patient) Validate(pagers []*Pager) error {
 	if err := validation.ValidateStruct(patient,
 		validation.Field(&patient.ID, validation.Required),
 		validation.Field(&patient.Ssn, validation.Required, is.Digit, validation.Length(10, 10)),
-		validation.Field(&patient.Name, validation.Required, validation.Match(regexp.MustCompile("^[a-zA-Z\u00c0-\u017e\\s]+$")), validation.Length(1, 100)),
+		validation.Field(&patient.Name, validation.Required, validation.Length(1, 100)),
 		validation.Field(&patient.PagerID, validation.In(pagerIDs...)),
 		validation.Field(&patient.Status, validation.In(PatientStatePending, PatientStateCall, PatientStateCalled)),
 	); err != nil {
