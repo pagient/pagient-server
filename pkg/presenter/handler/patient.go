@@ -8,8 +8,6 @@ import (
 	"github.com/pagient/pagient-server/pkg/presenter/renderer"
 	"github.com/pagient/pagient-server/pkg/presenter/websocket"
 	"github.com/pagient/pagient-server/pkg/service"
-	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
 )
 
 // PatientHandler struct
@@ -55,13 +53,7 @@ func (handler *PatientHandler) AddPatient(w http.ResponseWriter, req *http.Reque
 	}
 	patient.ClientID = ctxClient.ID
 
-	updatedPatients, deletedPatients, err := handler.getPatientsInvolvedInUpdate(patient)
-	if err != nil {
-		render.Render(w, req, renderer.ErrInternalServer(err))
-		return
-	}
-
-	patient, err = handler.patientService.Add(patient)
+	patient, err := handler.patientService.Add(patient)
 	if err != nil {
 		if service.IsModelExistErr(err) {
 			render.Render(w, req, renderer.ErrConflict(err))
@@ -74,28 +66,6 @@ func (handler *PatientHandler) AddPatient(w http.ResponseWriter, req *http.Reque
 		}
 
 		// on any other error raise 500 status
-		render.Render(w, req, renderer.ErrInternalServer(err))
-		return
-	}
-
-	// broadcast updated/deleted patients
-	if err := handler.broadcastPatientsInvolvedInUpdate(updatedPatients, deletedPatients); err != nil {
-		if err != nil {
-			log.Error().
-				Err(err).
-				Msg("broadcast patients failed")
-
-			render.Render(w, req, renderer.ErrInternalServer(err))
-			return
-		}
-	}
-
-	// broadcast new patient
-	if err := handler.wsHub.Broadcast(websocket.MessageTypePatientAdd, patient); err != nil {
-		log.Error().
-			Err(err).
-			Msg("broadcast patient failed")
-
 		render.Render(w, req, renderer.ErrInternalServer(err))
 		return
 	}
@@ -127,13 +97,7 @@ func (handler *PatientHandler) UpdatePatient(w http.ResponseWriter, req *http.Re
 		patient.ClientID = ctxClient.ID
 	}
 
-	updatedPatients, deletedPatients, err := handler.getPatientsInvolvedInUpdate(patient)
-	if err != nil {
-		render.Render(w, req, renderer.ErrInternalServer(err))
-		return
-	}
-
-	patient, err = handler.patientService.Update(patient)
+	patient, err := handler.patientService.Update(patient)
 	if err != nil {
 		if service.IsModelValidationErr(err) {
 			render.Render(w, req, renderer.ErrValidation(err))
@@ -148,21 +112,6 @@ func (handler *PatientHandler) UpdatePatient(w http.ResponseWriter, req *http.Re
 		// on any other error raise 500 status
 		render.Render(w, req, renderer.ErrInternalServer(err))
 		return
-	}
-
-	// append updated patient for broadcasting
-	updatedPatients = append(updatedPatients, patient)
-
-	// broadcast updated/deleted patients
-	if err := handler.broadcastPatientsInvolvedInUpdate(updatedPatients, deletedPatients); err != nil {
-		if err != nil {
-			log.Error().
-				Err(err).
-				Msg("broadcast patients failed")
-
-			render.Render(w, req, renderer.ErrInternalServer(err))
-			return
-		}
 	}
 
 	render.Render(w, req, renderer.NewPatientResponse(patient))
@@ -182,64 +131,5 @@ func (handler *PatientHandler) DeletePatient(w http.ResponseWriter, req *http.Re
 		return
 	}
 
-	// Broadcast remove patient in websocket hub
-	err := handler.wsHub.Broadcast(websocket.MessageTypePatientDelete, ctxPatient)
-	if err != nil {
-		log.Error().
-			Err(err).
-			Msg("broadcast deleted patient failed")
-
-		render.Render(w, req, renderer.ErrInternalServer(err))
-		return
-	}
-
 	w.WriteHeader(http.StatusNoContent)
-}
-
-// getPatientsInvolvedInUpdate calculates patients that will be changed and
-// deleted by the update according to the business rules (only one active patient per client; delete unused patients)
-// results will be used to broadcast patients by the websocket, thus the changes need to applied
-func (handler *PatientHandler) getPatientsInvolvedInUpdate(patient *model.Patient) ([]*model.Patient, []*model.Patient, error) {
-	patients, err := handler.patientService.GetAll()
-	if err != nil {
-		return nil, nil, errors.Wrap(err, "get all patients failed")
-	}
-
-	var updatedPatients []*model.Patient
-	var deletedPatients []*model.Patient
-	for _, pat := range patients {
-		if pat.ClientID == patient.ClientID && pat.ID != patient.ID {
-			if pat.PagerID == 0 {
-				// patient will be deletedPatients
-				deletedPatients = append(deletedPatients, pat)
-				continue
-			}
-
-			if pat.Active && patient.Active {
-				pat.Active = false
-				updatedPatients = append(updatedPatients, pat)
-			}
-		}
-	}
-
-	return updatedPatients, deletedPatients, nil
-}
-
-// broadcastPatientsInvolvedInUpdate broadcasts all the involved patients
-func (handler *PatientHandler) broadcastPatientsInvolvedInUpdate(updatedPatients, deletedPatients []*model.Patient) error {
-	// broadcast deleted patients
-	for _, pat := range deletedPatients {
-		if err := handler.wsHub.Broadcast(websocket.MessageTypePatientDelete, pat); err != nil {
-			return errors.Wrap(err, "broadcast deletedPatients patient failed")
-		}
-	}
-
-	// broadcast updated patients
-	for _, pat := range updatedPatients {
-		if err := handler.wsHub.Broadcast(websocket.MessageTypePatientUpdate, pat); err != nil {
-			return errors.Wrap(err, "broadcast updatedPatients patient failed")
-		}
-	}
-
-	return nil
 }

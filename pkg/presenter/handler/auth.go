@@ -106,7 +106,7 @@ func (handler *AuthHandler) DeleteToken(w http.ResponseWriter, req *http.Request
 		return
 	}
 
-	handler.wsHub.Disconnect(token.Signature)
+	handler.wsHub.DisconnectClient(token.Signature)
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     "jwt",

@@ -80,10 +80,9 @@ func TestPatientFileRepository_Get(t *testing.T) {
 			Once()
 
 		repository := &patientFileRepository{
-			db: driver,
+			lock: &sync.Mutex{},
+			db:   driver,
 		}
-
-		lock = &sync.Mutex{}
 
 		patient, err := repository.Get(test.patientID)
 		assert.Equal(t, test.patientRet, patient)
@@ -152,10 +151,9 @@ func TestPatientFileRepository_GetAll(t *testing.T) {
 			Once()
 
 		repository := &patientFileRepository{
-			db: driver,
+			lock: &sync.Mutex{},
+			db:   driver,
 		}
-
-		lock = &sync.Mutex{}
 
 		patients, err := repository.GetAll()
 		assert.Equal(t, test.patients, patients)
@@ -219,14 +217,13 @@ func TestPatientFileRepository_Add(t *testing.T) {
 		}
 
 		repository := &patientFileRepository{
-			db: driver,
+			lock: &sync.Mutex{},
+			db:   driver,
 		}
-
-		lock = &sync.Mutex{}
 
 		patient := new(model.Patient)
 		*patient = *test.patient
-		err := repository.Add(patient)
+		_, err := repository.Add(patient)
 		if test.resultingErrMsg != "" {
 			assert.EqualError(t, err, test.resultingErrMsg)
 		} else {
@@ -301,12 +298,11 @@ func TestPatientFileRepository_Update(t *testing.T) {
 		}
 
 		repository := &patientFileRepository{
-			db: driver,
+			lock: &sync.Mutex{},
+			db:   driver,
 		}
 
-		lock = &sync.Mutex{}
-
-		err := repository.Update(test.patient)
+		_, err := repository.Update(test.patient)
 		if test.readPatErr != nil || test.writePatErr != nil {
 			assert.EqualError(t, err, test.resultingErrMsg)
 		} else {
@@ -357,12 +353,11 @@ func TestPatientFileRepository_Remove(t *testing.T) {
 			Once()
 
 		repository := &patientFileRepository{
-			db: driver,
+			lock: &sync.Mutex{},
+			db:   driver,
 		}
 
-		lock = &sync.Mutex{}
-
-		err := repository.Remove(test.patient)
+		_, err := repository.Remove(test.patient)
 		if test.deleteErr != nil {
 			assert.EqualError(t, err, test.resultingErrMsg)
 		} else {

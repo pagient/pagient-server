@@ -4,6 +4,8 @@
 
 package websocket
 
+import "github.com/pagient/pagient-server/pkg/model"
+
 // Hub maintains the set of active clients and broadcasts messages to the
 // clients.
 type Hub struct {
@@ -11,7 +13,10 @@ type Hub struct {
 	clients map[*Client]bool
 
 	// Inbound messages from the clients.
-	broadcast chan *Message
+	transmit chan *Message
+
+	// stop running hub
+	stop chan struct{}
 
 	// Register requests from the clients.
 	Register chan *Client
@@ -25,48 +30,62 @@ func NewHub() *Hub {
 	return &Hub{
 		Register:   make(chan *Client),
 		Unregister: make(chan *Client),
-		broadcast:  make(chan *Message),
 		clients:    make(map[*Client]bool),
+		transmit:   make(chan *Message),
 	}
 }
 
 // Run performs client registration and message broadcasts in a goroutine
-func (h *Hub) Run() {
-	for {
-		select {
-		case client := <-h.Register:
-			h.clients[client] = true
-		case client := <-h.Unregister:
-			if _, ok := h.clients[client]; ok {
-				delete(h.clients, client)
-				close(client.send)
-			}
-		case message := <-h.broadcast:
-			for client := range h.clients {
-				select {
-				case client.send <- message:
-				default:
-					close(client.send)
+func (h *Hub) Run(stop <-chan struct{}) {
+	go func() {
+		for {
+			select {
+			case client := <-h.Register:
+				h.clients[client] = true
+			case client := <-h.Unregister:
+				if _, ok := h.clients[client]; ok {
 					delete(h.clients, client)
+					close(client.send)
 				}
+			case message := <-h.transmit:
+				for client := range h.clients {
+					select {
+					case client.send <- message:
+					default:
+						close(client.send)
+						delete(h.clients, client)
+					}
+				}
+			case <-stop:
+				return
 			}
 		}
-	}
+	}()
 }
 
-// Broadcast creates a message and adds it to the broadcast channel
-func (h *Hub) Broadcast(msgType MessageType, data interface{}) error {
+// broadcast creates a message and adds it to the broadcast channel
+func (h *Hub) broadcast(msgType MessageType, data interface{}) {
 	msg := &Message{
 		Type: msgType,
 		Data: data,
 	}
 
-	h.broadcast <- msg
-
-	return nil
+	h.transmit <- msg
 }
 
-func (h *Hub) Disconnect(id string) {
+func (h *Hub) NotifyNewPatient(patient *model.Patient) {
+	h.broadcast(MessageTypePatientAdd, patient)
+}
+
+func (h *Hub) NotifyUpdatedPatient(patient *model.Patient) {
+	h.broadcast(MessageTypePatientUpdate, patient)
+}
+
+func (h *Hub) NotifyDeletedPatient(patient *model.Patient) {
+	h.broadcast(MessageTypePatientDelete, patient)
+}
+
+func (h *Hub) DisconnectClient(id string) {
 	for client := range h.clients {
 		if client.id == id {
 			h.Unregister <- client

@@ -6,6 +6,7 @@ import (
 	"github.com/pagient/pagient-easy-call-go/easycall"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
+	"github.com/pagient/pagient-server/pkg/notifier"
 )
 
 // PatientService interface
@@ -22,14 +23,16 @@ type DefaultPatientService struct {
 	cfg               *config.Config
 	patientRepository PatientRepository
 	pagerRepository   PagerRepository
+	notifier          notifier.Notifier
 }
 
 // NewPatientService initializes a PatientService
-func NewPatientService(cfg *config.Config, patientRepository PatientRepository, pagerRepository PagerRepository) PatientService {
+func NewPatientService(cfg *config.Config, patientRepository PatientRepository, pagerRepository PagerRepository, notifier notifier.Notifier) PatientService {
 	return &DefaultPatientService{
 		cfg:               cfg,
 		patientRepository: patientRepository,
 		pagerRepository:   pagerRepository,
+		notifier:          notifier,
 	}
 }
 
@@ -70,7 +73,7 @@ func (service *DefaultPatientService) Add(patient *model.Patient) (*model.Patien
 		return nil, errors.WithStack(err)
 	}
 
-	err := service.patientRepository.Add(patient)
+	patient, err := service.patientRepository.Add(patient)
 	if err != nil {
 		if isEntryNotValidErr(err) {
 			return nil, &modelValidationErr{err.Error()}
@@ -90,6 +93,8 @@ func (service *DefaultPatientService) Add(patient *model.Patient) (*model.Patien
 			return nil, errors.WithStack(err)
 		}
 	}
+
+	service.notifier.NotifyNewPatient(patient)
 
 	return patient, errors.Wrap(err, "add patient failed")
 }
@@ -111,7 +116,7 @@ func (service *DefaultPatientService) Update(patient *model.Patient) (*model.Pat
 		return nil, errors.Wrap(err, "get patient failed")
 	}
 
-	err = service.patientRepository.Update(patient)
+	patient, err = service.patientRepository.Update(patient)
 	if err != nil {
 		if isEntryNotValidErr(err) {
 			return nil, &modelValidationErr{err.Error()}
@@ -154,7 +159,9 @@ func (service *DefaultPatientService) Update(patient *model.Patient) (*model.Pat
 				Msg("call pager failed")
 
 			patient.Status = model.PatientStatePending
-			if err := service.patientRepository.Update(patient); err != nil {
+
+			patient, err = service.patientRepository.Update(patient)
+			if err != nil {
 				log.Error().
 					Err(err).
 					Msg("update patient failed")
@@ -166,7 +173,9 @@ func (service *DefaultPatientService) Update(patient *model.Patient) (*model.Pat
 		}
 
 		patient.Status = model.PatientStateCalled
-		if err := service.patientRepository.Update(patient); err != nil {
+
+		patient, err = service.patientRepository.Update(patient)
+		if err != nil {
 			log.Error().
 				Err(err).
 				Msg("update patient failed")
@@ -174,6 +183,8 @@ func (service *DefaultPatientService) Update(patient *model.Patient) (*model.Pat
 			return nil, errors.Wrap(err, "update patient failed")
 		}
 	}
+
+	service.notifier.NotifyUpdatedPatient(patient)
 
 	return patient, nil
 }
@@ -184,7 +195,8 @@ func (service *DefaultPatientService) Remove(patient *model.Patient) error {
 		return &invalidArgumentErr{"pagerId: cannot be set"}
 	}
 
-	if err := service.patientRepository.Remove(patient); err != nil {
+	patient, err := service.patientRepository.Remove(patient)
+	if err != nil {
 		if isEntryNotExistErr(err) {
 			return &modelNotExistErr{"patient doesn't exist"}
 		}
@@ -195,6 +207,8 @@ func (service *DefaultPatientService) Remove(patient *model.Patient) error {
 
 		return errors.Wrap(err, "remove patient failed")
 	}
+
+	service.notifier.NotifyDeletedPatient(patient)
 
 	return nil
 }
@@ -229,22 +243,32 @@ func (service *DefaultPatientService) validatePatient(patient *model.Patient) er
 func (service *DefaultPatientService) cleanupPatients(patient *model.Patient) error {
 	// mark all patients as inactive if current patient is active
 	if patient.Active {
-		if err := service.patientRepository.MarkAllExceptPatientInactiveByPatientClient(patient); err != nil {
+		updatedPatients, err := service.patientRepository.MarkAllExceptPatientInactiveByPatientClient(patient)
+		if err != nil {
 			log.Error().
 				Err(err).
 				Msg("mark all patients as inactive failed")
 
 			return errors.Wrap(err, "mark all patients as inactive failed")
 		}
+
+		for _, patient := range updatedPatients {
+			service.notifier.NotifyUpdatedPatient(patient)
+		}
 	}
 
 	// remove all inactive patients that have no pager assigned
-	if err := service.patientRepository.RemoveAllExceptPatientInactiveNoPagerByPatientClient(patient); err != nil {
+	deletedPatients, err := service.patientRepository.RemoveAllExceptPatientInactiveNoPagerByPatientClient(patient)
+	if err != nil {
 		log.Error().
 			Err(err).
 			Msg("remove all inactive patients without pager failed")
 
 		return errors.Wrap(err, "remove all inactive patients without pager failed")
+	}
+
+	for _, patient := range deletedPatients {
+		service.notifier.NotifyDeletedPatient(patient)
 	}
 
 	return nil

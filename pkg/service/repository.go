@@ -22,18 +22,18 @@ type PagerRepository interface {
 type PatientRepository interface {
 	GetAll() ([]*model.Patient, error)
 	Get(int) (*model.Patient, error)
-	Add(*model.Patient) error
-	Update(*model.Patient) error
-	Remove(*model.Patient) error
-	MarkAllExceptPatientInactiveByPatientClient(*model.Patient) error
-	RemoveAllExceptPatientInactiveNoPagerByPatientClient(*model.Patient) error
+	Add(*model.Patient) (*model.Patient, error)
+	Update(*model.Patient) (*model.Patient, error)
+	Remove(*model.Patient) (*model.Patient, error)
+	MarkAllExceptPatientInactiveByPatientClient(*model.Patient) ([]*model.Patient, error)
+	RemoveAllExceptPatientInactiveNoPagerByPatientClient(*model.Patient) ([]*model.Patient, error)
 }
 
 // TokenRepository interface
 type TokenRepository interface {
 	Get(string) ([]*model.Token, error)
-	Add(*model.Token) error
-	Remove(*model.Token) error
+	Add(*model.Token) (*model.Token, error)
+	Remove(*model.Token) (*model.Token, error)
 }
 
 // UserRepository interface

@@ -121,16 +121,15 @@ func Server() *cli.Command {
 				os.Exit(1)
 			}
 
+			// Initialize Websocket Hub and Handler (presenter layer)
+			hub := websocket.NewHub()
+
 			// Initialize Services (business logic)
 			clientService := service.NewClientService(clientRepo)
 			pagerService := service.NewPagerService(pagerRepo)
-			patientService := service.NewPatientService(cfg, patientRepo, pagerRepo)
+			patientService := service.NewPatientService(cfg, patientRepo, pagerRepo, hub)
 			tokenService := service.NewTokenService(cfg, tokenRepo)
 			userService := service.NewUserService(cfg, userRepo)
-
-			// Initialize Websocket Hub and Handler (presenter layer)
-			hub := websocket.NewHub()
-			go hub.Run()
 
 			authHandler := handler.NewAuthHandler(cfg, userService, tokenService, hub)
 			clientHandler := handler.NewClientHandler(clientService)
@@ -145,13 +144,25 @@ func Server() *cli.Command {
 
 				gr.Add(func() error {
 					signal.Notify(stop, os.Interrupt)
-
 					<-stop
 
 					return nil
 				}, func(err error) {
 					close(stop)
 				})
+			}
+
+			{
+				stop := make(chan struct{}, 1)
+
+				gr.Add(func() error {
+					hub.Run(stop)
+					<-stop
+
+					return nil
+				}, func(reason error) {
+					close(stop)
+				});
 			}
 
 			if cfg.Server.Cert != "" && cfg.Server.Key != "" {

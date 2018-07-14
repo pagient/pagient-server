@@ -58,31 +58,31 @@ func (repo *tokenFileRepository) Get(username string) ([]*model.Token, error) {
 	return *tokens, nil
 }
 
-func (repo *tokenFileRepository) Add(token *model.Token) error {
+func (repo *tokenFileRepository) Add(token *model.Token) (*model.Token, error) {
 	repo.lock.Lock()
 	defer repo.lock.Unlock()
 
 	tokens := &[]*model.Token{}
 	if err := repo.db.Read(tokenCollection, token.User, tokens); err != nil && !isNotFoundErr(err) {
-		return errors.Wrap(err, "read token failed")
+		return nil, errors.Wrap(err, "read token failed")
 	}
 
 	*tokens = append(*tokens, token)
 
 	err := repo.db.Write(tokenCollection, token.User, tokens)
-	return errors.Wrap(err, "write token failed")
+	return token, errors.Wrap(err, "write token failed")
 }
 
-func (repo *tokenFileRepository) Remove(token *model.Token) error {
+func (repo *tokenFileRepository) Remove(token *model.Token) (*model.Token, error) {
 	repo.lock.Lock()
 	defer repo.lock.Unlock()
 
 	tokens := &[]*model.Token{}
 	if err := repo.db.Read(tokenCollection, token.User, tokens); err != nil && !isNotFoundErr(err) {
 		if isNotFoundErr(err) {
-			return &entryNotExistErr{"token not found"}
+			return nil, &entryNotExistErr{"token not found"}
 		}
-		return errors.Wrap(err, "read token failed")
+		return nil, errors.Wrap(err, "read token failed")
 	}
 
 	for i, tok := range *tokens {
@@ -99,5 +99,5 @@ func (repo *tokenFileRepository) Remove(token *model.Token) error {
 		err = repo.db.Write(tokenCollection, token.User, tokens)
 	}
 
-	return errors.Wrap(err, "delete token failed")
+	return token, errors.Wrap(err, "delete token failed")
 }

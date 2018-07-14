@@ -41,7 +41,7 @@ func (service *DefaultTokenService) Get(username string) ([]*model.Token, error)
 }
 
 func (service *DefaultTokenService) Add(token *model.Token) error {
-	err := service.tokenRepository.Add(token)
+	token, err := service.tokenRepository.Add(token)
 	if err != nil {
 		log.Error().
 			Err(err).
@@ -52,7 +52,8 @@ func (service *DefaultTokenService) Add(token *model.Token) error {
 }
 
 func (service *DefaultTokenService) Remove(token *model.Token) error {
-	if err := service.tokenRepository.Remove(token); err != nil {
+	token, err := service.tokenRepository.Remove(token)
+	if err != nil {
 		if isEntryNotExistErr(err) {
 			return &modelNotExistErr{"token doesn't exist"}
 		}

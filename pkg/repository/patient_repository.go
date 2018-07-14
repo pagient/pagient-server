@@ -91,127 +91,133 @@ func (repo *patientFileRepository) Get(id int) (*model.Patient, error) {
 }
 
 // Add stores the values in the repository
-func (repo *patientFileRepository) Add(patient *model.Patient) error {
+func (repo *patientFileRepository) Add(patient *model.Patient) (*model.Patient, error) {
 	repo.lock.Lock()
 	defer repo.lock.Unlock()
 
 	if patient.ID == 0 {
-		return &entryNotValidErr{"id: cannot be blank"}
+		return nil, &entryNotValidErr{"id: cannot be blank"}
 	}
 
 	pat := &model.Patient{}
 	if err := repo.db.Read(patientCollection, strconv.Itoa(patient.ID), pat); err != nil && !isNotFoundErr(err) {
-		return errors.Wrap(err, "read patient failed")
+		return nil, errors.Wrap(err, "read patient failed")
 	}
 	if pat.ID != 0 {
-		return &entryExistErr{"patient already exists"}
+		return nil, &entryExistErr{"patient already exists"}
 	}
 
 	err := repo.db.Write(patientCollection, strconv.Itoa(patient.ID), patient)
-	return errors.Wrap(err, "write patient failed")
+	return patient, errors.Wrap(err, "write patient failed")
 }
 
 // Update updates the values in the repository
-func (repo *patientFileRepository) Update(patient *model.Patient) error {
+func (repo *patientFileRepository) Update(patient *model.Patient) (*model.Patient, error) {
 	repo.lock.Lock()
 	defer repo.lock.Unlock()
 
 	if patient.ID == 0 {
-		return &entryNotValidErr{"id: cannot be blank"}
+		return nil, &entryNotValidErr{"id: cannot be blank"}
 	}
 
 	if err := repo.db.Read(patientCollection, strconv.Itoa(patient.ID), &model.Patient{}); err != nil {
 		if isNotFoundErr(err) {
-			return &entryNotExistErr{"patient not found"}
+			return nil, &entryNotExistErr{"patient not found"}
 		}
-		return errors.Wrap(err, "read patient failed")
+		return nil, errors.Wrap(err, "read patient failed")
 	}
 
 	err := repo.db.Write(patientCollection, strconv.Itoa(patient.ID), patient)
-	return errors.Wrap(err, "write patient failed")
+	return patient, errors.Wrap(err, "write patient failed")
 }
 
 // Remove deletes the values from the repository
-func (repo *patientFileRepository) Remove(patient *model.Patient) error {
+func (repo *patientFileRepository) Remove(patient *model.Patient) (*model.Patient, error) {
 	repo.lock.Lock()
 	defer repo.lock.Unlock()
 
 	err := repo.db.Delete(patientCollection, strconv.Itoa(patient.ID))
 	if err != nil {
 		if isNotFoundErr(err) {
-			return &entryNotExistErr{"patient not found"}
+			return nil, &entryNotExistErr{"patient not found"}
 		}
-		return errors.Wrap(err, "delete patient failed")
+		return nil, errors.Wrap(err, "delete patient failed")
 	}
 
-	return nil
+	return patient, nil
 }
 
 // MarkAllExceptPatientInactiveByPatientClient sets active to false for every patient by that client
-func (repo *patientFileRepository) MarkAllExceptPatientInactiveByPatientClient(patient *model.Patient) error {
+func (repo *patientFileRepository) MarkAllExceptPatientInactiveByPatientClient(patient *model.Patient) ([]*model.Patient, error) {
 	repo.lock.Lock()
 	defer repo.lock.Unlock()
 
 	records, err := repo.db.ReadAll(patientCollection)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil
+			return nil, nil
 		}
-		return errors.Wrap(err, "read patients failed")
+		return nil, errors.Wrap(err, "read patients failed")
 	}
 
 	patients := make([]*model.Patient, len(records))
 	for i, p := range records {
 		patient := &model.Patient{}
 		if err := json.Unmarshal([]byte(p), patient); err != nil {
-			return errors.Wrap(err, "json unmarshal failed")
+			return nil, errors.Wrap(err, "json unmarshal failed")
 		}
 		patients[i] = patient
 	}
 
+	var updatedPatients []*model.Patient
 	for _, pat := range patients {
 		if pat.ClientID == patient.ClientID && pat.ID != patient.ID && pat.Active {
 			pat.Active = false
 
 			if err := repo.db.Write(patientCollection, strconv.Itoa(pat.ID), pat); err != nil {
-				return errors.Wrap(err, "write patient failed")
+				return nil, errors.Wrap(err, "write patient failed")
 			}
+
+			updatedPatients = append(updatedPatients, pat)
 		}
 	}
 
-	return nil
+	return updatedPatients, nil
 }
 
 // RemoveAllExceptPatientInactiveNoPagerByPatientClient deletes the patients that are inactive, have no pager assigned and are from that client
-func (repo *patientFileRepository) RemoveAllExceptPatientInactiveNoPagerByPatientClient(patient *model.Patient) error {
+func (repo *patientFileRepository) RemoveAllExceptPatientInactiveNoPagerByPatientClient(patient *model.Patient) ([]*model.Patient, error) {
 	repo.lock.Lock()
 	defer repo.lock.Unlock()
 
 	records, err := repo.db.ReadAll(patientCollection)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil
+			return nil, nil
 		}
-		return errors.Wrap(err, "read patients failed")
+		return nil, errors.Wrap(err, "read patients failed")
 	}
 
 	patients := make([]*model.Patient, len(records))
 	for i, p := range records {
 		patient := &model.Patient{}
 		if err := json.Unmarshal([]byte(p), patient); err != nil {
-			return errors.Wrap(err, "json unmarshal failed")
+			return nil, errors.Wrap(err, "json unmarshal failed")
 		}
 		patients[i] = patient
 	}
 
+	var deletedPatients []*model.Patient
 	for _, pat := range patients {
 		if pat.ClientID == patient.ClientID && pat.ID != patient.ID && !pat.Active && pat.PagerID == 0 {
 			err := repo.db.Delete(patientCollection, strconv.Itoa(pat.ID))
 			if err != nil && !isNotFoundErr(err) {
-				return errors.Wrap(err, "delete patient failed")
+				return nil, errors.Wrap(err, "delete patient failed")
 			}
+
+			deletedPatients = append(deletedPatients, pat)
 		}
 	}
 
-	return nil
+	return deletedPatients, nil
 }
