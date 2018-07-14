@@ -38,6 +38,7 @@ export default {
 
     // changes originate from pagient-cli
     if (
+      !patientBeforeUpdate ||
       patientBeforeUpdate.ssn !== patient.ssn ||
       patientBeforeUpdate.name !== patient.name ||
       patientBeforeUpdate.clientId !== patient.clientId
