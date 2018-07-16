@@ -1,7 +1,7 @@
 <template>
   <v-layout row wrap>
     <v-flex v-for="pager in pagers" :key="pager.id" class="custom-flex">
-      <v-card @click.native="assignPager({ patient: currentPatient, pager: pager })" class="flex-card flex-column" height="100%" :color="isPagerOverdue(pager) ? 'error' : undefined" :dark="isPagerOverdue(pager)" hover ripple>
+      <v-card @click.native="assignPager(currentPatient, pager)" class="flex-card flex-column" height="100%" :color="isPagerOverdue(pager) ? 'error' : undefined" :dark="isPagerOverdue(pager)" hover ripple>
         <v-card-title>
           <div>
             <h3 class="title font-weight-light">{{ pager.name }}</h3>
@@ -20,12 +20,26 @@
           <v-btn @click.stop="callPatient(pager.patient)" :disabled="!pager.patient" :color="isPagerCalled(pager) ? 'primary' : undefined" :dark="isPagerCalled(pager)" icon large>
             <v-icon medium>vibration</v-icon>
           </v-btn>
-          <v-btn @click.stop="assignPager({ patient: pager.patient, pager: null })" :disabled="!pager.patient" icon large>
+          <v-btn @click.stop="assignPager(pager.patient, null)" :disabled="!pager.patient" icon large>
             <v-icon medium>check</v-icon>
           </v-btn>
         </v-card-actions>
       </v-card>
     </v-flex>
+    <v-snackbar
+      v-model="pagerNotAssignableError"
+      color="error"
+      timeout.int="3000"
+    >
+      Pager has already been assigned!
+      <v-btn
+        dark
+        flat
+        @click="pagerNotAssignableError = false"
+      >
+        Close
+      </v-btn>
+    </v-snackbar>
   </v-layout>
 </template>
 
@@ -33,8 +47,19 @@
 import { mapActions, mapGetters } from "vuex";
 
 export default {
+  data: () => ({
+    pagerNotAssignableError: false
+  }),
   methods: {
-    ...mapActions(["assignPager", "callPatient"]),
+    ...mapActions(["callPatient"]),
+    assignPager(patient, pager) {
+      // prevent overwriting of a patient if pager has already been assigned
+      if (pager && pager.patient) {
+        this.pagerNotAssignableError = true;
+        return;
+      }
+      this.$store.dispatch("assignPager", { patient: patient, pager: pager });
+    },
     isPagerCalled(pager) {
       return pager.patient && pager.patient.status === "called";
     },

@@ -224,8 +224,29 @@ func (service *DefaultPatientService) validatePatient(patient *model.Patient) er
 		return errors.Wrap(err, "get all pagers failed")
 	}
 
+	patients, err := service.patientRepository.GetAll()
+	if err != nil {
+		log.Error().
+			Err(err).
+			Msg("get all patients failed")
+
+		return errors.Wrap(err, "get all patients failed")
+	}
+
+	// filter unassigned pagers
+	var unassignedPagers []*model.Pager
+PagerLoop:
+	for _, pager := range pagers {
+		for _, patient := range patients {
+			if patient.PagerID == pager.ID {
+				continue PagerLoop
+			}
+			unassignedPagers = append(unassignedPagers, pager)
+		}
+	}
+
 	// validate patient
-	if err := patient.Validate(pagers); err != nil {
+	if err := patient.Validate(unassignedPagers); err != nil {
 		if model.IsValidationErr(err) {
 			return &modelValidationErr{err.Error()}
 		}
