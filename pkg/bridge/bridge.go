@@ -47,7 +47,7 @@ func (bridge *Bridge) Run(stop <-chan struct{}) error {
 	db.SetLogger(&log.Logger)
 	defer db.Close()
 
-	ticker := time.NewTicker(5 * time.Second)
+	ticker := time.NewTicker(time.Duration(bridge.cfg.Bridge.PollingInterval) * time.Second)
 
 	go func() {
 		var assignments []*patientRoomAssignment

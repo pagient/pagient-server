@@ -66,6 +66,7 @@ type Bridge struct {
 	DbUser                  string `ini:"DB_USER"`
 	DbPassword              string `ini:"DB_PASSWORD"`
 	DbName                  string `ini:"DB_NAME"`
+	PollingInterval         int    `ini:"POLLING_INTERVAL"`
 	CallActionWZ            string `ini:"CALL_ACTION_WZ"`
 	CallActionQueuePosition int    `ini:"CALL_ACTION_QUEUE_POSITION"`
 	RemoveActionWZ          string `ini:"REMOVE_ACTION_WZ"`
