@@ -1,7 +1,7 @@
 <template>
   <v-layout row wrap>
     <v-flex v-for="pager in pagers" :key="pager.id" class="custom-flex">
-      <v-card @click.native="assignPager({ patient: currentPatient, pager: pager })" class="flex-card flex-column" height="100%" hover ripple>
+      <v-card @click.native="assignPager({ patient: currentPatient, pager: pager })" class="flex-card flex-column" height="100%" :color="isPagerOverdue(pager) ? 'error' : undefined" :dark="isPagerOverdue(pager)" hover ripple>
         <v-card-title>
           <div>
             <h3 class="title font-weight-light">{{ pager.name }}</h3>
@@ -37,6 +37,9 @@ export default {
     ...mapActions(["assignPager", "callPatient"]),
     isPagerCalled(pager) {
       return pager.patient && pager.patient.status === "called";
+    },
+    isPagerOverdue(pager) {
+      return pager.patient && pager.patient.status === "finished";
     }
   },
   computed: mapGetters(["pagers", "currentPatient"])

@@ -50,9 +50,13 @@ func (bridge *Bridge) Run(stop <-chan struct{}) error {
 	ticker := time.NewTicker(5 * time.Second)
 
 	go func() {
+		var assignments []*patientRoomAssignment
+		var previousAssignments []*patientRoomAssignment
+
 		for {
 			select {
 			case <-ticker.C:
+				// get all patients
 				patients, err := bridge.patientService.GetAll()
 				if err != nil {
 					log.Error().
@@ -62,19 +66,47 @@ func (bridge *Bridge) Run(stop <-chan struct{}) error {
 					continue
 				}
 
-				patients = bridge.filterPatients(patients)
-
-				if len(patients) == 0 {
-					continue
-				}
-
-				var assignments []*patientRoomAssignment
+				// get current patient room assignments
 				db.Raw("SELECT TOP(?) PDS6_WZ.* FROM PDS6_WZ JOIN PDS6_STWZ ON PDS6_WZ.WZID = PDS6_STWZ.WZID "+
 					"WHERE PDS6_STWZ.CODE = ? ORDER BY PDS6_WZ.FLGNR ASC",
 					bridge.cfg.Bridge.CallActionQueuePosition, bridge.cfg.Bridge.CallActionWZ).
 					Scan(&assignments)
 
-				if len(assignments) == 0 {
+				// calculate moved assignments (previously existent but now removed)
+				var movedAssignments []*patientRoomAssignment
+			PreviousAssignmentLoop:
+				for _, previousAssignment := range previousAssignments {
+					for _, assignment := range assignments {
+						if previousAssignment.ID == assignment.ID {
+							continue PreviousAssignmentLoop
+						}
+					}
+					movedAssignments = append(movedAssignments, previousAssignment)
+				}
+
+				// for each moved assignment that has a corresponding patient set status to "finished"
+				for _, assignment := range movedAssignments {
+					for _, patient := range patients {
+						if assignment.PatientID == patient.ID {
+							patient.Status = model.PatientStateFinished
+							if _, err := bridge.patientService.Update(patient); err != nil {
+								log.Error().
+									Err(err).
+									Msg("update patient failed")
+							}
+							break
+						}
+					}
+				}
+
+				// filter patients such that the slice only contains patients that have a pager and haven't already been called
+				patients = bridge.filterPatients(patients)
+
+				// store assignments for next tick (to check moved assignments)
+				previousAssignments = make([]*patientRoomAssignment, len(assignments))
+				copy(previousAssignments, assignments)
+
+				if len(patients) == 0 || len(assignments) == 0 {
 					continue
 				}
 

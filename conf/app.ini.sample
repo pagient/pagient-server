@@ -55,14 +55,12 @@ DB_PASSWORD =
 ; database name
 DB_NAME     =
 ; defines room when to call patient (on enter)
+; and when to mark as overdue (on leave)
 ; letter of the room in surgery software
 CALL_ACTION_WZ             = O
 ; the required position in the queue before pager will be called
-; -1 if no position is required
-CALL_ACTION_QUEUE_POSITION = 4
-; defines room when a patient is finished (on leave)
-; letter of the room in surgery software
-REMOVE_ACTION_WZ           = O
+; -1 if no specific position is required
+CALL_ACTION_QUEUE_POSITION = 3
 
 [log]
 ; set logging level

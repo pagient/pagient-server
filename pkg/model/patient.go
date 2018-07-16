@@ -17,6 +17,8 @@ const (
 	PatientStateCall PatientState = "call"
 	// PatientStateCalled is for when the Patient's Pager has been called
 	PatientStateCalled PatientState = "called"
+	// PatientStateFinished is for when the Patient is Finished with his medical examination
+	PatientStateFinished PatientState = "finished"
 )
 
 // Patient struct
@@ -43,7 +45,7 @@ func (patient *Patient) Validate(pagers []*Pager) error {
 		validation.Field(&patient.Ssn, validation.Required, is.Digit, validation.Length(10, 10)),
 		validation.Field(&patient.Name, validation.Required, validation.Length(1, 100)),
 		validation.Field(&patient.PagerID, validation.In(pagerIDs...)),
-		validation.Field(&patient.Status, validation.In(PatientStatePending, PatientStateCall, PatientStateCalled)),
+		validation.Field(&patient.Status, validation.In(PatientStatePending, PatientStateCall, PatientStateCalled, PatientStateFinished)),
 	); err != nil {
 		if e, ok := err.(validation.InternalError); ok {
 			return errors.Wrap(e, "internal validation error occured")

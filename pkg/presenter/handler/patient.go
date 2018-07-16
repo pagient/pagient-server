@@ -6,9 +6,9 @@ import (
 	"github.com/go-chi/render"
 	"github.com/pagient/pagient-server/pkg/model"
 	"github.com/pagient/pagient-server/pkg/presenter/renderer"
+	"github.com/pagient/pagient-server/pkg/presenter/router/middleware/context"
 	"github.com/pagient/pagient-server/pkg/presenter/websocket"
 	"github.com/pagient/pagient-server/pkg/service"
-	"github.com/pagient/pagient-server/pkg/presenter/router/middleware/context"
 )
 
 // PatientHandler struct

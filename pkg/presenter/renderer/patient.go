@@ -20,7 +20,7 @@ func (pr *PatientRequest) Bind(r *http.Request) error {
 
 	// Request is an update
 	if r.Context().Value(context.PatientKey) != nil {
-		patient = r.Context().Value("patient").(*model.Patient)
+		patient = r.Context().Value(context.PatientKey).(*model.Patient)
 
 		if pr.Patient.ID != 0 && pr.Patient.ID != patient.ID {
 			return errors.New("id attribute is not allowed to be updated")
