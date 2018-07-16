@@ -147,6 +147,9 @@ func Server() *cli.Command {
 				stop := make(chan struct{}, 1)
 
 				gr.Add(func() error {
+					log.Info().
+						Msg("starting websocket hub")
+
 					hub.Run(stop)
 					<-stop
 
@@ -181,7 +184,7 @@ func Server() *cli.Command {
 				)
 
 				if err != nil {
-					log.Info().
+					log.Fatal().
 						Err(err).
 						Msg("failed to load certificates")
 
@@ -214,7 +217,7 @@ func Server() *cli.Command {
 						defer cancel()
 
 						if err := server.Shutdown(ctx); err != nil {
-							log.Info().
+							log.Error().
 								Err(err).
 								Msg("failed to stop https server gracefully")
 
@@ -222,7 +225,7 @@ func Server() *cli.Command {
 						}
 
 						log.Info().
-							Err(reason).
+							AnErr("reason", reason).
 							Msg("https server stopped gracefully")
 					})
 				}
@@ -249,7 +252,7 @@ func Server() *cli.Command {
 					defer cancel()
 
 					if err := server.Shutdown(ctx); err != nil {
-						log.Info().
+						log.Error().
 							Err(err).
 							Msg("failed to stop http server gracefully")
 
@@ -257,7 +260,7 @@ func Server() *cli.Command {
 					}
 
 					log.Info().
-						Err(reason).
+						AnErr("reason", reason).
 						Msg("http server stopped gracefully")
 				})
 			}
