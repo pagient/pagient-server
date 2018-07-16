@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/signal"
 	"path"
-	"strings"
 	"time"
 
 	"github.com/oklog/run"
@@ -43,22 +42,13 @@ func Server() *cli.Command {
 				os.Exit(1)
 			}
 
-			switch strings.ToLower(cfg.Log.Level) {
-			case "debug":
-				zerolog.SetGlobalLevel(zerolog.DebugLevel)
-			case "info":
-				zerolog.SetGlobalLevel(zerolog.InfoLevel)
-			case "warn":
-				zerolog.SetGlobalLevel(zerolog.WarnLevel)
-			case "error":
-				zerolog.SetGlobalLevel(zerolog.ErrorLevel)
-			case "fatal":
-				zerolog.SetGlobalLevel(zerolog.FatalLevel)
-			case "panic":
-				zerolog.SetGlobalLevel(zerolog.PanicLevel)
-			default:
-				zerolog.SetGlobalLevel(zerolog.InfoLevel)
+			level, err := zerolog.ParseLevel(cfg.Log.Level)
+			if err != nil {
+				log.Fatal().
+					Err(err).
+					Msg("parse log level failed")
 			}
+			zerolog.SetGlobalLevel(level)
 
 			logFile, err := os.OpenFile(path.Join(cfg.General.Root, "pagient.log"), os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
 			if err != nil {
