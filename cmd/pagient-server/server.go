@@ -26,8 +26,8 @@ import (
 // Server provides the sub-command to start the server.
 func Server() *cli.Command {
 	return &cli.Command{
-		Name:   "server",
-		Usage:  "start the integrated server",
+		Name:  "server",
+		Usage: "start the integrated server",
 
 		Before: func(c *cli.Context) error {
 			return nil
@@ -60,7 +60,7 @@ func Server() *cli.Command {
 				zerolog.SetGlobalLevel(zerolog.InfoLevel)
 			}
 
-			logFile, err := os.OpenFile(path.Join(cfg.General.Root, "pagient.log") , os.O_CREATE | os.O_APPEND | os.O_RDWR, 0666)
+			logFile, err := os.OpenFile(path.Join(cfg.General.Root, "pagient.log"), os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
 			if err != nil {
 				log.Fatal().
 					Err(err).
@@ -163,7 +163,7 @@ func Server() *cli.Command {
 					return nil
 				}, func(reason error) {
 					close(stop)
-				});
+				})
 			}
 
 			{

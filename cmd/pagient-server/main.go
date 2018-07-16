@@ -18,7 +18,7 @@ func main() {
 		Usage:    "pagient server",
 		Compiled: time.Now(),
 
-		Authors:  []*cli.Author{
+		Authors: []*cli.Author{
 			{
 				Name:  "David Schneiderbauer",
 				Email: "david.schneiderbauer@dschneiderbauer.me",
@@ -34,7 +34,7 @@ func main() {
 			},
 		},
 
-		Before:   func(c *cli.Context) error {
+		Before: func(c *cli.Context) error {
 			return nil
 		},
 

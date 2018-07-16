@@ -3,8 +3,8 @@ package renderer
 import (
 	"net/http"
 
-	"github.com/pagient/pagient-server/pkg/model"
 	"github.com/go-chi/render"
+	"github.com/pagient/pagient-server/pkg/model"
 )
 
 // TokenResponse is the response payload for the token data model

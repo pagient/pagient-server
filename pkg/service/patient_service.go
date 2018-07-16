@@ -1,12 +1,12 @@
 package service
 
 import (
+	"github.com/pagient/pagient-easy-call-go/easycall"
 	"github.com/pagient/pagient-server/pkg/config"
 	"github.com/pagient/pagient-server/pkg/model"
-	"github.com/pagient/pagient-easy-call-go/easycall"
+	"github.com/pagient/pagient-server/pkg/notifier"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
-	"github.com/pagient/pagient-server/pkg/notifier"
 )
 
 // PatientService interface
