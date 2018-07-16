@@ -43,6 +43,7 @@ export const assignPager = (_, { patient, pager }) => {
   if (!patient) return;
   // Copy patient to prevent direct state mutation
   patient = clone(patient);
+  patient.status = "pending";
   patient.pagerId = pager ? pager.id : null;
   return api.updatePatient(patient).then(() => {
     if (!patient.active && !patient.pagerId) {
