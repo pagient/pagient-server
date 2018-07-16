@@ -4,7 +4,7 @@ ADDRESS        = 0.0.0.0:8080
 ; external access to server
 HOST           = http://localhost:8080
 ; root path of the proxy
-ROOT           = /
+ROOT           = ./
 ; path to ssl cert
 CERT           =
 ; path to ssl key
@@ -38,9 +38,9 @@ PROVIDER = file
 ; easycall url
 URL      = http://localhost:8080/
 ; easycall user
-USER     = user
+USER     =
 ; easycall password
-PASSWORD = password
+PASSWORD =
 ; easycall port
 PORT     = COM1
 
