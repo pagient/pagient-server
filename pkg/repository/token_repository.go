@@ -50,24 +50,24 @@ func (repo *tokenFileRepository) Get(username string) ([]*model.Token, error) {
 	repo.lock.Lock()
 	defer repo.lock.Unlock()
 
-	tokens := &[]*model.Token{}
-	if err := repo.db.Read(tokenCollection, username, tokens); err != nil && !isNotFoundErr(err) {
+	var tokens []*model.Token
+	if err := repo.db.Read(tokenCollection, username, &tokens); err != nil && !isNotFoundErr(err) {
 		return nil, errors.Wrap(err, "read token failed")
 	}
 
-	return *tokens, nil
+	return tokens, nil
 }
 
 func (repo *tokenFileRepository) Add(token *model.Token) (*model.Token, error) {
 	repo.lock.Lock()
 	defer repo.lock.Unlock()
 
-	tokens := &[]*model.Token{}
+	var tokens []*model.Token
 	if err := repo.db.Read(tokenCollection, token.User, tokens); err != nil && !isNotFoundErr(err) {
 		return nil, errors.Wrap(err, "read token failed")
 	}
 
-	*tokens = append(*tokens, token)
+	tokens = append(tokens, token)
 
 	err := repo.db.Write(tokenCollection, token.User, tokens)
 	return token, errors.Wrap(err, "write token failed")
@@ -77,7 +77,7 @@ func (repo *tokenFileRepository) Remove(token *model.Token) (*model.Token, error
 	repo.lock.Lock()
 	defer repo.lock.Unlock()
 
-	tokens := &[]*model.Token{}
+	var tokens []*model.Token
 	if err := repo.db.Read(tokenCollection, token.User, tokens); err != nil && !isNotFoundErr(err) {
 		if isNotFoundErr(err) {
 			return nil, &entryNotExistErr{"token not found"}
@@ -85,18 +85,18 @@ func (repo *tokenFileRepository) Remove(token *model.Token) (*model.Token, error
 		return nil, errors.Wrap(err, "read token failed")
 	}
 
-	for i, tok := range *tokens {
-		if tok.Token == token.Token {
-			*tokens = append((*tokens)[:i], (*tokens)[i+1:]...)
-			break
+	var remainingTokens []*model.Token
+	for _, tok := range tokens {
+		if tok.Token != token.Token {
+			remainingTokens = append(remainingTokens, tok)
 		}
 	}
 
 	var err error
-	if len(*tokens) == 0 {
+	if len(remainingTokens) == 0 {
 		err = repo.db.Delete(tokenCollection, token.User)
 	} else {
-		err = repo.db.Write(tokenCollection, token.User, tokens)
+		err = repo.db.Write(tokenCollection, token.User, remainingTokens)
 	}
 
 	return token, errors.Wrap(err, "delete token failed")
