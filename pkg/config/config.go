@@ -59,6 +59,16 @@ type EasyCall struct {
 	Port     string `ini:"PORT"`
 }
 
+type Bridge struct {
+	DbUrl                   string `ini:"DB_URL"`
+	DbUser                  string `ini:"DB_USER"`
+	DbPassword              string `ini:"DB_PASSWORD"`
+	DbName                  string `ini:"DB_NAME"`
+	CallActionWZ            string `ini:"CALL_ACTION_WZ"`
+	CallActionQueuePosition int    `ini:"CALL_ACTION_QUEUE_POSITION"`
+	RemoveActionWZ          string `ini:"REMOVE_ACTION_WZ"`
+}
+
 // Log defines the logging configuration.
 type Log struct {
 	Level   string `ini:"LEVEL"`
@@ -72,6 +82,7 @@ type Config struct {
 	General  General
 	Database Database
 	EasyCall EasyCall
+	Bridge   Bridge
 	Log      Log
 }
 
@@ -125,6 +136,11 @@ func New() (*Config, error) {
 
 	easyCallCfg.Url = strings.TrimSuffix(easyCallCfg.Url, "/")
 
+	bridgeCfg := new(Bridge)
+	if err = config.Section("bridge").MapTo(bridgeCfg); err != nil {
+		return nil, errors.Wrap(err, "read config bridge section failed")
+	}
+
 	logCfg := new(Log)
 	if err = config.Section("log").MapTo(logCfg); err != nil {
 		return nil, errors.Wrap(err, "read config log section failed")
@@ -135,6 +151,7 @@ func New() (*Config, error) {
 		General:  *generalCfg,
 		Database: *databaseCfg,
 		EasyCall: *easyCallCfg,
+		Bridge:   *bridgeCfg,
 		Log:      *logCfg,
 	}
 

@@ -44,6 +44,26 @@ PASSWORD = password
 ; easycall port
 PORT     = COM1
 
+[bridge]
+; surgery software uses mssql database
+; database url
+DB_URL      = localhost:1433
+; database user
+DB_USER     =
+; database password
+DB_PASSWORD =
+; database name
+DB_NAME     =
+; defines room when to call patient (on enter)
+; letter of the room in surgery software
+CALL_ACTION_WZ             = O
+; the required position in the queue before pager will be called
+; -1 if no position is required
+CALL_ACTION_QUEUE_POSITION = 4
+; defines room when a patient is finished (on leave)
+; letter of the room in surgery software
+REMOVE_ACTION_WZ           = O
+
 [log]
 ; set logging level
 LEVEL   = info

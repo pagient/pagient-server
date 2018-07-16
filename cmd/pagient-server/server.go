@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/oklog/run"
+	"github.com/pagient/pagient-server/pkg/bridge"
 	"github.com/pagient/pagient-server/pkg/config"
 	"github.com/pagient/pagient-server/pkg/presenter/handler"
 	"github.com/pagient/pagient-server/pkg/presenter/router"
@@ -163,6 +164,24 @@ func Server() *cli.Command {
 				}, func(reason error) {
 					close(stop)
 				});
+			}
+
+			{
+				surgerySoftwareBridge := bridge.NewBridge(cfg, patientService, hub)
+				stop := make(chan struct{}, 1)
+
+				gr.Add(func() error {
+					log.Info().
+						Msg("starting surgery software bridge")
+
+					return surgerySoftwareBridge.Run(stop)
+				}, func(reason error) {
+					close(stop)
+
+					log.Info().
+						AnErr("reason", reason).
+						Msg("bridge stopped gracefully")
+				})
 			}
 
 			if cfg.Server.Cert != "" && cfg.Server.Key != "" {
