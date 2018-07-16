@@ -28,6 +28,7 @@ func NewTokenService(cfg *config.Config, tokenRepository TokenRepository) TokenS
 	}
 }
 
+// Get returns all active tokens by username
 func (service *DefaultTokenService) Get(username string) ([]*model.Token, error) {
 	tokens, err := service.tokenRepository.Get(username)
 	if err != nil {
@@ -40,6 +41,7 @@ func (service *DefaultTokenService) Get(username string) ([]*model.Token, error)
 	return tokens, errors.Wrap(err, "get token failed")
 }
 
+// Add adds an active token to a user
 func (service *DefaultTokenService) Add(token *model.Token) error {
 	token, err := service.tokenRepository.Add(token)
 	if err != nil {
@@ -51,6 +53,7 @@ func (service *DefaultTokenService) Add(token *model.Token) error {
 	return errors.Wrap(err, "add token failed")
 }
 
+// Remove removes an active token from a user
 func (service *DefaultTokenService) Remove(token *model.Token) error {
 	token, err := service.tokenRepository.Remove(token)
 	if err != nil {

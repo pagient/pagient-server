@@ -26,12 +26,12 @@ func NewWebsocketHandler(cfg *config.Config, hub *websocket.Hub) *WebsocketHandl
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 		CheckOrigin: func(req *http.Request) bool {
-			hostUrl, err := url.Parse(cfg.Server.Host)
+			hostURL, err := url.Parse(cfg.Server.Host)
 			if err != nil {
 				return false
 			}
 
-			if hostUrl.String() == req.Header.Get("Origin") && hostUrl.Host == req.Host {
+			if hostURL.String() == req.Header.Get("Origin") && hostURL.Host == req.Host {
 				return true
 			}
 			return false

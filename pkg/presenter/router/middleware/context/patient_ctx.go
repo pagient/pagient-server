@@ -42,7 +42,7 @@ func PatientCtx(patientService service.PatientService) func(http.Handler) http.H
 					return
 				}
 
-				ctx := context.WithValue(req.Context(), "patient", patient)
+				ctx := context.WithValue(req.Context(), PatientKey, patient)
 				next.ServeHTTP(w, req.WithContext(ctx))
 				return
 			}

@@ -73,18 +73,22 @@ func (h *Hub) broadcast(msgType MessageType, data interface{}) {
 	h.transmit <- msg
 }
 
+// NotifyNewPatient broadcasts a notification about a new patient
 func (h *Hub) NotifyNewPatient(patient *model.Patient) {
 	h.broadcast(MessageTypePatientAdd, patient)
 }
 
+// NotifyUpdatedPatient broadcasts a notification about an updated patient
 func (h *Hub) NotifyUpdatedPatient(patient *model.Patient) {
 	h.broadcast(MessageTypePatientUpdate, patient)
 }
 
+// NotifyDeletedPatient broadcasts a notification about a deleted patient
 func (h *Hub) NotifyDeletedPatient(patient *model.Patient) {
 	h.broadcast(MessageTypePatientDelete, patient)
 }
 
+// DisconnectClient disconnects a client by token signature
 func (h *Hub) DisconnectClient(id string) {
 	for client := range h.clients {
 		if client.id == id {

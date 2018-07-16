@@ -106,6 +106,7 @@ func (err *invalidArgumentErr) InvalidArgument() bool {
 	return true
 }
 
+// IsInvalidArgumentErr returns true if a given argument is invalid
 func IsInvalidArgumentErr(err error) bool {
 	ia, ok := errors.Cause(err).(invalidArgErr)
 	return ok && ia.InvalidArgument()

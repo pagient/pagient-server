@@ -19,6 +19,7 @@ const (
 )
 
 var (
+	// Path of config file
 	Path string
 
 	isWindows   bool
@@ -53,14 +54,15 @@ type Database struct {
 
 // EasyCall defines the easycall pager backend configuration
 type EasyCall struct {
-	Url      string `ini:"URL"`
+	URL      string `ini:"URL"`
 	User     string `ini:"USER"`
 	Password string `ini:"PASSWORD"`
 	Port     string `ini:"PORT"`
 }
 
+// Bridge defines the surgery software bridge configuration
 type Bridge struct {
-	DbUrl                   string `ini:"DB_URL"`
+	DbURL                   string `ini:"DB_URL"`
 	DbUser                  string `ini:"DB_USER"`
 	DbPassword              string `ini:"DB_PASSWORD"`
 	DbName                  string `ini:"DB_NAME"`
@@ -134,7 +136,7 @@ func New() (*Config, error) {
 		return nil, errors.Wrap(err, "read config easycall section failed")
 	}
 
-	easyCallCfg.Url = strings.TrimSuffix(easyCallCfg.Url, "/")
+	easyCallCfg.URL = strings.TrimSuffix(easyCallCfg.URL, "/")
 
 	bridgeCfg := new(Bridge)
 	if err = config.Section("bridge").MapTo(bridgeCfg); err != nil {

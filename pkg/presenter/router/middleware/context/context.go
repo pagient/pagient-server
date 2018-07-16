@@ -4,6 +4,7 @@ type ctxKey string
 
 // enumerates all context keys
 const (
-	PatientKey ctxKey = "patient"
 	ClientKey  ctxKey = "client"
+	PatientKey ctxKey = "patient"
+	UserKey    ctxKey = "user"
 )

@@ -8,6 +8,7 @@ import (
 	"github.com/pagient/pagient-server/pkg/presenter/renderer"
 	"github.com/pagient/pagient-server/pkg/presenter/websocket"
 	"github.com/pagient/pagient-server/pkg/service"
+	"github.com/pagient/pagient-server/pkg/presenter/router/middleware/context"
 )
 
 // PatientHandler struct
@@ -46,7 +47,7 @@ func (handler *PatientHandler) AddPatient(w http.ResponseWriter, req *http.Reque
 	patient := data.Patient
 
 	// Set clientID to the client that added the patient
-	ctxClient := req.Context().Value("client").(*model.Client)
+	ctxClient := req.Context().Value(context.ClientKey).(*model.Client)
 	if ctxClient == nil {
 		http.Error(w, http.StatusText(http.StatusUnauthorized), 401)
 		return
@@ -76,7 +77,7 @@ func (handler *PatientHandler) AddPatient(w http.ResponseWriter, req *http.Reque
 
 // GetPatient returns the patient by specified id
 func (handler *PatientHandler) GetPatient(w http.ResponseWriter, req *http.Request) {
-	ctxPatient := req.Context().Value("patient").(*model.Patient)
+	ctxPatient := req.Context().Value(context.PatientKey).(*model.Patient)
 
 	render.Render(w, req, renderer.NewPatientResponse(ctxPatient))
 }
@@ -92,7 +93,7 @@ func (handler *PatientHandler) UpdatePatient(w http.ResponseWriter, req *http.Re
 	patient := data.Patient
 
 	// Set clientID to the client that updated the patient
-	ctxClient := req.Context().Value("client").(*model.Client)
+	ctxClient := req.Context().Value(context.ClientKey).(*model.Client)
 	if ctxClient != nil {
 		patient.ClientID = ctxClient.ID
 	}
@@ -119,7 +120,7 @@ func (handler *PatientHandler) UpdatePatient(w http.ResponseWriter, req *http.Re
 
 // DeletePatient deletes a patient by specified id
 func (handler *PatientHandler) DeletePatient(w http.ResponseWriter, req *http.Request) {
-	ctxPatient := req.Context().Value("patient").(*model.Patient)
+	ctxPatient := req.Context().Value(context.PatientKey).(*model.Patient)
 
 	if err := handler.patientService.Remove(ctxPatient); err != nil {
 		if service.IsInvalidArgumentErr(err) {

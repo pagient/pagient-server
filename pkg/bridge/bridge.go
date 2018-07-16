@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/mssql"
+	_ "github.com/jinzhu/gorm/dialects/mssql" // import mssql for database connection
 	"github.com/pagient/pagient-server/pkg/config"
 	"github.com/pagient/pagient-server/pkg/model"
 	"github.com/pagient/pagient-server/pkg/notifier"
@@ -15,12 +15,14 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// Bridge struct encapsulates the surgery software bridge
 type Bridge struct {
 	cfg            *config.Config
 	patientService service.PatientService
 	notifier       notifier.Notifier
 }
 
+// NewBridge returns a surgery software bridge struct
 func NewBridge(cfg *config.Config, patientService service.PatientService, notifier notifier.Notifier) *Bridge {
 	return &Bridge{
 		cfg:            cfg,
@@ -29,11 +31,12 @@ func NewBridge(cfg *config.Config, patientService service.PatientService, notifi
 	}
 }
 
+// Run runs the bridge functionality in a new goroutine
 func (bridge *Bridge) Run(stop <-chan struct{}) error {
 	connectionString := fmt.Sprintf("sqlserver://%s:%s@%s?database=%s&encrypt=disable",
 		bridge.cfg.Bridge.DbUser,
 		bridge.cfg.Bridge.DbPassword,
-		bridge.cfg.Bridge.DbUrl,
+		bridge.cfg.Bridge.DbURL,
 		bridge.cfg.Bridge.DbName)
 
 	db, err := gorm.Open("mssql", connectionString)

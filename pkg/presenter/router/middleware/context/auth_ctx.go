@@ -10,7 +10,7 @@ import (
 )
 
 // AuthCtx middleware is used to load a User object from
-// the basic auth headers passed through as the request. In case
+// the authentication headers passed through as the request. In case
 // the User could not be found, we stop here and return a 500.
 func AuthCtx(userService service.UserService) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
@@ -37,7 +37,7 @@ func AuthCtx(userService service.UserService) func(http.Handler) http.Handler {
 				return
 			}
 
-			ctx := context.WithValue(req.Context(), "user", user)
+			ctx := context.WithValue(req.Context(), UserKey, user)
 			next.ServeHTTP(w, req.WithContext(ctx))
 		})
 	}

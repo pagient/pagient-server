@@ -9,10 +9,11 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// ClientCtx middleware is used to load a Client object from the authenticated user
 func ClientCtx(clientService service.ClientService) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			ctxUser := req.Context().Value("user").(*model.User)
+			ctxUser := req.Context().Value(UserKey).(*model.User)
 			client, err := clientService.GetByUser(ctxUser)
 			if err != nil {
 				log.Fatal().
@@ -23,7 +24,7 @@ func ClientCtx(clientService service.ClientService) func(http.Handler) http.Hand
 				return
 			}
 
-			ctx := context.WithValue(req.Context(), "client", client)
+			ctx := context.WithValue(req.Context(), ClientKey, client)
 			next.ServeHTTP(w, req.WithContext(ctx))
 		})
 	}

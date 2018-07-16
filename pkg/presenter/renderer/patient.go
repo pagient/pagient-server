@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-chi/render"
 	"github.com/pagient/pagient-server/pkg/model"
+	"github.com/pagient/pagient-server/pkg/presenter/router/middleware/context"
 	"github.com/pkg/errors"
 )
 
@@ -18,7 +19,7 @@ func (pr *PatientRequest) Bind(r *http.Request) error {
 	var patient *model.Patient
 
 	// Request is an update
-	if r.Context().Value("patient") != nil {
+	if r.Context().Value(context.PatientKey) != nil {
 		patient = r.Context().Value("patient").(*model.Patient)
 
 		if pr.Patient.ID != 0 && pr.Patient.ID != patient.ID {
