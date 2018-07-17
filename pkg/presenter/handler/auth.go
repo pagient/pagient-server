@@ -33,80 +33,74 @@ func NewAuthHandler(cfg *config.Config, userService service.UserService, tokenSe
 
 // CreateToken authenticates a user and creates a jwt token
 func (handler *AuthHandler) CreateToken(w http.ResponseWriter, req *http.Request) {
-	data := &renderer.UserRequest{}
-	if err := render.Bind(req, data); err != nil {
+	userReq := &renderer.UserRequest{}
+	if err := render.Bind(req, userReq); err != nil {
 		render.Render(w, req, renderer.ErrBadRequest(err))
 		return
 	}
 
-	user := data.User
-	valid, err := handler.userService.Login(user.Username, user.Password)
+	user, valid, err := handler.userService.Login(userReq.Username, userReq.Password)
 	if err != nil {
 		render.Render(w, req, renderer.ErrInternalServer(err))
 		return
 	}
 
 	if !valid {
-		http.Error(w, http.StatusText(401), 401)
+		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		return
 	}
 
 	tokenAuth := jwtauth.New("HS256", []byte(handler.cfg.General.Secret), nil)
-	_, tokenString, err := tokenAuth.Encode(jwtauth.Claims{
-		"user": user.Username,
-		"exp":  jwtauth.ExpireIn(12 * time.Hour),
+	jwtToken, _, err := tokenAuth.Encode(jwtauth.Claims{
+		"exp": jwtauth.ExpireIn(12 * time.Hour),
 	})
 	if err != nil {
 		render.Render(w, req, renderer.ErrInternalServer(err))
 		return
 	}
 
-	err = handler.tokenService.Add(&model.Token{
-		Token: tokenString,
-		User:  user.Username,
-	})
-	if err != nil && !service.IsModelNotExistErr(err) {
+	token := &model.Token{
+		Raw:  jwtToken.Raw,
+		User: *user,
+	}
+	err = handler.tokenService.Add(token)
+	if err != nil {
 		render.Render(w, req, renderer.ErrInternalServer(err))
 		return
 	}
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     "jwt",
-		Value:    tokenString,
+		Value:    jwtToken.Raw,
 		Path:     "/",
 		Expires:  time.Now().Add(12 * time.Hour),
 		HttpOnly: true,
 	})
 
-	render.Render(w, req, renderer.NewTokenResponse(&model.Token{
-		Token: tokenString,
-	}))
+	render.Render(w, req, renderer.NewTokenResponse(token))
 }
 
 // DeleteToken deletes a valid jwt token
 func (handler *AuthHandler) DeleteToken(w http.ResponseWriter, req *http.Request) {
-	token, claims, err := jwtauth.FromContext(req.Context())
+	jwtToken, _, err := jwtauth.FromContext(req.Context())
 	if err != nil {
 		render.Render(w, req, renderer.ErrInternalServer(err))
 		return
 	}
 
-	username, ok := claims.Get("user")
-	if !ok {
-		render.Render(w, req, renderer.ErrInternalServer(err))
-		return
-	}
-
-	err = handler.tokenService.Remove(&model.Token{
-		Token: token.Raw,
-		User:  username.(string),
-	})
+	token, err := handler.tokenService.Get(jwtToken.Raw)
 	if err != nil {
 		render.Render(w, req, renderer.ErrInternalServer(err))
 		return
 	}
 
-	handler.wsHub.DisconnectClient(token.Signature)
+	err = handler.tokenService.Remove(token)
+	if err != nil {
+		render.Render(w, req, renderer.ErrInternalServer(err))
+		return
+	}
+
+	handler.wsHub.DisconnectClient(token.ID)
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     "jwt",
@@ -121,19 +115,19 @@ func (handler *AuthHandler) DeleteToken(w http.ResponseWriter, req *http.Request
 
 // GetSessions returns all jwt tokens from a user
 func (handler *AuthHandler) GetSessions(w http.ResponseWriter, req *http.Request) {
-	_, claims, err := jwtauth.FromContext(req.Context())
+	jwtToken, _, err := jwtauth.FromContext(req.Context())
 	if err != nil {
 		render.Render(w, req, renderer.ErrInternalServer(err))
 		return
 	}
 
-	username, ok := claims.Get("user")
-	if !ok {
+	user, err := handler.userService.GetByToken(jwtToken.Raw)
+	if err != nil {
 		render.Render(w, req, renderer.ErrInternalServer(err))
 		return
 	}
 
-	tokens, err := handler.tokenService.Get(username.(string))
+	tokens, err := handler.tokenService.GetByUser(user.Username)
 	if err != nil {
 		render.Render(w, req, renderer.ErrInternalServer(err))
 		return

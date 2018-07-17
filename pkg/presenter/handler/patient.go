@@ -38,23 +38,21 @@ func (handler *PatientHandler) GetPatients(w http.ResponseWriter, req *http.Requ
 
 // AddPatient adds a patient
 func (handler *PatientHandler) AddPatient(w http.ResponseWriter, req *http.Request) {
-	data := &renderer.PatientRequest{}
-	if err := render.Bind(req, data); err != nil {
+	patientReq := &renderer.PatientRequest{}
+	if err := render.Bind(req, patientReq); err != nil {
 		render.Render(w, req, renderer.ErrBadRequest(err))
 		return
 	}
 
-	patient := data.Patient
-
-	// Set clientID to the client that added the patient
+	// Set clientID to the client that added the patientReq
 	ctxClient := req.Context().Value(context.ClientKey).(*model.Client)
 	if ctxClient == nil {
 		http.Error(w, http.StatusText(http.StatusUnauthorized), 401)
 		return
 	}
-	patient.ClientID = ctxClient.ID
+	patientReq.ClientID = ctxClient.ID
 
-	patient, err := handler.patientService.Add(patient)
+	patient, err := handler.patientService.Add(patientReq.GetModel())
 	if err != nil {
 		if service.IsModelExistErr(err) {
 			render.Render(w, req, renderer.ErrConflict(err))
@@ -84,21 +82,19 @@ func (handler *PatientHandler) GetPatient(w http.ResponseWriter, req *http.Reque
 
 // UpdatePatient updates a patient by specified id
 func (handler *PatientHandler) UpdatePatient(w http.ResponseWriter, req *http.Request) {
-	data := &renderer.PatientRequest{}
-	if err := render.Bind(req, data); err != nil {
+	patientReq := &renderer.PatientRequest{}
+	if err := render.Bind(req, patientReq); err != nil {
 		render.Render(w, req, renderer.ErrBadRequest(err))
 		return
 	}
 
-	patient := data.Patient
-
 	// Set clientID to the client that updated the patient
 	ctxClient := req.Context().Value(context.ClientKey).(*model.Client)
 	if ctxClient != nil {
-		patient.ClientID = ctxClient.ID
+		patientReq.ClientID = ctxClient.ID
 	}
 
-	patient, err := handler.patientService.Update(patient)
+	patient, err := handler.patientService.Update(patientReq.GetModel())
 	if err != nil {
 		if service.IsModelValidationErr(err) {
 			render.Render(w, req, renderer.ErrValidation(err))

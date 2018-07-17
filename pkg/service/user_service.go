@@ -11,7 +11,8 @@ import (
 type UserService interface {
 	GetAll() ([]*model.User, error)
 	Get(string) (*model.User, error)
-	Login(username, password string) (bool, error)
+	GetByToken(string) (*model.User, error)
+	Login(username, password string) (*model.User, bool, error)
 }
 
 // DefaultUserService struct
@@ -52,16 +53,28 @@ func (service *DefaultUserService) Get(username string) (*model.User, error) {
 	return user, errors.Wrap(err, "get user failed")
 }
 
+// GetByToken returns a user by token
+func (service *DefaultUserService) GetByToken(rawToken string) (*model.User, error) {
+	user, err := service.userRepository.GetByToken(rawToken)
+	if err != nil {
+		log.Error().
+			Err(err).
+			Msg("get user by token failed")
+	}
+
+	return user, errors.Wrap(err, "get user by token failed")
+}
+
 // Login checks whether the combination of username and password is valid
-func (service *DefaultUserService) Login(username, password string) (bool, error) {
+func (service *DefaultUserService) Login(username, password string) (*model.User, bool, error) {
 	user, err := service.userRepository.Get(username)
 	if err != nil {
 		log.Error().
 			Err(err).
 			Msg("get user failed")
 
-		return false, err
+		return nil, false, err
 	}
 
-	return user != nil && user.Password == password, nil
+	return user, user != nil && user.Password == password, nil
 }

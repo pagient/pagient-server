@@ -15,19 +15,13 @@ import (
 func AuthCtx(userService service.UserService) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			_, claims, err := jwtauth.FromContext(req.Context())
+			jwtToken, _, err := jwtauth.FromContext(req.Context())
 			if err != nil {
 				http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 				return
 			}
 
-			username, ok := claims.Get("user")
-			if !ok {
-				http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-				return
-			}
-
-			user, err := userService.Get(username.(string))
+			user, err := userService.GetByToken(jwtToken.Raw)
 			if err != nil {
 				log.Error().
 					Err(err).

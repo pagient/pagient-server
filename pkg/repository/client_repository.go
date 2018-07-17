@@ -1,11 +1,9 @@
 package repository
 
 import (
-	"strconv"
-	"strings"
 	"sync"
 
-	"github.com/pagient/pagient-server/pkg/config"
+	"github.com/jinzhu/gorm"
 	"github.com/pagient/pagient-server/pkg/model"
 	"github.com/pagient/pagient-server/pkg/service"
 	"github.com/pkg/errors"
@@ -17,64 +15,45 @@ var (
 )
 
 // GetClientRepositoryInstance creates and returns a new ClientCfgRepository
-func GetClientRepositoryInstance(cfg *config.Config) (service.ClientRepository, error) {
+func GetClientRepositoryInstance(db *gorm.DB) (service.ClientRepository, error) {
 	clientRepositoryOnce.Do(func() {
-		clientRepositoryInstance = &clientCfgRepository{cfg}
+		clientRepositoryInstance = &clientRepository{db}
 	})
 
 	return clientRepositoryInstance, nil
 }
 
-type clientCfgRepository struct {
-	cfg *config.Config
+type clientRepository struct {
+	db *gorm.DB
 }
 
 // GetAll returns all configured clients
-func (repo *clientCfgRepository) GetAll() ([]*model.Client, error) {
-	clients := make([]*model.Client, len(repo.cfg.General.Clients))
-	for i, clientInfo := range repo.cfg.General.Clients {
-		pair := strings.SplitN(clientInfo, ":", 2)
+func (repo *clientRepository) GetAll() ([]*model.Client, error) {
+	var clients []*model.Client
+	err := repo.db.Find(&clients).Error
 
-		id, err := strconv.Atoi(pair[0])
-		if err != nil {
-			return nil, errors.Wrap(err, "integer string conversion failed")
-		}
-
-		clients[i] = &model.Client{ID: id, Name: pair[1]}
-	}
-
-	return clients, nil
+	return clients, errors.Wrap(err, "select all clients failed")
 }
 
 // Get returns a client by it's id
-func (repo *clientCfgRepository) Get(id int) (*model.Client, error) {
-	clients, err := repo.GetAll()
-	if err != nil {
-		return nil, errors.Wrap(err, "get clients failed")
+func (repo *clientRepository) Get(id uint) (*model.Client, error) {
+	client := &model.Client{}
+	err := repo.db.First(client, id).Error
+	if gorm.IsRecordNotFoundError(err) {
+		return nil, nil
 	}
 
-	for _, client := range clients {
-		if client.ID == id {
-			return client, nil
-		}
-	}
-
-	return nil, nil
+	return client, errors.Wrap(err, "select client by id failed")
 }
 
-func (repo *clientCfgRepository) GetByUser(user *model.User) (*model.Client, error) {
-	for _, userClientInfo := range repo.cfg.General.UserClient {
-		pair := strings.SplitN(userClientInfo, ":", 2)
-
-		if pair[0] == user.Username {
-			id, err := strconv.Atoi(pair[1])
-			if err != nil {
-				return nil, errors.Wrap(err, "integer string conversion failed")
-			}
-
-			return repo.Get(id)
-		}
+func (repo *clientRepository) GetByUser(username string) (*model.Client, error) {
+	client := &model.Client{}
+	err := repo.db.
+		Joins("JOIN users ON users.client_id = clients.id").
+		Where("users.username = ?", username).First(client).Error
+	if gorm.IsRecordNotFoundError(err) {
+		return nil, nil
 	}
 
-	return nil, nil
+	return client, errors.Wrap(err, "select client by user failed")
 }

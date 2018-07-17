@@ -77,16 +77,11 @@
   version = "v1.2.0"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/jcelliott/lumber"
-  packages = ["."]
-  revision = "dd349441af25132d146d7095c6693a15431fc9b1"
-
-[[projects]]
   name = "github.com/jinzhu/gorm"
   packages = [
     ".",
-    "dialects/mssql"
+    "dialects/mssql",
+    "dialects/sqlite"
   ]
   revision = "6ed508ec6a4ecb3531899a69cbc746ccf65a4166"
   version = "v1.9.1"
@@ -104,10 +99,10 @@
   revision = "cad6b2b879b0970e4245a20ebf1a81a756e2bb70"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/nanobox-io/golang-scribble"
+  name = "github.com/mattn/go-sqlite3"
   packages = ["."]
-  revision = "336beac0a992ed9abaf4ef8e7042ba7fe3335c06"
+  revision = "25ecb14adfc7543176f7d85291ec7dba82c6f7e4"
+  version = "v1.9.0"
 
 [[projects]]
   name = "github.com/oklog/run"
@@ -213,6 +208,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "36020502a281466d65f1cf16bb24acdaae89b79f945722a095920d7e1d7d7e89"
+  inputs-digest = "9a653238da94614535195e6fd92d3521620ef29edee1fe386cfddb0ca97d0c96"
   solver-name = "gps-cdcl"
   solver-version = 1

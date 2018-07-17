@@ -9,6 +9,8 @@ import (
 	"path"
 	"time"
 
+	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/sqlite" // import sqlite for database connection
 	"github.com/oklog/run"
 	"github.com/pagient/pagient-server/pkg/bridge"
 	"github.com/pagient/pagient-server/pkg/config"
@@ -70,8 +72,29 @@ func Server() *cli.Command {
 				log.Logger = log.Output(logFile)
 			}
 
+			// Initialize Database Connection
+			db, err := gorm.Open("sqlite3", cfg.Database.Path)
+			if err != nil {
+				log.Fatal().
+					Err(err).
+					Msg("establish database connection failed")
+
+				os.Exit(1)
+			}
+			db.LogMode(zerolog.GlobalLevel() <= zerolog.DebugLevel)
+			db.SetLogger(&log.Logger)
+			defer db.Close()
+
+			if err := repository.InitDatabase(db); err != nil {
+				log.Fatal().
+					Err(err).
+					Msg("database initialization failed")
+
+				os.Exit(1)
+			}
+
 			// Initialize Repositories  (database access)
-			clientRepo, err := repository.GetClientRepositoryInstance(cfg)
+			clientRepo, err := repository.GetClientRepositoryInstance(db)
 			if err != nil {
 				log.Fatal().
 					Err(err).
@@ -79,7 +102,7 @@ func Server() *cli.Command {
 
 				os.Exit(1)
 			}
-			pagerRepo, err := repository.GetPagerRepositoryInstance(cfg)
+			pagerRepo, err := repository.GetPagerRepositoryInstance(db)
 			if err != nil {
 				log.Fatal().
 					Err(err).
@@ -87,7 +110,7 @@ func Server() *cli.Command {
 
 				os.Exit(1)
 			}
-			patientRepo, err := repository.GetPatientRepositoryInstance(cfg)
+			patientRepo, err := repository.GetPatientRepositoryInstance(db)
 			if err != nil {
 				log.Fatal().
 					Err(err).
@@ -95,7 +118,7 @@ func Server() *cli.Command {
 
 				os.Exit(1)
 			}
-			tokenRepo, err := repository.GetTokenRepositoryInstance(cfg)
+			tokenRepo, err := repository.GetTokenRepositoryInstance(db)
 			if err != nil {
 				log.Fatal().
 					Err(err).
@@ -103,7 +126,7 @@ func Server() *cli.Command {
 
 				os.Exit(1)
 			}
-			userRepo, err := repository.GetUserRepositoryInstance(cfg)
+			userRepo, err := repository.GetUserRepositoryInstance(db)
 			if err != nil {
 				log.Fatal().
 					Err(err).
@@ -126,7 +149,7 @@ func Server() *cli.Command {
 			clientHandler := handler.NewClientHandler(clientService)
 			pagerHandler := handler.NewPagerHandler(pagerService)
 			patientHandler := handler.NewPatientHandler(patientService, hub)
-			websocketHandler := handler.NewWebsocketHandler(cfg, hub)
+			websocketHandler := handler.NewWebsocketHandler(cfg, tokenService, hub)
 
 			var gr run.Group
 

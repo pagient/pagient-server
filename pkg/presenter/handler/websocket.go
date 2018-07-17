@@ -9,19 +9,21 @@ import (
 	"github.com/pagient/pagient-server/pkg/config"
 	"github.com/pagient/pagient-server/pkg/presenter/renderer"
 	"github.com/pagient/pagient-server/pkg/presenter/websocket"
+	"github.com/pagient/pagient-server/pkg/service"
 	"github.com/rs/zerolog/log"
 	"net/url"
 )
 
 // WebsocketHandler struct
 type WebsocketHandler struct {
-	cfg        *config.Config
-	wsHub      *websocket.Hub
-	wsUpgrader ws.Upgrader
+	cfg          *config.Config
+	tokenService service.TokenService
+	wsHub        *websocket.Hub
+	wsUpgrader   ws.Upgrader
 }
 
 // NewWebsocketHandler initializes a WebsocketHandler
-func NewWebsocketHandler(cfg *config.Config, hub *websocket.Hub) *WebsocketHandler {
+func NewWebsocketHandler(cfg *config.Config, tokenService service.TokenService, hub *websocket.Hub) *WebsocketHandler {
 	upgrader := ws.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
@@ -39,9 +41,10 @@ func NewWebsocketHandler(cfg *config.Config, hub *websocket.Hub) *WebsocketHandl
 	}
 
 	return &WebsocketHandler{
-		cfg:        cfg,
-		wsHub:      hub,
-		wsUpgrader: upgrader,
+		cfg:          cfg,
+		tokenService: tokenService,
+		wsHub:        hub,
+		wsUpgrader:   upgrader,
 	}
 }
 
@@ -57,13 +60,19 @@ func (handler *WebsocketHandler) ServeWebsocket(w http.ResponseWriter, req *http
 		return
 	}
 
-	token, _, err := jwtauth.FromContext(req.Context())
+	jwtToken, _, err := jwtauth.FromContext(req.Context())
 	if err != nil {
 		render.Render(w, req, renderer.ErrInternalServer(err))
 		return
 	}
 
-	client := websocket.NewClient(token.Signature, handler.wsHub, conn)
+	token, err := handler.tokenService.Get(jwtToken.Raw)
+	if err != nil {
+		render.Render(w, req, renderer.ErrInternalServer(err))
+		return
+	}
+
+	client := websocket.NewClient(token.ID, handler.wsHub, conn)
 	handler.wsHub.Register <- client
 
 	// Allow collection of memory referenced by the caller by doing all work in

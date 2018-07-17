@@ -11,7 +11,13 @@ import (
 
 // PatientRequest is the request payload for patient data model
 type PatientRequest struct {
-	*model.Patient
+	ID               uint   `json:"id"`
+	SocialSecurityNo string `json:"ssn"`
+	Name             string `json:"name"`
+	PagerID          uint   `json:"pagerId"`
+	ClientID         uint   `json:"clientId"`
+	Status           string `json:"status"`
+	Active           bool   `json:"active"`
 }
 
 // Bind postprocesses the decoding of the request body
@@ -22,23 +28,23 @@ func (pr *PatientRequest) Bind(r *http.Request) error {
 	if r.Context().Value(context.PatientKey) != nil {
 		patient = r.Context().Value(context.PatientKey).(*model.Patient)
 
-		if pr.Patient.ID != 0 && pr.Patient.ID != patient.ID {
+		if pr.ID != 0 && pr.ID != patient.ID {
 			return errors.New("id attribute is not allowed to be updated")
 		}
 
-		if pr.Patient.ClientID != 0 && pr.Patient.ClientID != patient.ClientID {
+		if pr.ClientID != 0 && pr.ClientID != patient.ClientID {
 			return errors.New("client_id attribute is not allowed to be updated")
 		}
 
-		if pr.Patient.PagerID == 0 && pr.Patient.Status == model.PatientStateCall {
+		if pr.PagerID == 0 && pr.Status == string(model.PatientStateCall) {
 			return errors.New("patient call state can only be set if a pager is assigned")
 		}
 	} else {
-		if pr.Patient.ClientID != 0 {
+		if pr.ClientID != 0 {
 			return errors.New("client_id not allowed")
 		}
 
-		if pr.Patient.Status != "" {
+		if pr.Status != "" {
 			return errors.New("status not allowed")
 		}
 	}
@@ -46,14 +52,42 @@ func (pr *PatientRequest) Bind(r *http.Request) error {
 	return nil
 }
 
+// GetModel returns a Patient model
+func (pr *PatientRequest) GetModel() *model.Patient {
+
+	return &model.Patient{
+		ID:               pr.ID,
+		SocialSecurityNo: pr.SocialSecurityNo,
+		Name:             pr.Name,
+		PagerID:          pr.PagerID,
+		ClientID:         pr.ClientID,
+		Status:           model.PatientState(pr.Status),
+		Active:           pr.Active,
+	}
+}
+
 // PatientResponse is the response payload for the patient data model
 type PatientResponse struct {
-	*model.Patient
+	ID               uint   `json:"id"`
+	SocialSecurityNo string `json:"ssn"`
+	Name             string `json:"name"`
+	PagerID          uint   `json:"pagerId,omitempty"`
+	ClientID         uint   `json:"clientId"`
+	Status           string `json:"status"`
+	Active           bool   `json:"active"`
 }
 
 // NewPatientResponse creates a new patient response from patient model
 func NewPatientResponse(patient *model.Patient) *PatientResponse {
-	resp := &PatientResponse{Patient: patient}
+	resp := &PatientResponse{
+		ID:               patient.ID,
+		SocialSecurityNo: patient.SocialSecurityNo,
+		Name:             patient.Name,
+		PagerID:          patient.PagerID,
+		ClientID:         patient.ClientID,
+		Status:           string(patient.Status),
+		Active:           patient.Active,
+	}
 
 	return resp
 }

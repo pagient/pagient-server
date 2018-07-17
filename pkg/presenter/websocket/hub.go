@@ -4,7 +4,10 @@
 
 package websocket
 
-import "github.com/pagient/pagient-server/pkg/model"
+import (
+	"github.com/pagient/pagient-server/pkg/model"
+	"github.com/pagient/pagient-server/pkg/presenter/renderer"
+)
 
 // Hub maintains the set of active clients and broadcasts messages to the
 // clients.
@@ -75,21 +78,21 @@ func (h *Hub) broadcast(msgType MessageType, data interface{}) {
 
 // NotifyNewPatient broadcasts a notification about a new patient
 func (h *Hub) NotifyNewPatient(patient *model.Patient) {
-	h.broadcast(MessageTypePatientAdd, patient)
+	h.broadcast(MessageTypePatientAdd, renderer.NewPatientResponse(patient))
 }
 
 // NotifyUpdatedPatient broadcasts a notification about an updated patient
 func (h *Hub) NotifyUpdatedPatient(patient *model.Patient) {
-	h.broadcast(MessageTypePatientUpdate, patient)
+	h.broadcast(MessageTypePatientUpdate, renderer.NewPatientResponse(patient))
 }
 
 // NotifyDeletedPatient broadcasts a notification about a deleted patient
 func (h *Hub) NotifyDeletedPatient(patient *model.Patient) {
-	h.broadcast(MessageTypePatientDelete, patient)
+	h.broadcast(MessageTypePatientDelete, renderer.NewPatientResponse(patient))
 }
 
 // DisconnectClient disconnects a client by token signature
-func (h *Hub) DisconnectClient(id string) {
+func (h *Hub) DisconnectClient(id uint) {
 	for client := range h.clients {
 		if client.id == id {
 			h.Unregister <- client

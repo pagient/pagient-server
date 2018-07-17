@@ -9,8 +9,8 @@ import (
 // ClientService interface
 type ClientService interface {
 	GetAll() ([]*model.Client, error)
-	Get(int) (*model.Client, error)
-	GetByUser(*model.User) (*model.Client, error)
+	Get(uint) (*model.Client, error)
+	GetByUser(string) (*model.Client, error)
 }
 
 // DefaultClientService struct
@@ -38,12 +38,12 @@ func (service *DefaultClientService) GetAll() ([]*model.Client, error) {
 }
 
 // Get returns a client by it's id
-func (service *DefaultClientService) Get(id int) (*model.Client, error) {
+func (service *DefaultClientService) Get(id uint) (*model.Client, error) {
 	client, err := service.clientRepository.Get(id)
 	if err != nil {
 		log.Error().
 			Err(err).
-			Int("client id", id).
+			Uint("client id", id).
 			Msg("get client failed")
 	}
 
@@ -51,12 +51,12 @@ func (service *DefaultClientService) Get(id int) (*model.Client, error) {
 }
 
 // GetByUser returns a client belonging to the given user
-func (service *DefaultClientService) GetByUser(user *model.User) (*model.Client, error) {
-	client, err := service.clientRepository.GetByUser(user)
+func (service *DefaultClientService) GetByUser(username string) (*model.Client, error) {
+	client, err := service.clientRepository.GetByUser(username)
 	if err != nil {
 		log.Error().
 			Err(err).
-			Str("username", user.Username).
+			Str("username", username).
 			Msg("get client by user failed")
 	}
 

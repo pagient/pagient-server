@@ -3,15 +3,10 @@ package repository
 import (
 	"sync"
 
-	"github.com/nanobox-io/golang-scribble"
-	"github.com/pagient/pagient-server/pkg/config"
+	"github.com/jinzhu/gorm"
 	"github.com/pagient/pagient-server/pkg/model"
 	"github.com/pagient/pagient-server/pkg/service"
 	"github.com/pkg/errors"
-)
-
-const (
-	tokenCollection = "token"
 )
 
 var (
@@ -20,83 +15,49 @@ var (
 )
 
 // GetTokenRepositoryInstance creates and returns a new TokenFileRepository
-func GetTokenRepositoryInstance(cfg *config.Config) (service.TokenRepository, error) {
-	var err error
-
+func GetTokenRepositoryInstance(db *gorm.DB) (service.TokenRepository, error) {
 	tokenRepositoryOnce.Do(func() {
-		// Set up scribble json file store
-		var db fileDriver
-		db, err = scribble.New(cfg.General.Root, nil)
-
-		tokenRepositoryInstance = &tokenFileRepository{
-			lock: &sync.Mutex{},
-			db:   db,
-		}
+		tokenRepositoryInstance = &tokenRepository{db}
 	})
-
-	if err != nil {
-		return nil, errors.Wrap(err, "init scribble store failed")
-	}
 
 	return tokenRepositoryInstance, nil
 }
 
-type tokenFileRepository struct {
-	lock *sync.Mutex
-	db   fileDriver
+type tokenRepository struct {
+	db *gorm.DB
 }
 
-func (repo *tokenFileRepository) Get(username string) ([]*model.Token, error) {
-	repo.lock.Lock()
-	defer repo.lock.Unlock()
-
-	var tokens []*model.Token
-	if err := repo.db.Read(tokenCollection, username, &tokens); err != nil && !isNotFoundErr(err) {
-		return nil, errors.Wrap(err, "read token failed")
+func (repo *tokenRepository) Get(rawToken string) (*model.Token, error) {
+	token := &model.Token{}
+	err := repo.db.Where(&model.Token{
+		Raw: rawToken,
+	}).First(token).Error
+	if gorm.IsRecordNotFoundError(err) {
+		return nil, nil
 	}
 
-	return tokens, nil
+	return token, errors.Wrap(err, "select token failed")
 }
 
-func (repo *tokenFileRepository) Add(token *model.Token) (*model.Token, error) {
-	repo.lock.Lock()
-	defer repo.lock.Unlock()
-
+func (repo *tokenRepository) GetByUser(username string) ([]*model.Token, error) {
 	var tokens []*model.Token
-	if err := repo.db.Read(tokenCollection, token.User, tokens); err != nil && !isNotFoundErr(err) {
-		return nil, errors.Wrap(err, "read token failed")
-	}
+	err := repo.db.
+		Joins("JOIN users ON users.id = tokens.user_id").
+		Where("users.username = ?", username).Find(&tokens).Error
 
-	tokens = append(tokens, token)
-
-	err := repo.db.Write(tokenCollection, token.User, tokens)
-	return token, errors.Wrap(err, "write token failed")
+	return tokens, errors.Wrap(err, "select tokens by user failed")
 }
 
-func (repo *tokenFileRepository) Remove(token *model.Token) (*model.Token, error) {
-	repo.lock.Lock()
-	defer repo.lock.Unlock()
+func (repo *tokenRepository) Add(token *model.Token) (*model.Token, error) {
+	err := repo.db.Create(token).Error
 
-	var tokens []*model.Token
-	if err := repo.db.Read(tokenCollection, token.User, tokens); err != nil && !isNotFoundErr(err) {
-		if isNotFoundErr(err) {
-			return nil, &entryNotExistErr{"token not found"}
-		}
-		return nil, errors.Wrap(err, "read token failed")
-	}
+	return token, errors.Wrap(err, "create token failed")
+}
 
-	var remainingTokens []*model.Token
-	for _, tok := range tokens {
-		if tok.Token != token.Token {
-			remainingTokens = append(remainingTokens, tok)
-		}
-	}
-
-	var err error
-	if len(remainingTokens) == 0 {
-		err = repo.db.Delete(tokenCollection, token.User)
-	} else {
-		err = repo.db.Write(tokenCollection, token.User, remainingTokens)
+func (repo *tokenRepository) Remove(token *model.Token) (*model.Token, error) {
+	err := repo.db.Delete(token).Error
+	if gorm.IsRecordNotFoundError(err) {
+		return nil, &entryNotExistErr{"token not found"}
 	}
 
 	return token, errors.Wrap(err, "delete token failed")

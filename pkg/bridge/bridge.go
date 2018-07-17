@@ -67,8 +67,7 @@ func (bridge *Bridge) Run(stop <-chan struct{}) error {
 				}
 
 				// get current patient room assignments
-				db.Raw("SELECT TOP(?) PDS6_WZ.* FROM PDS6_WZ JOIN PDS6_STWZ ON PDS6_WZ.WZID = PDS6_STWZ.WZID "+
-					"WHERE PDS6_STWZ.CODE = ? ORDER BY PDS6_WZ.FLGNR ASC",
+				db.Raw("SELECT TOP(?) pds6_wz.* FROM pds6_wz JOIN pds6_stwz ON pds6_wz.wzid = pds6_stwz.wzid WHERE pds6_stwz.code = ? ORDER BY pds6_wz.flgnr ASC",
 					bridge.cfg.Bridge.CallActionQueuePosition, bridge.cfg.Bridge.CallActionWZ).
 					Scan(&assignments)
 

@@ -2,6 +2,8 @@ package model
 
 // Token struct
 type Token struct {
-	Token string `json:"token"`
-	User  string `json:"-"`
+	ID     uint   `gorm:"primary_key"`
+	Raw    string `gorm:"not null;unique"`
+	User   User   `gorm:"save_associations:false"`
+	UserID uint
 }

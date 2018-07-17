@@ -5,33 +5,41 @@ import (
 	"github.com/pkg/errors"
 )
 
+// DB generic interface
+type DB interface{}
+
 // ClientRepository interface
 type ClientRepository interface {
 	GetAll() ([]*model.Client, error)
-	Get(int) (*model.Client, error)
-	GetByUser(*model.User) (*model.Client, error)
+	Get(uint) (*model.Client, error)
+	GetByUser(string) (*model.Client, error)
 }
 
 // PagerRepository interface
 type PagerRepository interface {
 	GetAll() ([]*model.Pager, error)
-	Get(int) (*model.Pager, error)
+	GetUnassigned() ([]*model.Pager, error)
+	Get(uint) (*model.Pager, error)
 }
 
 // PatientRepository interface
 type PatientRepository interface {
-	GetAll() ([]*model.Patient, error)
-	Get(int) (*model.Patient, error)
-	Add(*model.Patient) (*model.Patient, error)
-	Update(*model.Patient) (*model.Patient, error)
-	Remove(*model.Patient) (*model.Patient, error)
-	MarkAllExceptPatientInactiveByPatientClient(*model.Patient) ([]*model.Patient, error)
-	RemoveAllExceptPatientInactiveNoPagerByPatientClient(*model.Patient) ([]*model.Patient, error)
+	BeginTx() DB
+	RollbackTx(DB) DB
+	CommitTx(DB) DB
+	GetAll(DB) ([]*model.Patient, error)
+	Get(DB, uint) (*model.Patient, error)
+	Add(DB, *model.Patient) (*model.Patient, error)
+	Update(DB, *model.Patient) (*model.Patient, error)
+	Remove(DB, *model.Patient) (*model.Patient, error)
+	MarkAllExceptPatientInactiveByPatientClient(DB, *model.Patient) ([]*model.Patient, error)
+	RemoveAllExceptPatientInactiveNoPagerByPatientClient(DB, *model.Patient) ([]*model.Patient, error)
 }
 
 // TokenRepository interface
 type TokenRepository interface {
-	Get(string) ([]*model.Token, error)
+	Get(string) (*model.Token, error)
+	GetByUser(string) ([]*model.Token, error)
 	Add(*model.Token) (*model.Token, error)
 	Remove(*model.Token) (*model.Token, error)
 }
@@ -40,6 +48,7 @@ type TokenRepository interface {
 type UserRepository interface {
 	GetAll() ([]*model.User, error)
 	Get(string) (*model.User, error)
+	GetByToken(string) (*model.User, error)
 }
 
 type entryExistErr interface {

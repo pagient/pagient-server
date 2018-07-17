@@ -1,16 +1,13 @@
 package repository
 
 import (
-	"encoding/json"
-	"os"
-	"strconv"
 	"sync"
 
-	"github.com/nanobox-io/golang-scribble"
-	"github.com/pagient/pagient-server/pkg/config"
+	"github.com/jinzhu/gorm"
 	"github.com/pagient/pagient-server/pkg/model"
 	"github.com/pagient/pagient-server/pkg/service"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -23,201 +20,142 @@ var (
 )
 
 // GetPatientRepositoryInstance creates and returns a new PatientFileRepository
-func GetPatientRepositoryInstance(cfg *config.Config) (service.PatientRepository, error) {
-	var err error
-
+func GetPatientRepositoryInstance(db *gorm.DB) (service.PatientRepository, error) {
 	patientRepositoryOnce.Do(func() {
-		// Set up scribble json file store
-		var db fileDriver
-		db, err = scribble.New(cfg.General.Root, nil)
-
-		patientRepositoryInstance = &patientFileRepository{
-			lock: &sync.Mutex{},
-			db:   db,
-		}
+		patientRepositoryInstance = &patientRepository{db}
 	})
-
-	if err != nil {
-		return nil, errors.Wrap(err, "init scribble store failed")
-	}
 
 	return patientRepositoryInstance, nil
 }
 
-type patientFileRepository struct {
-	lock *sync.Mutex
-	db   fileDriver
+type patientRepository struct {
+	db *gorm.DB
+}
+
+// BeginTx begins a transaction
+func (repo *patientRepository) BeginTx() service.DB {
+	return repo.db.Begin()
+}
+
+//
+func (repo *patientRepository) RollbackTx(sess service.DB) service.DB {
+	session := sess.(*gorm.DB)
+	return session.Rollback()
+}
+
+func (repo *patientRepository) CommitTx(sess service.DB) service.DB {
+	session := sess.(*gorm.DB)
+	return session.Commit()
 }
 
 // GetAll lists all patients
-func (repo *patientFileRepository) GetAll() ([]*model.Patient, error) {
-	repo.lock.Lock()
-	defer repo.lock.Unlock()
+func (repo *patientRepository) GetAll(sess service.DB) ([]*model.Patient, error) {
+	session := sess.(*gorm.DB)
 
-	records, err := repo.db.ReadAll(patientCollection)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil, nil
-		}
-		return nil, errors.Wrap(err, "read patients failed")
+	var patients []*model.Patient
+	err := session.Find(&patients).Error
+
+	return patients, errors.Wrap(err, "select all patients failed")
+}
+
+// Get returns a patient by ID
+func (repo *patientRepository) Get(sess service.DB, id uint) (*model.Patient, error) {
+	session := sess.(*gorm.DB)
+
+	patient := &model.Patient{}
+	err := session.Find(patient, id).Error
+	if gorm.IsRecordNotFoundError(err) {
+		return nil, nil
 	}
 
-	patients := make([]*model.Patient, len(records))
-	for i, p := range records {
-		patient := &model.Patient{}
-		if err := json.Unmarshal([]byte(p), patient); err != nil {
-			return nil, errors.Wrap(err, "json unmarshal failed")
-		}
-		patients[i] = patient
+	return patient, errors.Wrap(err, "select patient by id failed")
+}
+
+// Add stores the values in the repository
+func (repo *patientRepository) Add(sess service.DB, patient *model.Patient) (*model.Patient, error) {
+	session := sess.(*gorm.DB)
+
+	// FIXME: handle sql constraint errors
+	err := session.Create(patient).Error
+
+	return patient, errors.Wrap(err, "create patient failed")
+}
+
+// Update updates the values in the repository
+func (repo *patientRepository) Update(sess service.DB, patient *model.Patient) (*model.Patient, error) {
+	session := sess.(*gorm.DB)
+
+	// FIXME: handle sql constraint errors
+	err := session.Save(patient).Error
+	if gorm.IsRecordNotFoundError(err) {
+		return nil, &entryNotExistErr{"patient not found"}
+	}
+
+	return patient, errors.Wrap(err, "update patient failed")
+}
+
+// Remove deletes the values from the repository
+func (repo *patientRepository) Remove(sess service.DB, patient *model.Patient) (*model.Patient, error) {
+	session := sess.(*gorm.DB)
+
+	err := session.Delete(patient).Error
+	if gorm.IsRecordNotFoundError(err) {
+		return nil, &entryNotExistErr{"patient not found"}
+	}
+
+	return patient, errors.Wrap(err, "delete patient failed")
+}
+
+// MarkAllExceptPatientInactiveByPatientClient sets active to false for every patient by that client
+func (repo *patientRepository) MarkAllExceptPatientInactiveByPatientClient(sess service.DB, patient *model.Patient) ([]*model.Patient, error) {
+	session := sess.(*gorm.DB)
+
+	statement := session.Where(&model.Patient{
+		ClientID: patient.ClientID,
+		Active:   true,
+	}).Not(&model.Patient{
+		ID: patient.ID,
+	})
+
+	var patients []*model.Patient
+	if err := statement.Find(&patients).Error; err != nil {
+		log.Error().
+			Err(err).
+			Msg("find active patients by client failed")
+	}
+
+	if err := statement.Model(model.Patient{}).Updates(map[string]interface{}{"active": false}).Error; err != nil {
+		log.Error().
+			Err(err).
+			Msg("update active patients by client failed")
 	}
 
 	return patients, nil
 }
 
-// Get returns a patient by ID
-func (repo *patientFileRepository) Get(id int) (*model.Patient, error) {
-	repo.lock.Lock()
-	defer repo.lock.Unlock()
-
-	patient := &model.Patient{}
-	if err := repo.db.Read(patientCollection, strconv.Itoa(id), patient); err != nil {
-		if isNotFoundErr(err) {
-			return nil, nil
-		}
-		return nil, errors.Wrap(err, "read patient failed")
-	}
-
-	return patient, nil
-}
-
-// Add stores the values in the repository
-func (repo *patientFileRepository) Add(patient *model.Patient) (*model.Patient, error) {
-	repo.lock.Lock()
-	defer repo.lock.Unlock()
-
-	if patient.ID == 0 {
-		return nil, &entryNotValidErr{"id: cannot be blank"}
-	}
-
-	pat := &model.Patient{}
-	if err := repo.db.Read(patientCollection, strconv.Itoa(patient.ID), pat); err != nil && !isNotFoundErr(err) {
-		return nil, errors.Wrap(err, "read patient failed")
-	}
-	if pat.ID != 0 {
-		return nil, &entryExistErr{"patient already exists"}
-	}
-
-	err := repo.db.Write(patientCollection, strconv.Itoa(patient.ID), patient)
-	return patient, errors.Wrap(err, "write patient failed")
-}
-
-// Update updates the values in the repository
-func (repo *patientFileRepository) Update(patient *model.Patient) (*model.Patient, error) {
-	repo.lock.Lock()
-	defer repo.lock.Unlock()
-
-	if patient.ID == 0 {
-		return nil, &entryNotValidErr{"id: cannot be blank"}
-	}
-
-	if err := repo.db.Read(patientCollection, strconv.Itoa(patient.ID), &model.Patient{}); err != nil {
-		if isNotFoundErr(err) {
-			return nil, &entryNotExistErr{"patient not found"}
-		}
-		return nil, errors.Wrap(err, "read patient failed")
-	}
-
-	err := repo.db.Write(patientCollection, strconv.Itoa(patient.ID), patient)
-	return patient, errors.Wrap(err, "write patient failed")
-}
-
-// Remove deletes the values from the repository
-func (repo *patientFileRepository) Remove(patient *model.Patient) (*model.Patient, error) {
-	repo.lock.Lock()
-	defer repo.lock.Unlock()
-
-	err := repo.db.Delete(patientCollection, strconv.Itoa(patient.ID))
-	if err != nil {
-		if isNotFoundErr(err) {
-			return nil, &entryNotExistErr{"patient not found"}
-		}
-		return nil, errors.Wrap(err, "delete patient failed")
-	}
-
-	return patient, nil
-}
-
-// MarkAllExceptPatientInactiveByPatientClient sets active to false for every patient by that client
-func (repo *patientFileRepository) MarkAllExceptPatientInactiveByPatientClient(patient *model.Patient) ([]*model.Patient, error) {
-	repo.lock.Lock()
-	defer repo.lock.Unlock()
-
-	records, err := repo.db.ReadAll(patientCollection)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil, nil
-		}
-		return nil, errors.Wrap(err, "read patients failed")
-	}
-
-	patients := make([]*model.Patient, len(records))
-	for i, p := range records {
-		patient := &model.Patient{}
-		if err := json.Unmarshal([]byte(p), patient); err != nil {
-			return nil, errors.Wrap(err, "json unmarshal failed")
-		}
-		patients[i] = patient
-	}
-
-	var updatedPatients []*model.Patient
-	for _, pat := range patients {
-		if pat.ClientID == patient.ClientID && pat.ID != patient.ID && pat.Active {
-			pat.Active = false
-
-			if err := repo.db.Write(patientCollection, strconv.Itoa(pat.ID), pat); err != nil {
-				return nil, errors.Wrap(err, "write patient failed")
-			}
-
-			updatedPatients = append(updatedPatients, pat)
-		}
-	}
-
-	return updatedPatients, nil
-}
-
 // RemoveAllExceptPatientInactiveNoPagerByPatientClient deletes the patients that are inactive, have no pager assigned and are from that client
-func (repo *patientFileRepository) RemoveAllExceptPatientInactiveNoPagerByPatientClient(patient *model.Patient) ([]*model.Patient, error) {
-	repo.lock.Lock()
-	defer repo.lock.Unlock()
+func (repo *patientRepository) RemoveAllExceptPatientInactiveNoPagerByPatientClient(sess service.DB, patient *model.Patient) ([]*model.Patient, error) {
+	session := sess.(*gorm.DB)
 
-	records, err := repo.db.ReadAll(patientCollection)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil, nil
-		}
-		return nil, errors.Wrap(err, "read patients failed")
+	statement := session.Where(&model.Patient{
+		ClientID: patient.ClientID,
+		Active:   false,
+	}).Where("pager_id = 0").Not(&model.Patient{
+		ID: patient.ID,
+	})
+
+	var patients []*model.Patient
+	if err := statement.Find(&patients).Error; err != nil {
+		log.Error().
+			Err(err).
+			Msg("find active patients w/o pager by client failed")
 	}
 
-	patients := make([]*model.Patient, len(records))
-	for i, p := range records {
-		patient := &model.Patient{}
-		if err := json.Unmarshal([]byte(p), patient); err != nil {
-			return nil, errors.Wrap(err, "json unmarshal failed")
-		}
-		patients[i] = patient
+	if err := statement.Delete(model.Patient{}).Error; err != nil {
+		log.Error().
+			Err(err).
+			Msg("delete active patients w/o pager by client failed")
 	}
 
-	var deletedPatients []*model.Patient
-	for _, pat := range patients {
-		if pat.ClientID == patient.ClientID && pat.ID != patient.ID && !pat.Active && pat.PagerID == 0 {
-			err := repo.db.Delete(patientCollection, strconv.Itoa(pat.ID))
-			if err != nil && !isNotFoundErr(err) {
-				return nil, errors.Wrap(err, "delete patient failed")
-			}
-
-			deletedPatients = append(deletedPatients, pat)
-		}
-	}
-
-	return deletedPatients, nil
+	return patients, nil
 }

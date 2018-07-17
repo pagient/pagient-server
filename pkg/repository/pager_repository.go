@@ -1,11 +1,9 @@
 package repository
 
 import (
-	"strconv"
-	"strings"
 	"sync"
 
-	"github.com/pagient/pagient-server/pkg/config"
+	"github.com/jinzhu/gorm"
 	"github.com/pagient/pagient-server/pkg/model"
 	"github.com/pagient/pagient-server/pkg/service"
 	"github.com/pkg/errors"
@@ -17,47 +15,43 @@ var (
 )
 
 // GetPagerRepositoryInstance creates and returns a new PagerCfgRepository
-func GetPagerRepositoryInstance(cfg *config.Config) (service.PagerRepository, error) {
+func GetPagerRepositoryInstance(db *gorm.DB) (service.PagerRepository, error) {
 	pagerRepositoryOnce.Do(func() {
-		pagerRepositoryInstance = &pagerCfgRepository{cfg}
+		pagerRepositoryInstance = &pagerRepository{db}
 	})
 
 	return pagerRepositoryInstance, nil
 }
 
-type pagerCfgRepository struct {
-	cfg *config.Config
+type pagerRepository struct {
+	db *gorm.DB
 }
 
 // GetAll returns all available pagers
-func (repo *pagerCfgRepository) GetAll() ([]*model.Pager, error) {
+func (repo *pagerRepository) GetAll() ([]*model.Pager, error) {
 	var pagers []*model.Pager
-	for _, pagerInfo := range repo.cfg.General.Pagers {
-		pair := strings.SplitN(pagerInfo, ":", 2)
+	err := repo.db.Find(&pagers).Error
 
-		id, err := strconv.Atoi(pair[0])
-		if err != nil {
-			return nil, errors.Wrap(err, "integer string conversion failed")
-		}
+	return pagers, errors.Wrap(err, "select all pagers failed")
+}
 
-		pagers = append(pagers, &model.Pager{ID: id, Name: pair[1]})
-	}
+// GetUnassigned returns all unassigned pagers
+func (repo *pagerRepository) GetUnassigned() ([]*model.Pager, error) {
+	var pagers []*model.Pager
+	err := repo.db.
+		Joins("LEFT JOIN patients ON patients.pager_id = pagers.id").
+		Where("patients.id IS NULL").Find(&pagers).Error
 
-	return pagers, nil
+	return pagers, errors.Wrap(err, "select unassigned pagers failed")
 }
 
 // Get returns a single pager by ID
-func (repo *pagerCfgRepository) Get(id int) (*model.Pager, error) {
-	pagers, err := repo.GetAll()
-	if err != nil {
-		return nil, errors.Wrap(err, "get pagers failed")
+func (repo *pagerRepository) Get(id uint) (*model.Pager, error) {
+	pager := &model.Pager{}
+	err := repo.db.First(pager, id).Error
+	if gorm.IsRecordNotFoundError(err) {
+		return nil, nil
 	}
 
-	for _, pager := range pagers {
-		if pager.ID == id {
-			return pager, nil
-		}
-	}
-
-	return nil, nil
+	return pager, errors.Wrap(err, "select pager by id failed")
 }

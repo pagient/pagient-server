@@ -9,7 +9,7 @@ import (
 // PagerService interface
 type PagerService interface {
 	GetAll() ([]*model.Pager, error)
-	Get(int) (*model.Pager, error)
+	Get(uint) (*model.Pager, error)
 }
 
 // DefaultPagerService struct
@@ -37,12 +37,12 @@ func (service *DefaultPagerService) GetAll() ([]*model.Pager, error) {
 }
 
 // Get returns a pager by it's id
-func (service *DefaultPagerService) Get(id int) (*model.Pager, error) {
+func (service *DefaultPagerService) Get(id uint) (*model.Pager, error) {
 	pager, err := service.pagerRepository.Get(id)
 	if err != nil {
 		log.Error().
 			Err(err).
-			Int("pager ID", id).
+			Uint("pager ID", id).
 			Msg("get pager failed")
 	}
 

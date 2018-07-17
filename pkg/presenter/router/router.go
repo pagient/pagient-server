@@ -53,7 +53,7 @@ func Load(cfg *config.Config, authHandler *handler.AuthHandler, clientHandler *h
 	mux.Route("/", func(root chi.Router) {
 		root.Group(func(r chi.Router) {
 			r.Use(jwtauth.Verifier(tokenAuth))
-			r.Use(auth.Authenticator(tokenService))
+			r.Use(auth.Authenticator(tokenService, userService))
 
 			r.Route("/api", func(r chi.Router) {
 				r.Use(render.SetContentType(render.ContentTypeJSON))
@@ -88,7 +88,7 @@ func Load(cfg *config.Config, authHandler *handler.AuthHandler, clientHandler *h
 
 			r.Route("/", func(r chi.Router) {
 				r.Use(jwtauth.Verifier(tokenAuth))
-				r.Use(auth.Authenticator(tokenService))
+				r.Use(auth.Authenticator(tokenService, userService))
 
 				r.Delete("/token", authHandler.DeleteToken)
 				r.Get("/sessions", authHandler.GetSessions)

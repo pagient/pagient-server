@@ -9,12 +9,12 @@ import (
 
 // TokenResponse is the response payload for the token data model
 type TokenResponse struct {
-	*model.Token
+	Token string `json:"token"`
 }
 
 // NewTokenResponse creates a new token response from token model
 func NewTokenResponse(token *model.Token) *TokenResponse {
-	resp := &TokenResponse{Token: token}
+	resp := &TokenResponse{Token: token.Raw}
 
 	return resp
 }

@@ -14,7 +14,7 @@ func ClientCtx(clientService service.ClientService) func(http.Handler) http.Hand
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			ctxUser := req.Context().Value(UserKey).(*model.User)
-			client, err := clientService.GetByUser(ctxUser)
+			client, err := clientService.GetByUser(ctxUser.Username)
 			if err != nil {
 				log.Fatal().
 					Err(err).

@@ -2,6 +2,9 @@ package model
 
 // User struct
 type User struct {
-	Username string `json:"username"`
-	Password string `json:"password,omitempty"`
+	ID       uint   `gorm:"primary_key"`
+	Username string `gorm:"not null;unique"`
+	Password string `gorm:"not null"`
+	Client   Client `gorm:"save_associations:false"`
+	ClientID uint   `gorm:"unique"`
 }

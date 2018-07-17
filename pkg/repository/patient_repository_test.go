@@ -79,7 +79,7 @@ func TestPatientFileRepository_Get(t *testing.T) {
 			}).
 			Once()
 
-		repository := &patientFileRepository{
+		repository := &patientRepository{
 			lock: &sync.Mutex{},
 			db:   driver,
 		}
@@ -150,7 +150,7 @@ func TestPatientFileRepository_GetAll(t *testing.T) {
 			Return(test.patientsStr, test.readErr).
 			Once()
 
-		repository := &patientFileRepository{
+		repository := &patientRepository{
 			lock: &sync.Mutex{},
 			db:   driver,
 		}
@@ -216,7 +216,7 @@ func TestPatientFileRepository_Add(t *testing.T) {
 				Once()
 		}
 
-		repository := &patientFileRepository{
+		repository := &patientRepository{
 			lock: &sync.Mutex{},
 			db:   driver,
 		}
@@ -297,7 +297,7 @@ func TestPatientFileRepository_Update(t *testing.T) {
 				Once()
 		}
 
-		repository := &patientFileRepository{
+		repository := &patientRepository{
 			lock: &sync.Mutex{},
 			db:   driver,
 		}
@@ -352,7 +352,7 @@ func TestPatientFileRepository_Remove(t *testing.T) {
 			Return(test.deleteErr).
 			Once()
 
-		repository := &patientFileRepository{
+		repository := &patientRepository{
 			lock: &sync.Mutex{},
 			db:   driver,
 		}

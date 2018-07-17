@@ -27,7 +27,7 @@ func PatientCtx(patientService service.PatientService) func(http.Handler) http.H
 					return
 				}
 
-				patient, err = patientService.Get(id)
+				patient, err = patientService.Get(uint(id))
 				if err != nil {
 					log.Fatal().
 						Err(err).

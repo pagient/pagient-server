@@ -9,7 +9,8 @@ import (
 
 // TokenService interface
 type TokenService interface {
-	Get(string) ([]*model.Token, error)
+	Get(string) (*model.Token, error)
+	GetByUser(string) ([]*model.Token, error)
 	Add(*model.Token) error
 	Remove(*model.Token) error
 }
@@ -28,9 +29,21 @@ func NewTokenService(cfg *config.Config, tokenRepository TokenRepository) TokenS
 	}
 }
 
-// Get returns all active tokens by username
-func (service *DefaultTokenService) Get(username string) ([]*model.Token, error) {
-	tokens, err := service.tokenRepository.Get(username)
+// Get returns a token
+func (service *DefaultTokenService) Get(rawToken string) (*model.Token, error) {
+	token, err := service.tokenRepository.Get(rawToken)
+	if err != nil {
+		log.Error().
+			Err(err).
+			Msg("get token failed")
+	}
+
+	return token, errors.Wrap(err, "get token failed")
+}
+
+// GetByUser returns all active tokens by username
+func (service *DefaultTokenService) GetByUser(username string) ([]*model.Token, error) {
+	tokens, err := service.tokenRepository.GetByUser(username)
 	if err != nil {
 		log.Error().
 			Err(err).
@@ -38,7 +51,7 @@ func (service *DefaultTokenService) Get(username string) ([]*model.Token, error)
 			Msg("get token failed")
 	}
 
-	return tokens, errors.Wrap(err, "get token failed")
+	return tokens, errors.Wrap(err, "get token by user failed")
 }
 
 // Add adds an active token to a user

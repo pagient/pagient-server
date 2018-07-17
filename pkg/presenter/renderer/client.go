@@ -9,12 +9,13 @@ import (
 
 // ClientResponse is the response payload for the client data model
 type ClientResponse struct {
-	*model.Client
+	ID   uint   `json:"id"`
+	Name string `json:"name"`
 }
 
 // NewClientResponse creates a new client response from client model
 func NewClientResponse(client *model.Client) *ClientResponse {
-	resp := &ClientResponse{Client: client}
+	resp := &ClientResponse{ID: client.ID, Name: client.Name}
 
 	return resp
 }

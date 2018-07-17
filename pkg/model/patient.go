@@ -23,13 +23,15 @@ const (
 
 // Patient struct
 type Patient struct {
-	ID       int          `json:"id"`
-	Ssn      string       `json:"ssn"`
-	Name     string       `json:"name"`
-	PagerID  int          `json:"pagerId,omitempty"`
-	ClientID int          `json:"clientId,omitempty"`
-	Status   PatientState `json:"status"`
-	Active   bool         `json:"active"`
+	ID               uint   `gorm:"primary_key"`
+	SocialSecurityNo string `gorm:"column:ssn;not null;unique"`
+	Name             string `gorm:"not null"`
+	Pager            Pager  `gorm:"save_associations:false"`
+	PagerID          uint
+	Client           Client `gorm:"save_associations:false"`
+	ClientID         uint
+	Status           PatientState `gorm:"not null" sql:"default:\"pending\""`
+	Active           bool         `gorm:"not null" sql:"default:false"`
 }
 
 // Validate validates the patient
@@ -42,7 +44,7 @@ func (patient *Patient) Validate(pagers []*Pager) error {
 
 	if err := validation.ValidateStruct(patient,
 		validation.Field(&patient.ID, validation.Required),
-		validation.Field(&patient.Ssn, validation.Required, is.Digit, validation.Length(10, 10)),
+		validation.Field(&patient.SocialSecurityNo, validation.Required, is.Digit, validation.Length(10, 10)),
 		validation.Field(&patient.Name, validation.Required, validation.Length(1, 100)),
 		validation.Field(&patient.PagerID, validation.In(pagerIDs...)),
 		validation.Field(&patient.Status, validation.In(PatientStatePending, PatientStateCall, PatientStateCalled, PatientStateFinished)),

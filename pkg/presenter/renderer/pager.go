@@ -9,12 +9,13 @@ import (
 
 // PagerResponse is the response payload for the pager data model
 type PagerResponse struct {
-	*model.Pager
+	ID   uint   `json:"id"`
+	Name string `json:"name"`
 }
 
 // NewPagerResponse creates a new pager response from pager model
-func NewPagerResponse(Pager *model.Pager) *PagerResponse {
-	resp := &PagerResponse{Pager: Pager}
+func NewPagerResponse(pager *model.Pager) *PagerResponse {
+	resp := &PagerResponse{ID: pager.ID, Name: pager.Name}
 
 	return resp
 }

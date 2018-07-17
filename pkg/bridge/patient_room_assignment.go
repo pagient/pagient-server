@@ -1,8 +1,8 @@
 package bridge
 
 type patientRoomAssignment struct {
-	ID        int `gorm:"primary_key,column:WZJID"`
-	PatientID int `gorm:"column:PID"`
+	ID        int  `gorm:"primary_key,column:WZJID"`
+	PatientID uint `gorm:"column:PID"`
 }
 
 func (ass *patientRoomAssignment) TableName() string {

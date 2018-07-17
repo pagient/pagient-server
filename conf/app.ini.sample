@@ -4,7 +4,7 @@ ADDRESS        = 0.0.0.0:8080
 ; external access to server
 HOST           = http://localhost:8080
 ; root path of the proxy
-ROOT           = ./
+ROOT           = /
 ; path to ssl cert
 CERT           =
 ; path to ssl key
@@ -19,20 +19,10 @@ STRICT_CIPHERS = false
 ROOT    = data/
 ; secret for file encryption
 SECRET  =
-; users in the form {username}:{password}
-USERS   = pc_links:password, pc_rechts:password
-; clients in the form {id}:{name}
-; name has to match with user name
-CLIENTS = """1:linker PC, 2:rechter PC"""
-; user_client maps a user to a client
-; it is given in the form of {username}:{client_id}
-USER_CLIENT = pc_links:1, pc_rechts:2
-; pagers in the form {id}:{name}
-PAGERS = """1:Pager 1, 2:Pager 2, 3:Pager 3, 4:Pager 4"""
 
 [database]
-; provider of stored data
-PROVIDER = file
+; path of sqlite database
+PATH = pagient.db
 
 [easycall]
 ; easycall url
