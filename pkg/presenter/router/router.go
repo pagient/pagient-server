@@ -14,14 +14,15 @@ import (
 	"github.com/pagient/pagient-server/pkg/presenter/router/middleware/auth"
 	"github.com/pagient/pagient-server/pkg/presenter/router/middleware/context"
 	"github.com/pagient/pagient-server/pkg/presenter/router/middleware/header"
+	"github.com/pagient/pagient-server/pkg/presenter/websocket"
 	"github.com/pagient/pagient-server/pkg/service"
 	"github.com/rs/zerolog/hlog"
 	"github.com/rs/zerolog/log"
 )
 
 // Load initializes the routing of the application.
-func Load(cfg *config.Config, authHandler *handler.AuthHandler, clientHandler *handler.ClientHandler, pagerHandler *handler.PagerHandler, patientHandler *handler.PatientHandler,
-	websocketHandler *handler.WebsocketHandler, clientService service.ClientService, patientService service.PatientService, tokenService service.TokenService, userService service.UserService) http.Handler {
+func Load(cfg *config.Config, clientService service.ClientService, pagerService service.PagerService,
+	patientService service.PatientService, tokenService service.TokenService, userService service.UserService, wsHub *websocket.Hub) http.Handler {
 
 	mux := chi.NewRouter()
 
@@ -61,37 +62,37 @@ func Load(cfg *config.Config, authHandler *handler.AuthHandler, clientHandler *h
 
 				// Manage patients
 				r.Route("/patients", func(r chi.Router) {
-					r.Get("/", patientHandler.GetPatients)
-					r.With(context.ClientCtx(clientService)).Post("/", patientHandler.AddPatient)
+					r.Get("/", handler.GetPatients(patientService))
+					r.With(context.ClientCtx(clientService)).Post("/", handler.AddPatient(patientService))
 
 					r.Route("/{patientID}", func(r chi.Router) {
 						r.Use(context.PatientCtx(patientService))
 
-						r.Get("/", patientHandler.GetPatient)
-						r.With(context.ClientCtx(clientService)).Post("/", patientHandler.UpdatePatient)
-						r.Delete("/", patientHandler.DeletePatient)
+						r.Get("/", handler.GetPatient())
+						r.With(context.ClientCtx(clientService)).Post("/", handler.UpdatePatient(patientService))
+						r.Delete("/", handler.DeletePatient(patientService))
 					})
 				})
 
 				// List pagers
-				r.Get("/pagers", pagerHandler.GetPagers)
+				r.Get("/pagers", handler.GetPagers(pagerService))
 				// List clients
-				r.Get("/clients", clientHandler.GetClients)
+				r.Get("/clients", handler.GetClients(clientService))
 			})
 
 			// Serve Websocket
-			r.Get("/ws", websocketHandler.ServeWebsocket)
+			r.Get("/ws", handler.ServeWebsocket(cfg, tokenService, wsHub))
 		})
 
 		root.Route("/oauth", func(r chi.Router) {
-			r.Post("/token", authHandler.CreateToken)
+			r.Post("/token", handler.CreateToken(cfg, userService, tokenService))
 
 			r.Route("/", func(r chi.Router) {
 				r.Use(jwtauth.Verifier(tokenAuth))
 				r.Use(auth.Authenticator(tokenService, userService))
 
-				r.Delete("/token", authHandler.DeleteToken)
-				r.Get("/sessions", authHandler.GetSessions)
+				r.Delete("/token", handler.DeleteToken(tokenService, wsHub))
+				r.Get("/sessions", handler.GetSessions(userService, tokenService))
 			})
 		})
 

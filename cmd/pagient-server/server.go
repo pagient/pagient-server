@@ -16,7 +16,6 @@ import (
 	"github.com/oklog/run"
 	"github.com/pagient/pagient-server/pkg/bridge"
 	"github.com/pagient/pagient-server/pkg/config"
-	"github.com/pagient/pagient-server/pkg/presenter/handler"
 	"github.com/pagient/pagient-server/pkg/presenter/router"
 	"github.com/pagient/pagient-server/pkg/presenter/websocket"
 	"github.com/pagient/pagient-server/pkg/repository"
@@ -147,12 +146,6 @@ func Server() *cli.Command {
 			tokenService := service.NewTokenService(cfg, tokenRepo)
 			userService := service.NewUserService(cfg, userRepo)
 
-			authHandler := handler.NewAuthHandler(cfg, userService, tokenService, hub)
-			clientHandler := handler.NewClientHandler(clientService)
-			pagerHandler := handler.NewPagerHandler(pagerService)
-			patientHandler := handler.NewPatientHandler(patientService, hub)
-			websocketHandler := handler.NewWebsocketHandler(cfg, tokenService, hub)
-
 			var gr run.Group
 
 			{
@@ -219,7 +212,7 @@ func Server() *cli.Command {
 				{
 					server := &http.Server{
 						Addr:         cfg.Server.Address,
-						Handler:      router.Load(cfg, authHandler, clientHandler, pagerHandler, patientHandler, websocketHandler, clientService, patientService, tokenService, userService),
+						Handler:      router.Load(cfg, clientService, pagerService, patientService, tokenService, userService, hub),
 						ReadTimeout:  5 * time.Second,
 						WriteTimeout: 10 * time.Second,
 						TLSConfig: &tls.Config{
@@ -261,7 +254,7 @@ func Server() *cli.Command {
 			{
 				server := &http.Server{
 					Addr:         cfg.Server.Address,
-					Handler:      router.Load(cfg, authHandler, clientHandler, pagerHandler, patientHandler, websocketHandler, clientService, patientService, tokenService, userService),
+					Handler:      router.Load(cfg, clientService, pagerService, patientService, tokenService, userService, hub),
 					ReadTimeout:  5 * time.Second,
 					WriteTimeout: 10 * time.Second,
 				}
