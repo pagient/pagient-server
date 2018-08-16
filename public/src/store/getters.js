@@ -36,12 +36,12 @@ export const patients = state => {
   return [];
 };
 
-export const currentClient = state => {
-  return state.currentClientId ? state.clients[state.currentClientId] : {};
+export const activeClient = state => {
+  return state.activeClientId ? state.clients[state.activeClientId] : {};
 };
 
-export const currentPatient = (state, getters) => {
-  const client = currentClient(state);
+export const activePatient = (state, getters) => {
+  const client = activeClient(state);
   return getters.patientByClient(client);
 };
 

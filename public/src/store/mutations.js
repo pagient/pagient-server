@@ -43,7 +43,7 @@ export default {
       patientBeforeUpdate.name !== patient.name ||
       patientBeforeUpdate.clientId !== patient.clientId
     ) {
-      setCurrentClient(state, patient.clientId);
+      setActiveClient(state, patient.clientId);
     }
   },
   deletePatient(state, patient) {
@@ -53,7 +53,8 @@ export default {
     state.patients = { ...patients };
   },
   switchClient(state, client) {
-    setCurrentClient(state, client.id);
+    localStorage.setItem("activeClient", client.id);
+    setActiveClient(state, client.id);
   }
 };
 
@@ -75,6 +76,6 @@ function createPatient(state, id, patient) {
   Vue.set(state.patients, id, patient);
 }
 
-function setCurrentClient(state, id) {
-  state.currentClientId = id;
+function setActiveClient(state, id) {
+  state.activeClientId = id;
 }

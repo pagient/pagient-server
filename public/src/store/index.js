@@ -7,7 +7,7 @@ import mutations from "./mutations";
 const state = {
   isLoggedIn: !!localStorage.getItem("token"),
   authToken: localStorage.getItem("token"),
-  currentClientId: null,
+  activeClientId: localStorage.getItem("activeClient"),
   clients: {
     /*
     id: {
