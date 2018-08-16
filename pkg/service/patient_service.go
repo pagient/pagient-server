@@ -81,6 +81,7 @@ func (service *DefaultPatientService) Add(patient *model.Patient) (*model.Patien
 
 	session := service.patientRepository.BeginTx()
 	if err := service.validatePatient(session, patient); err != nil {
+		service.patientRepository.RollbackTx(session)
 		return nil, errors.WithStack(err)
 	}
 
@@ -105,6 +106,7 @@ func (service *DefaultPatientService) Add(patient *model.Patient) (*model.Patien
 
 	if patient.Active {
 		if err := service.cleanupPatients(session, patient); err != nil {
+			service.patientRepository.RollbackTx(session)
 			return nil, errors.WithStack(err)
 		}
 	}
@@ -119,6 +121,7 @@ func (service *DefaultPatientService) Add(patient *model.Patient) (*model.Patien
 func (service *DefaultPatientService) Update(patient *model.Patient) (*model.Patient, error) {
 	session := service.patientRepository.BeginTx()
 	if err := service.validatePatient(session, patient); err != nil {
+		service.patientRepository.RollbackTx(session)
 		return nil, errors.WithStack(err)
 	}
 
@@ -155,6 +158,7 @@ func (service *DefaultPatientService) Update(patient *model.Patient) (*model.Pat
 
 	if patient.Active || (patient.PagerID == 0 && patient.PagerID != patientBeforeUpdate.PagerID) {
 		if err := service.cleanupPatients(session, patient); err != nil {
+			service.patientRepository.RollbackTx(session)
 			return nil, errors.WithStack(err)
 		}
 	}
@@ -178,18 +182,7 @@ func (service *DefaultPatientService) Update(patient *model.Patient) (*model.Pat
 				Uint("pager ID", patient.PagerID).
 				Msg("call pager failed")
 
-			patient.Status = model.PatientStatePending
-
-			patient, err = service.patientRepository.Update(session, patient)
-			if err != nil {
-				log.Error().
-					Err(err).
-					Msg("update patient failed")
-
-				service.patientRepository.RollbackTx(session)
-				return nil, errors.Wrap(err, "update patient failed")
-			}
-
+			service.patientRepository.RollbackTx(session)
 			return nil, &externalServiceErr{"pager call failed"}
 		}
 
@@ -289,7 +282,6 @@ func (service *DefaultPatientService) cleanupPatients(session DB, patient *model
 				Err(err).
 				Msg("mark all patients as inactive failed")
 
-			service.patientRepository.RollbackTx(session)
 			return errors.Wrap(err, "mark all patients as inactive failed")
 		}
 
@@ -305,7 +297,6 @@ func (service *DefaultPatientService) cleanupPatients(session DB, patient *model
 			Err(err).
 			Msg("remove all inactive patients without pager failed")
 
-		service.patientRepository.RollbackTx(session)
 		return errors.Wrap(err, "remove all inactive patients without pager failed")
 	}
 
