@@ -27,38 +27,53 @@ func NewClientService(repository ClientRepository) ClientService {
 
 // GetAll returns all clients
 func (service *DefaultClientService) GetAll() ([]*model.Client, error) {
-	clients, err := service.clientRepository.GetAll()
+	session := service.clientRepository.BeginTx()
+	clients, err := service.clientRepository.GetAll(session)
 	if err != nil {
 		log.Error().
 			Err(err).
 			Msg("get all clients failed")
+
+		service.clientRepository.RollbackTx(session)
+		return nil, errors.Wrap(err, "get all clients failed")
 	}
 
-	return clients, errors.Wrap(err, "get all clients failed")
+	service.clientRepository.CommitTx(session)
+	return clients, nil
 }
 
 // Get returns a client by it's id
 func (service *DefaultClientService) Get(id uint) (*model.Client, error) {
-	client, err := service.clientRepository.Get(id)
+	session := service.clientRepository.BeginTx()
+	client, err := service.clientRepository.Get(session, id)
 	if err != nil {
 		log.Error().
 			Err(err).
 			Uint("client id", id).
 			Msg("get client failed")
+
+		service.clientRepository.RollbackTx(session)
+		return nil, errors.Wrap(err, "get client failed")
 	}
 
-	return client, errors.Wrap(err, "get client failed")
+	service.clientRepository.CommitTx(session)
+	return client, nil
 }
 
 // GetByUser returns a client belonging to the given user
 func (service *DefaultClientService) GetByUser(username string) (*model.Client, error) {
-	client, err := service.clientRepository.GetByUser(username)
+	session := service.clientRepository.BeginTx()
+	client, err := service.clientRepository.GetByUser(session, username)
 	if err != nil {
 		log.Error().
 			Err(err).
 			Str("username", username).
 			Msg("get client by user failed")
+
+		service.clientRepository.RollbackTx(session)
+		return nil, errors.Wrap(err, "get client by user failed")
 	}
 
-	return client, errors.Wrap(err, "get client by user failed")
+	service.clientRepository.CommitTx(session)
+	return client, nil
 }

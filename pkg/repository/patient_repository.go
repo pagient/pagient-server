@@ -1,8 +1,6 @@
 package repository
 
 import (
-	"sync"
-
 	"github.com/jinzhu/gorm"
 	"github.com/pagient/pagient-server/pkg/model"
 	"github.com/pagient/pagient-server/pkg/service"
@@ -10,42 +8,13 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-const (
-	patientCollection = "patient"
-)
-
-var (
-	patientRepositoryOnce     sync.Once
-	patientRepositoryInstance service.PatientRepository
-)
-
-// GetPatientRepositoryInstance creates and returns a new PatientFileRepository
-func GetPatientRepositoryInstance(db *gorm.DB) (service.PatientRepository, error) {
-	patientRepositoryOnce.Do(func() {
-		patientRepositoryInstance = &patientRepository{db}
-	})
-
-	return patientRepositoryInstance, nil
-}
-
 type patientRepository struct {
-	db *gorm.DB
+	sqlRepository
 }
 
-// BeginTx begins a transaction
-func (repo *patientRepository) BeginTx() service.DB {
-	return repo.db.Begin()
-}
-
-//
-func (repo *patientRepository) RollbackTx(sess service.DB) service.DB {
-	session := sess.(*gorm.DB)
-	return session.Rollback()
-}
-
-func (repo *patientRepository) CommitTx(sess service.DB) service.DB {
-	session := sess.(*gorm.DB)
-	return session.Commit()
+// NewPatientRepository returns a new instance of a PatientRepository
+func NewPatientRepository(db *gorm.DB) service.PatientRepository {
+	return &patientRepository{sqlRepository{db}}
 }
 
 // GetAll lists all patients

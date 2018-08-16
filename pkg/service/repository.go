@@ -8,25 +8,31 @@ import (
 // DB generic interface
 type DB interface{}
 
+type repository interface {
+	BeginTx() DB
+	RollbackTx(DB) DB
+	CommitTx(DB) DB
+}
+
 // ClientRepository interface
 type ClientRepository interface {
-	GetAll() ([]*model.Client, error)
-	Get(uint) (*model.Client, error)
-	GetByUser(string) (*model.Client, error)
+	repository
+	GetAll(DB) ([]*model.Client, error)
+	Get(DB, uint) (*model.Client, error)
+	GetByUser(DB, string) (*model.Client, error)
 }
 
 // PagerRepository interface
 type PagerRepository interface {
-	GetAll() ([]*model.Pager, error)
-	GetUnassigned() ([]*model.Pager, error)
-	Get(uint) (*model.Pager, error)
+	repository
+	GetAll(DB) ([]*model.Pager, error)
+	GetUnassigned(DB) ([]*model.Pager, error)
+	Get(DB, uint) (*model.Pager, error)
 }
 
 // PatientRepository interface
 type PatientRepository interface {
-	BeginTx() DB
-	RollbackTx(DB) DB
-	CommitTx(DB) DB
+	repository
 	GetAll(DB) ([]*model.Patient, error)
 	Get(DB, uint) (*model.Patient, error)
 	Add(DB, *model.Patient) (*model.Patient, error)
@@ -38,17 +44,19 @@ type PatientRepository interface {
 
 // TokenRepository interface
 type TokenRepository interface {
-	Get(string) (*model.Token, error)
-	GetByUser(string) ([]*model.Token, error)
-	Add(*model.Token) (*model.Token, error)
-	Remove(*model.Token) (*model.Token, error)
+	repository
+	Get(DB, string) (*model.Token, error)
+	GetByUser(DB, string) ([]*model.Token, error)
+	Add(DB, *model.Token) (*model.Token, error)
+	Remove(DB, *model.Token) (*model.Token, error)
 }
 
 // UserRepository interface
 type UserRepository interface {
-	GetAll() ([]*model.User, error)
-	Get(string) (*model.User, error)
-	GetByToken(string) (*model.User, error)
+	repository
+	GetAll(DB) ([]*model.User, error)
+	Get(DB, string) (*model.User, error)
+	GetByToken(DB, string) (*model.User, error)
 }
 
 type entryExistErr interface {

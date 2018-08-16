@@ -61,6 +61,7 @@ func Server() *cli.Command {
 
 				os.Exit(1)
 			}
+			defer logFile.Close()
 
 			if cfg.Log.Pretty {
 				log.Logger = log.Output(
@@ -86,6 +87,7 @@ func Server() *cli.Command {
 			db.SetLogger(&log.Logger)
 			defer db.Close()
 
+			// Create database tables etc.
 			if err := repository.InitDatabase(db); err != nil {
 				log.Fatal().
 					Err(err).
@@ -95,46 +97,11 @@ func Server() *cli.Command {
 			}
 
 			// Initialize Repositories  (database access)
-			clientRepo, err := repository.GetClientRepositoryInstance(db)
-			if err != nil {
-				log.Fatal().
-					Err(err).
-					Msg("client repository initialization failed")
-
-				os.Exit(1)
-			}
-			pagerRepo, err := repository.GetPagerRepositoryInstance(db)
-			if err != nil {
-				log.Fatal().
-					Err(err).
-					Msg("pager repository initialization failed")
-
-				os.Exit(1)
-			}
-			patientRepo, err := repository.GetPatientRepositoryInstance(db)
-			if err != nil {
-				log.Fatal().
-					Err(err).
-					Msg("patient repository initialization failed")
-
-				os.Exit(1)
-			}
-			tokenRepo, err := repository.GetTokenRepositoryInstance(db)
-			if err != nil {
-				log.Fatal().
-					Err(err).
-					Msg("token repository initialization failed")
-
-				os.Exit(1)
-			}
-			userRepo, err := repository.GetUserRepositoryInstance(db)
-			if err != nil {
-				log.Fatal().
-					Err(err).
-					Msg("user repository initialization failed")
-
-				os.Exit(1)
-			}
+			clientRepo := repository.NewClientRepository(db)
+			pagerRepo := repository.NewPagerRepository(db)
+			patientRepo := repository.NewPatientRepository(db)
+			tokenRepo := repository.NewTokenRepository(db)
+			userRepo := repository.NewUserRepository(db)
 
 			// Initialize Websocket Hub and Handler (presenter layer)
 			hub := websocket.NewHub()

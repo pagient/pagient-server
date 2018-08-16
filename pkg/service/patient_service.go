@@ -242,7 +242,7 @@ func (service *DefaultPatientService) Remove(patient *model.Patient) error {
 
 func (service *DefaultPatientService) validatePatient(session DB, patient *model.Patient) error {
 	// load pagers to validate if pager sent with request is valid
-	pagers, err := service.pagerRepository.GetUnassigned()
+	pagers, err := service.pagerRepository.GetUnassigned(session)
 	if err != nil {
 		log.Error().
 			Err(err).

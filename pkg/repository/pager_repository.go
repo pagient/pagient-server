@@ -1,44 +1,37 @@
 package repository
 
 import (
-	"sync"
-
 	"github.com/jinzhu/gorm"
 	"github.com/pagient/pagient-server/pkg/model"
 	"github.com/pagient/pagient-server/pkg/service"
 	"github.com/pkg/errors"
 )
 
-var (
-	pagerRepositoryOnce     sync.Once
-	pagerRepositoryInstance service.PagerRepository
-)
-
-// GetPagerRepositoryInstance creates and returns a new PagerCfgRepository
-func GetPagerRepositoryInstance(db *gorm.DB) (service.PagerRepository, error) {
-	pagerRepositoryOnce.Do(func() {
-		pagerRepositoryInstance = &pagerRepository{db}
-	})
-
-	return pagerRepositoryInstance, nil
+type pagerRepository struct {
+	sqlRepository
 }
 
-type pagerRepository struct {
-	db *gorm.DB
+// NewPagerRepository returns a new instance of a PagerRepository
+func NewPagerRepository(db *gorm.DB) service.PagerRepository {
+	return &pagerRepository{sqlRepository{db}}
 }
 
 // GetAll returns all available pagers
-func (repo *pagerRepository) GetAll() ([]*model.Pager, error) {
+func (repo *pagerRepository) GetAll(sess service.DB) ([]*model.Pager, error) {
+	session := sess.(*gorm.DB)
+
 	var pagers []*model.Pager
-	err := repo.db.Find(&pagers).Error
+	err := session.Find(&pagers).Error
 
 	return pagers, errors.Wrap(err, "select all pagers failed")
 }
 
 // GetUnassigned returns all unassigned pagers
-func (repo *pagerRepository) GetUnassigned() ([]*model.Pager, error) {
+func (repo *pagerRepository) GetUnassigned(sess service.DB) ([]*model.Pager, error) {
+	session := sess.(*gorm.DB)
+
 	var pagers []*model.Pager
-	err := repo.db.
+	err := session.
 		Joins("LEFT JOIN patients ON patients.pager_id = pagers.id").
 		Where("patients.id IS NULL").Find(&pagers).Error
 
@@ -46,9 +39,11 @@ func (repo *pagerRepository) GetUnassigned() ([]*model.Pager, error) {
 }
 
 // Get returns a single pager by ID
-func (repo *pagerRepository) Get(id uint) (*model.Pager, error) {
+func (repo *pagerRepository) Get(sess service.DB, id uint) (*model.Pager, error) {
+	session := sess.(*gorm.DB)
+
 	pager := &model.Pager{}
-	err := repo.db.First(pager, id).Error
+	err := session.First(pager, id).Error
 	if gorm.IsRecordNotFoundError(err) {
 		return nil, nil
 	}

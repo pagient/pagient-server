@@ -26,25 +26,35 @@ func NewPagerService(repository PagerRepository) PagerService {
 
 // GetAll returns all pagers
 func (service *DefaultPagerService) GetAll() ([]*model.Pager, error) {
-	pagers, err := service.pagerRepository.GetAll()
+	session := service.pagerRepository.BeginTx()
+	pagers, err := service.pagerRepository.GetAll(session)
 	if err != nil {
 		log.Error().
 			Err(err).
 			Msg("get all pagers failed")
+
+		service.pagerRepository.RollbackTx(session)
+		return nil, errors.Wrap(err, "get all pagers failed")
 	}
 
-	return pagers, errors.Wrap(err, "get all pagers failed")
+	service.pagerRepository.CommitTx(session)
+	return pagers, nil
 }
 
 // Get returns a pager by it's id
 func (service *DefaultPagerService) Get(id uint) (*model.Pager, error) {
-	pager, err := service.pagerRepository.Get(id)
+	session := service.pagerRepository.BeginTx()
+	pager, err := service.pagerRepository.Get(session, id)
 	if err != nil {
 		log.Error().
 			Err(err).
 			Uint("pager ID", id).
 			Msg("get pager failed")
+
+		service.pagerRepository.RollbackTx(session)
+		return nil, errors.Wrapf(err, "get pager failed", id)
 	}
 
-	return pager, errors.Wrapf(err, "get pager failed", id)
+	service.pagerRepository.CommitTx(session)
+	return pager, nil
 }

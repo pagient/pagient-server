@@ -31,45 +31,63 @@ func NewTokenService(cfg *config.Config, tokenRepository TokenRepository) TokenS
 
 // Get returns a token
 func (service *DefaultTokenService) Get(rawToken string) (*model.Token, error) {
-	token, err := service.tokenRepository.Get(rawToken)
+	session := service.tokenRepository.BeginTx()
+	token, err := service.tokenRepository.Get(session, rawToken)
 	if err != nil {
 		log.Error().
 			Err(err).
 			Msg("get token failed")
+
+		service.tokenRepository.RollbackTx(session)
+		return nil, errors.Wrap(err, "get token failed")
 	}
 
-	return token, errors.Wrap(err, "get token failed")
+	service.tokenRepository.CommitTx(session)
+	return token, nil
 }
 
 // GetByUser returns all active tokens by username
 func (service *DefaultTokenService) GetByUser(username string) ([]*model.Token, error) {
-	tokens, err := service.tokenRepository.GetByUser(username)
+	session := service.tokenRepository.BeginTx()
+	tokens, err := service.tokenRepository.GetByUser(session, username)
 	if err != nil {
 		log.Error().
 			Err(err).
 			Str("user", username).
 			Msg("get token failed")
+
+		service.tokenRepository.RollbackTx(session)
+		return nil, errors.Wrap(err, "get token by user failed")
 	}
 
-	return tokens, errors.Wrap(err, "get token by user failed")
+	service.tokenRepository.CommitTx(session)
+	return tokens, nil
 }
 
 // Add adds an active token to a user
 func (service *DefaultTokenService) Add(token *model.Token) error {
-	token, err := service.tokenRepository.Add(token)
+	session := service.tokenRepository.BeginTx()
+	token, err := service.tokenRepository.Add(session, token)
 	if err != nil {
 		log.Error().
 			Err(err).
 			Msg("add token failed")
+
+		service.tokenRepository.RollbackTx(session)
+		return errors.Wrap(err, "add token failed")
 	}
 
-	return errors.Wrap(err, "add token failed")
+	service.tokenRepository.CommitTx(session)
+	return nil
 }
 
 // Remove removes an active token from a user
 func (service *DefaultTokenService) Remove(token *model.Token) error {
-	token, err := service.tokenRepository.Remove(token)
+	session := service.tokenRepository.BeginTx()
+	token, err := service.tokenRepository.Remove(session, token)
 	if err != nil {
+		service.tokenRepository.RollbackTx(session)
+
 		if isEntryNotExistErr(err) {
 			return &modelNotExistErr{"token doesn't exist"}
 		}
@@ -81,5 +99,6 @@ func (service *DefaultTokenService) Remove(token *model.Token) error {
 		return errors.Wrap(err, "remove token failed")
 	}
 
+	service.tokenRepository.CommitTx(session)
 	return nil
 }

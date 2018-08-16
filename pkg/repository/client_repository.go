@@ -1,44 +1,37 @@
 package repository
 
 import (
-	"sync"
-
 	"github.com/jinzhu/gorm"
 	"github.com/pagient/pagient-server/pkg/model"
 	"github.com/pagient/pagient-server/pkg/service"
 	"github.com/pkg/errors"
 )
 
-var (
-	clientRepositoryOnce     sync.Once
-	clientRepositoryInstance service.ClientRepository
-)
-
-// GetClientRepositoryInstance creates and returns a new ClientCfgRepository
-func GetClientRepositoryInstance(db *gorm.DB) (service.ClientRepository, error) {
-	clientRepositoryOnce.Do(func() {
-		clientRepositoryInstance = &clientRepository{db}
-	})
-
-	return clientRepositoryInstance, nil
+type clientRepository struct {
+	sqlRepository
 }
 
-type clientRepository struct {
-	db *gorm.DB
+// NewClientRepository returns a new instance of a ClientRepository
+func NewClientRepository(db *gorm.DB) service.ClientRepository {
+	return &clientRepository{sqlRepository{db}}
 }
 
 // GetAll returns all configured clients
-func (repo *clientRepository) GetAll() ([]*model.Client, error) {
+func (repo *clientRepository) GetAll(sess service.DB) ([]*model.Client, error) {
+	session := sess.(*gorm.DB)
+
 	var clients []*model.Client
-	err := repo.db.Find(&clients).Error
+	err := session.Find(&clients).Error
 
 	return clients, errors.Wrap(err, "select all clients failed")
 }
 
 // Get returns a client by it's id
-func (repo *clientRepository) Get(id uint) (*model.Client, error) {
+func (repo *clientRepository) Get(sess service.DB, id uint) (*model.Client, error) {
+	session := sess.(*gorm.DB)
+
 	client := &model.Client{}
-	err := repo.db.First(client, id).Error
+	err := session.First(client, id).Error
 	if gorm.IsRecordNotFoundError(err) {
 		return nil, nil
 	}
@@ -46,9 +39,11 @@ func (repo *clientRepository) Get(id uint) (*model.Client, error) {
 	return client, errors.Wrap(err, "select client by id failed")
 }
 
-func (repo *clientRepository) GetByUser(username string) (*model.Client, error) {
+func (repo *clientRepository) GetByUser(sess service.DB, username string) (*model.Client, error) {
+	session := sess.(*gorm.DB)
+
 	client := &model.Client{}
-	err := repo.db.
+	err := session.
 		Joins("JOIN users ON users.client_id = clients.id").
 		Where("users.username = ?", username).First(client).Error
 	if gorm.IsRecordNotFoundError(err) {

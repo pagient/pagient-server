@@ -1,35 +1,26 @@
 package repository
 
 import (
-	"sync"
-
 	"github.com/jinzhu/gorm"
 	"github.com/pagient/pagient-server/pkg/model"
-	"github.com/pagient/pagient-server/pkg/service"
 	"github.com/pkg/errors"
+	"github.com/pagient/pagient-server/pkg/service"
 )
-
-var (
-	tokenRepositoryOnce     sync.Once
-	tokenRepositoryInstance service.TokenRepository
-)
-
-// GetTokenRepositoryInstance creates and returns a new TokenFileRepository
-func GetTokenRepositoryInstance(db *gorm.DB) (service.TokenRepository, error) {
-	tokenRepositoryOnce.Do(func() {
-		tokenRepositoryInstance = &tokenRepository{db}
-	})
-
-	return tokenRepositoryInstance, nil
-}
 
 type tokenRepository struct {
-	db *gorm.DB
+	sqlRepository
 }
 
-func (repo *tokenRepository) Get(rawToken string) (*model.Token, error) {
+// NewTokenRepository returns a new instance of a TokenRepository
+func NewTokenRepository(db *gorm.DB) service.TokenRepository {
+	return &tokenRepository{sqlRepository{db}}
+}
+
+func (repo *tokenRepository) Get(sess service.DB, rawToken string) (*model.Token, error) {
+	session := sess.(*gorm.DB)
+
 	token := &model.Token{}
-	err := repo.db.Where(&model.Token{
+	err := session.Where(&model.Token{
 		Raw: rawToken,
 	}).First(token).Error
 	if gorm.IsRecordNotFoundError(err) {
@@ -39,23 +30,29 @@ func (repo *tokenRepository) Get(rawToken string) (*model.Token, error) {
 	return token, errors.Wrap(err, "select token failed")
 }
 
-func (repo *tokenRepository) GetByUser(username string) ([]*model.Token, error) {
+func (repo *tokenRepository) GetByUser(sess service.DB, username string) ([]*model.Token, error) {
+	session := sess.(*gorm.DB)
+
 	var tokens []*model.Token
-	err := repo.db.
+	err := session.
 		Joins("JOIN users ON users.id = tokens.user_id").
 		Where("users.username = ?", username).Find(&tokens).Error
 
 	return tokens, errors.Wrap(err, "select tokens by user failed")
 }
 
-func (repo *tokenRepository) Add(token *model.Token) (*model.Token, error) {
-	err := repo.db.Create(token).Error
+func (repo *tokenRepository) Add(sess service.DB, token *model.Token) (*model.Token, error) {
+	session := sess.(*gorm.DB)
+
+	err := session.Create(token).Error
 
 	return token, errors.Wrap(err, "create token failed")
 }
 
-func (repo *tokenRepository) Remove(token *model.Token) (*model.Token, error) {
-	err := repo.db.Delete(token).Error
+func (repo *tokenRepository) Remove(sess service.DB, token *model.Token) (*model.Token, error) {
+	session := sess.(*gorm.DB)
+
+	err := session.Delete(token).Error
 	if gorm.IsRecordNotFoundError(err) {
 		return nil, &entryNotExistErr{"token not found"}
 	}
