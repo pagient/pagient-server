@@ -40,7 +40,7 @@ func (t *tx) Rollback() error {
 }
 
 // OpenSQL opens a mssql database connection by given config
-func Open() (bridge.DB, error) {
+func Open() (*db, error) {
 	if config.Bridge.DB.Driver != "sqlserver" {
 		return nil, errors.New("only sqlserver is supported at the moment")
 	}

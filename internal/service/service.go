@@ -53,6 +53,6 @@ type DefaultService struct {
 	notifier notifier.Notifier
 }
 
-func Init(db DB, notifier notifier.Notifier) Service {
+func Init(db DB, notifier notifier.Notifier) *DefaultService {
 	return &DefaultService{db, notifier}
 }
