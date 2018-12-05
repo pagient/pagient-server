@@ -162,23 +162,9 @@ func (service *DefaultService) UpdatePatient(patient *model.Patient) (*model.Pat
 			Uint("pager", patient.PagerID).
 			Msg("pager gets called")
 
-		client := easycall.NewClient(config.EasyCall.URL, config.EasyCall.User, config.EasyCall.Password)
-
-		if err := client.Send(&easycall.SendOptions{
-			Receiver: int(patient.PagerID),
-			Message:  "",
-			Port:     config.EasyCall.Port,
-		}); err != nil {
+		if err := service.callPatient(tx, patient); err != nil {
 			tx.Rollback()
-			return nil, &externalServiceErr{"pager call failed"}
-		}
-
-		patient.Status = model.PatientStateCalled
-
-		patient, err = tx.UpdatePatient(patient)
-		if err != nil {
-			tx.Rollback()
-			return nil, errors.Wrap(err, "update patient failed")
+			return nil, errors.Wrap(err, "call patient failed")
 		}
 	}
 
@@ -212,6 +198,44 @@ func (service *DefaultService) DeletePatient(patient *model.Patient) error {
 
 	tx.Commit()
 	service.notifier.NotifyDeletedPatient(patient)
+
+	return nil
+}
+
+func (service *DefaultService) CallPatient(patient *model.Patient) error {
+	tx, err := service.db.Begin()
+	if err != nil {
+		return errors.Wrap(err, "create transaction failed")
+	}
+
+	if err := service.callPatient(tx, patient); err != nil {
+		tx.Rollback()
+		return errors.Wrap(err, "call patient failed")
+	}
+
+	tx.Commit()
+	service.notifier.NotifyUpdatedPatient(patient)
+
+	return nil
+}
+
+func (service *DefaultService) callPatient(tx Tx, patient *model.Patient) error {
+	client := easycall.NewClient(config.EasyCall.URL, config.EasyCall.User, config.EasyCall.Password)
+
+	if err := client.Send(&easycall.SendOptions{
+		Receiver: int(patient.PagerID),
+		Message:  "",
+		Port:     config.EasyCall.Port,
+	}); err != nil {
+		return &externalServiceErr{"pager call failed"}
+	}
+
+	patient.Status = model.PatientStateCalled
+
+	patient, err := tx.UpdatePatient(patient)
+	if err != nil {
+		return errors.Wrap(err, "update patient failed")
+	}
 
 	return nil
 }

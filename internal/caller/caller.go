@@ -110,10 +110,8 @@ func (c *Caller) Run(stop <-chan struct{}) error {
 
 func (c *Caller) callPatients(patients []*model.Patient) error {
 	for _, patient := range patients {
-		// call patient
-		patient.Status = model.PatientStateCall
-		if _, err := c.service.UpdatePatient(patient); err != nil {
-			return errors.Wrap(err, "update patient failed")
+		if err := c.service.CallPatient(patient); err != nil {
+			return errors.Wrap(err, "call patient failed")
 		}
 	}
 

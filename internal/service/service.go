@@ -23,6 +23,7 @@ type PatientService interface {
 	AddPatient(*model.Patient) (*model.Patient, error)
 	UpdatePatient(*model.Patient) (*model.Patient, error)
 	DeletePatient(*model.Patient) error
+	CallPatient(*model.Patient) error
 }
 
 type TokenService interface {
