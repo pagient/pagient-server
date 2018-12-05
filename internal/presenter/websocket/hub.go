@@ -6,7 +6,7 @@ package websocket
 
 import (
 	"github.com/pagient/pagient-server/internal/model"
-	"github.com/pagient/pagient-server/internal/presenterenter/renderer"
+	"github.com/pagient/pagient-server/internal/presenter/renderer"
 )
 
 // Hub maintains the set of active clients and broadcasts messages to the
