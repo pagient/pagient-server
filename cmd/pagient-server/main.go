@@ -4,8 +4,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/pagient/pagient-server/pkg/config"
-	"github.com/pagient/pagient-server/pkg/version"
+	"github.com/pagient/pagient-server/internal/config"
+	"github.com/pagient/pagient-server/internal/version"
 	"gopkg.in/urfave/cli.v2"
 )
 

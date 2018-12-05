@@ -1,3 +1,13 @@
+[general]
+; root path of stored data
+ROOT      = data/
+; secret for file encryption
+SECRET    =
+; database driver
+DB_DRIVER = sqlite3
+; path of sqlite database
+DB_PATH   = pagient.db
+
 [server]
 ; address to bind the server
 ADDRESS        = 0.0.0.0:8080
@@ -14,15 +24,15 @@ STRICT_CURVES  = false
 ; use strict ssl ciphers
 STRICT_CIPHERS = false
 
-[general]
-; root path of stored data
-ROOT    = data/
-; secret for file encryption
-SECRET  =
 
-[database]
-; path of sqlite database
-PATH = pagient.db
+[log]
+; set logging level
+LEVEL   = info
+; enable colored logging
+COLORED = false
+; enable pretty logging
+PRETTY  = false
+
 
 [easycall]
 ; easycall url
@@ -35,15 +45,18 @@ PASSWORD =
 PORT     = COM1
 
 [bridge]
-; surgery software uses mssql database
-; database url
-DB_URL      = localhost:1433
+; database driver
+DB_DRIVER   = sqlserver
+; database host
+DB_HOST     = localhost
+; database port
+DB_PORT     = 1433
+; database name
+DB_NAME     =
 ; database user
 DB_USER     =
 ; database password
 DB_PASSWORD =
-; database name
-DB_NAME     =
 ; database polling interval in seconds
 POLLING_INTERVAL           = 5
 ; defines room when to call patient (on enter)
@@ -53,11 +66,3 @@ CALL_ACTION_WZ             = O
 ; the required position in the queue before pager will be called
 ; -1 if no specific position is required
 CALL_ACTION_QUEUE_POSITION = 3
-
-[log]
-; set logging level
-LEVEL   = info
-; enable colored logging
-COLORED = false
-; enable pretty logging
-PRETTY  = false

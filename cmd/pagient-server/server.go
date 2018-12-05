@@ -5,22 +5,22 @@ package main
 import (
 	"context"
 	"crypto/tls"
+	"github.com/pagient/pagient-server/internal/caller"
 	"net/http"
 	"os"
 	"os/signal"
-	"path"
 	"time"
 
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/sqlite" // import sqlite for database connection
+	"github.com/pagient/pagient-server/internal/bridge"
+	bridgeDB "github.com/pagient/pagient-server/internal/bridge/database"
+	"github.com/pagient/pagient-server/internal/config"
+	"github.com/pagient/pagient-server/internal/database"
+	"github.com/pagient/pagient-server/internal/logger"
+	"github.com/pagient/pagient-server/internal/presenter/router"
+	"github.com/pagient/pagient-server/internal/presenter/websocket"
+	"github.com/pagient/pagient-server/internal/service"
+
 	"github.com/oklog/run"
-	"github.com/pagient/pagient-server/pkg/bridge"
-	"github.com/pagient/pagient-server/pkg/config"
-	"github.com/pagient/pagient-server/pkg/presenter/router"
-	"github.com/pagient/pagient-server/pkg/presenter/websocket"
-	"github.com/pagient/pagient-server/pkg/repository"
-	"github.com/pagient/pagient-server/pkg/service"
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/urfave/cli.v2"
 )
@@ -36,8 +36,7 @@ func Server() *cli.Command {
 		},
 
 		Action: func(c *cli.Context) error {
-			cfg, err := config.New()
-			if err != nil {
+			if err := config.Load(); err != nil {
 				log.Fatal().
 					Err(err).
 					Msg("config could not be loaded")
@@ -45,50 +44,18 @@ func Server() *cli.Command {
 				os.Exit(1)
 			}
 
-			level, err := zerolog.ParseLevel(cfg.Log.Level)
-			if err != nil {
+			// Setup Logger
+			if err := logger.Init(); err != nil {
 				log.Fatal().
 					Err(err).
-					Msg("parse log level failed")
-			}
-			zerolog.SetGlobalLevel(level)
-
-			logFile, err := os.OpenFile(path.Join(cfg.General.Root, "pagient.log"), os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
-			if err != nil {
-				log.Fatal().
-					Err(err).
-					Msg("logfile could not be opened")
+					Msg("logger initialization failed")
 
 				os.Exit(1)
 			}
-			defer logFile.Close()
 
-			if cfg.Log.Pretty {
-				log.Logger = log.Output(
-					zerolog.ConsoleWriter{
-						Out:     logFile,
-						NoColor: !cfg.Log.Colored,
-					},
-				)
-			} else {
-				log.Logger = log.Output(logFile)
-			}
-
-			// Initialize Database Connection
-			db, err := gorm.Open("sqlite3", cfg.Database.Path)
+			// Setup Database Connection
+			db, err := database.Open()
 			if err != nil {
-				log.Fatal().
-					Err(err).
-					Msg("establish database connection failed")
-
-				os.Exit(1)
-			}
-			db.LogMode(zerolog.GlobalLevel() <= zerolog.DebugLevel)
-			db.SetLogger(&log.Logger)
-			defer db.Close()
-
-			// Create database tables etc.
-			if err := repository.InitDatabase(db); err != nil {
 				log.Fatal().
 					Err(err).
 					Msg("database initialization failed")
@@ -96,22 +63,11 @@ func Server() *cli.Command {
 				os.Exit(1)
 			}
 
-			// Initialize Repositories  (database access)
-			clientRepo := repository.NewClientRepository(db)
-			pagerRepo := repository.NewPagerRepository(db)
-			patientRepo := repository.NewPatientRepository(db)
-			tokenRepo := repository.NewTokenRepository(db)
-			userRepo := repository.NewUserRepository(db)
-
-			// Initialize Websocket Hub and Handler (presenter layer)
+			// Initialize notifier (websocket hub)
 			hub := websocket.NewHub()
 
-			// Initialize Services (business logic)
-			clientService := service.NewClientService(clientRepo)
-			pagerService := service.NewPagerService(pagerRepo)
-			patientService := service.NewPatientService(cfg, patientRepo, pagerRepo, hub)
-			tokenService := service.NewTokenService(cfg, tokenRepo)
-			userService := service.NewUserService(cfg, userRepo)
+			// Setup Business Layer
+			s := service.Init(db, hub)
 
 			var gr run.Group
 
@@ -145,27 +101,41 @@ func Server() *cli.Command {
 			}
 
 			{
-				surgerySoftwareBridge := bridge.NewBridge(cfg, patientService, hub)
+				// Setup Bridge Database Connection
+				db, err := bridgeDB.Open()
+				if err != nil {
+					log.Fatal().
+						Err(err).
+						Msg("bridge database initialization failed")
+
+					return err
+				}
+
+				// Setup Software Bridge
+				softwareBridge := bridge.NewBridge(db)
+
+				// Setup Caller
+				pagerCaller := caller.NewCaller(s, softwareBridge)
 				stop := make(chan struct{}, 1)
 
 				gr.Add(func() error {
 					log.Info().
-						Msg("starting surgery software bridge")
+						Msg("starting caller")
 
-					return surgerySoftwareBridge.Run(stop)
+					return pagerCaller.Run(stop)
 				}, func(reason error) {
 					close(stop)
 
 					log.Info().
 						AnErr("reason", reason).
-						Msg("bridge stopped gracefully")
+						Msg("caller stopped gracefully")
 				})
 			}
 
-			if cfg.Server.Cert != "" && cfg.Server.Key != "" {
+			if config.Server.Cert != "" && config.Server.Key != "" {
 				cert, err := tls.LoadX509KeyPair(
-					cfg.Server.Cert,
-					cfg.Server.Key,
+					config.Server.Cert,
+					config.Server.Key,
 				)
 
 				if err != nil {
@@ -178,22 +148,22 @@ func Server() *cli.Command {
 
 				{
 					server := &http.Server{
-						Addr:         cfg.Server.Address,
-						Handler:      router.Load(cfg, clientService, pagerService, patientService, tokenService, userService, hub),
+						Addr:         config.Server.Address,
+						Handler:      router.Load(s, hub),
 						ReadTimeout:  5 * time.Second,
 						WriteTimeout: 10 * time.Second,
 						TLSConfig: &tls.Config{
 							PreferServerCipherSuites: true,
 							MinVersion:               tls.VersionTLS12,
-							CurvePreferences:         curves(cfg),
-							CipherSuites:             ciphers(cfg),
+							CurvePreferences:         curves(),
+							CipherSuites:             ciphers(),
 							Certificates:             []tls.Certificate{cert},
 						},
 					}
 
 					gr.Add(func() error {
 						log.Info().
-							Str("addr", cfg.Server.Address).
+							Str("addr", config.Server.Address).
 							Msg("starting https server")
 
 						return server.ListenAndServeTLS("", "")
@@ -220,15 +190,15 @@ func Server() *cli.Command {
 
 			{
 				server := &http.Server{
-					Addr:         cfg.Server.Address,
-					Handler:      router.Load(cfg, clientService, pagerService, patientService, tokenService, userService, hub),
+					Addr:         config.Server.Address,
+					Handler:      router.Load(s, hub),
 					ReadTimeout:  5 * time.Second,
 					WriteTimeout: 10 * time.Second,
 				}
 
 				gr.Add(func() error {
 					log.Info().
-						Str("addr", cfg.Server.Address).
+						Str("addr", config.Server.Address).
 						Msg("starting http server")
 
 					return server.ListenAndServe()
@@ -255,8 +225,8 @@ func Server() *cli.Command {
 	}
 }
 
-func curves(cfg *config.Config) []tls.CurveID {
-	if cfg.Server.StrictCurves {
+func curves() []tls.CurveID {
+	if config.Server.StrictCurves {
 		return []tls.CurveID{
 			tls.CurveP521,
 			tls.CurveP384,
@@ -267,8 +237,8 @@ func curves(cfg *config.Config) []tls.CurveID {
 	return nil
 }
 
-func ciphers(cfg *config.Config) []uint16 {
-	if cfg.Server.StrictCiphers {
+func ciphers() []uint16 {
+	if config.Server.StrictCiphers {
 		return []uint16{
 			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
 			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,

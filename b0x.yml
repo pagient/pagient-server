@@ -5,7 +5,7 @@
 pkg: assets
 
 # destination
-dest: "../../pkg/assets/"
+dest: "../../internal/assets/"
 
 # gofmt
 # type: bool
