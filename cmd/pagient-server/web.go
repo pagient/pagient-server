@@ -52,6 +52,7 @@ func Web() *cli.Command {
 
 				os.Exit(1)
 			}
+			defer logger.Close()
 
 			// Setup Database Connection
 			db, err := database.Open()

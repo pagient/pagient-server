@@ -11,6 +11,9 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+var logFile *os.File
+
+// Init sets up global logger using configuration
 func Init() error {
 	level, err := zerolog.ParseLevel(config.Log.Level)
 	if err != nil {
@@ -18,11 +21,10 @@ func Init() error {
 	}
 	zerolog.SetGlobalLevel(level)
 
-	logFile, err := os.OpenFile(path.Join(config.General.Root, "pagient.log"), os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
+	logFile, err = os.OpenFile(path.Join(config.General.Root, "pagient.log"), os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
 	if err != nil {
 		return errors.New("logfile could not be opened")
 	}
-	defer logFile.Close()
 
 	if config.Log.Pretty {
 		log.Logger = log.Output(
@@ -37,4 +39,9 @@ func Init() error {
 
 	log.Logger = log.Output(logFile)
 	return nil
+}
+
+// Close closes the log file
+func Close() error {
+	return logFile.Close()
 }
