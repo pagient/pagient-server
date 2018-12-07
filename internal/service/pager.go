@@ -7,8 +7,8 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// GetAll returns all pagers
-func (service *DefaultService) ListPagers() ([]*model.Pager, error) {
+// ListPagers returns all pagers
+func (service *defaultService) ListPagers() ([]*model.Pager, error) {
 	tx, err := service.db.Begin()
 	if err != nil {
 		return nil, errors.Wrap(err, "create transaction failed")
@@ -28,8 +28,8 @@ func (service *DefaultService) ListPagers() ([]*model.Pager, error) {
 	return pagers, nil
 }
 
-// Get returns a pager by it's id
-func (service *DefaultService) ShowPager(id uint) (*model.Pager, error) {
+// ShowPager returns a pager by it's id
+func (service *defaultService) ShowPager(id uint) (*model.Pager, error) {
 	tx, err := service.db.Begin()
 	if err != nil {
 		return nil, errors.Wrap(err, "create transaction failed")

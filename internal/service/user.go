@@ -8,8 +8,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// GetAll returns all users
-func (service *DefaultService) ListUsers() ([]*model.User, error) {
+// ListUsers returns all users
+func (service *defaultService) ListUsers() ([]*model.User, error) {
 	tx, err := service.db.Begin()
 	if err != nil {
 		return nil, errors.Wrap(err, "create transaction failed")
@@ -29,8 +29,8 @@ func (service *DefaultService) ListUsers() ([]*model.User, error) {
 	return users, nil
 }
 
-// Get returns a user by it's username
-func (service *DefaultService) ShowUser(username string) (*model.User, error) {
+// ShowUser returns a user by it's username
+func (service *defaultService) ShowUser(username string) (*model.User, error) {
 	tx, err := service.db.Begin()
 	if err != nil {
 		return nil, errors.Wrap(err, "create transaction failed")
@@ -50,8 +50,8 @@ func (service *DefaultService) ShowUser(username string) (*model.User, error) {
 	return user, nil
 }
 
-// GetByToken returns a user by token
-func (service *DefaultService) ShowUserByToken(rawToken string) (*model.User, error) {
+// ShowUserByToken returns a user by token
+func (service *defaultService) ShowUserByToken(rawToken string) (*model.User, error) {
 	tx, err := service.db.Begin()
 	if err != nil {
 		return nil, errors.Wrap(err, "create transaction failed")
@@ -71,7 +71,8 @@ func (service *DefaultService) ShowUserByToken(rawToken string) (*model.User, er
 	return user, nil
 }
 
-func (service *DefaultService) CreateUser(user *model.User) (*model.User, error) {
+// CreateUser creates a new user
+func (service *defaultService) CreateUser(user *model.User) (*model.User, error) {
 	tx, err := service.db.Begin()
 	if err != nil {
 		return nil, errors.Wrap(err, "create transaction failed")
@@ -102,7 +103,8 @@ func (service *DefaultService) CreateUser(user *model.User) (*model.User, error)
 	return user, nil
 }
 
-func (service *DefaultService) ChangeUserPassword(user *model.User) (*model.User, error) {
+// ChangeUserPassword changes password of given user
+func (service *defaultService) ChangeUserPassword(user *model.User) (*model.User, error) {
 	if err := user.ValidatePasswordChange(); err != nil {
 		if model.IsValidationErr(err) {
 			return nil, &modelValidationErr{err.Error()}
@@ -147,7 +149,7 @@ func (service *DefaultService) ChangeUserPassword(user *model.User) (*model.User
 }
 
 // Login checks whether the combination of username and password is valid
-func (service *DefaultService) Login(username, password string) (*model.User, bool, error) {
+func (service *defaultService) Login(username, password string) (*model.User, bool, error) {
 	tx, err := service.db.Begin()
 	if err != nil {
 		return nil, false, errors.Wrap(err, "create transaction failed")
@@ -167,7 +169,7 @@ func (service *DefaultService) Login(username, password string) (*model.User, bo
 	return user, user != nil && comparePasswords(user.Password, password), nil
 }
 
-func (service *DefaultService) validateUser(tx Tx, user *model.User) error {
+func (service *defaultService) validateUser(tx Tx, user *model.User) error {
 	var clients []*model.Client
 
 	if user.ClientID != 0 {

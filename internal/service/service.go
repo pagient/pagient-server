@@ -5,6 +5,7 @@ import (
 	"github.com/pagient/pagient-server/internal/notifier"
 )
 
+// ClientService interface
 type ClientService interface {
 	ListClients() ([]*model.Client, error)
 	ShowClient(uint) (*model.Client, error)
@@ -12,11 +13,13 @@ type ClientService interface {
 	CreateClient(*model.Client) (*model.Client, error)
 }
 
+// PagerService interface
 type PagerService interface {
 	ListPagers() ([]*model.Pager, error)
 	ShowPager(uint) (*model.Pager, error)
 }
 
+// PatientService interface
 type PatientService interface {
 	ListPatients() ([]*model.Patient, error)
 	ListPagerPatientsByStatus(...model.PatientState) ([]*model.Patient, error)
@@ -27,6 +30,7 @@ type PatientService interface {
 	CallPatient(*model.Patient) error
 }
 
+// TokenService interface
 type TokenService interface {
 	ListTokensByUser(string) ([]*model.Token, error)
 	ShowToken(string) (*model.Token, error)
@@ -34,6 +38,7 @@ type TokenService interface {
 	DeleteToken(*model.Token) error
 }
 
+// UserService interface
 type UserService interface {
 	ListUsers() ([]*model.User, error)
 	ShowUser(string) (*model.User, error)
@@ -43,6 +48,7 @@ type UserService interface {
 	Login(string, string) (*model.User, bool, error)
 }
 
+// Service interface combines all concrete model services
 type Service interface {
 	ClientService
 	PagerService
@@ -51,11 +57,12 @@ type Service interface {
 	UserService
 }
 
-type DefaultService struct {
+type defaultService struct {
 	db       DB
 	notifier notifier.Notifier
 }
 
-func Init(db DB, notifier notifier.Notifier) *DefaultService {
-	return &DefaultService{db, notifier}
+// NewService constructs a new service layer
+func NewService(db DB, notifier notifier.Notifier) Service {
+	return &defaultService{db, notifier}
 }

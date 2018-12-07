@@ -98,7 +98,7 @@ func basicSetup() (service.Service, db) {
 	}
 
 	// Setup Business Layer
-	s := service.Init(db, nil)
+	s := service.NewService(db, nil)
 
 	return s, db
 }

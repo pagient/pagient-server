@@ -69,7 +69,7 @@ func Web() *cli.Command {
 			hub := websocket.NewHub()
 
 			// Setup Business Layer
-			s := service.Init(db, hub)
+			s := service.NewService(db, hub)
 
 			var gr run.Group
 

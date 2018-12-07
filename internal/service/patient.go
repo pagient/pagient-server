@@ -9,8 +9,8 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// GetAll returns all patients
-func (service *DefaultService) ListPatients() ([]*model.Patient, error) {
+// ListPatients returns all patients
+func (service *defaultService) ListPatients() ([]*model.Patient, error) {
 	tx, err := service.db.Begin()
 	if err != nil {
 		return nil, errors.Wrap(err, "create transaction failed")
@@ -26,7 +26,8 @@ func (service *DefaultService) ListPatients() ([]*model.Patient, error) {
 	return patients, nil
 }
 
-func (service *DefaultService) ListPagerPatientsByStatus(states ...model.PatientState) ([]*model.Patient, error) {
+// ListPagerPatientsByStatus returns all patients with a pager by status
+func (service *defaultService) ListPagerPatientsByStatus(states ...model.PatientState) ([]*model.Patient, error) {
 	tx, err := service.db.Begin()
 	if err != nil {
 		return nil, errors.Wrap(err, "create transaction failed")
@@ -42,8 +43,8 @@ func (service *DefaultService) ListPagerPatientsByStatus(states ...model.Patient
 	return patients, nil
 }
 
-// Get returns a patient by it's id
-func (service *DefaultService) ShowPatient(id uint) (*model.Patient, error) {
+// ShowPatient returns a patient by it's id
+func (service *defaultService) ShowPatient(id uint) (*model.Patient, error) {
 	tx, err := service.db.Begin()
 	if err != nil {
 		return nil, errors.Wrap(err, "create transaction failed")
@@ -59,8 +60,8 @@ func (service *DefaultService) ShowPatient(id uint) (*model.Patient, error) {
 	return patient, nil
 }
 
-// Add adds a new patient if given model is valid and not already existing
-func (service *DefaultService) CreatePatient(patient *model.Patient) (*model.Patient, error) {
+// CreatePatient adds a new patient if given model is valid and not already existing
+func (service *defaultService) CreatePatient(patient *model.Patient) (*model.Patient, error) {
 	patient.Status = model.PatientStatePending
 
 	if patient.ClientID == 0 {
@@ -110,8 +111,8 @@ func (service *DefaultService) CreatePatient(patient *model.Patient) (*model.Pat
 	return patient, errors.Wrap(err, "add patient failed")
 }
 
-// Update updates an existing patient if given model is valid
-func (service *DefaultService) UpdatePatient(patient *model.Patient) (*model.Patient, error) {
+// UpdatePatient updates an existing patient if given model is valid
+func (service *defaultService) UpdatePatient(patient *model.Patient) (*model.Patient, error) {
 	tx, err := service.db.Begin()
 	if err != nil {
 		return nil, errors.Wrap(err, "create transaction failed")
@@ -174,8 +175,8 @@ func (service *DefaultService) UpdatePatient(patient *model.Patient) (*model.Pat
 	return patient, nil
 }
 
-// Remove deletes an existing patient
-func (service *DefaultService) DeletePatient(patient *model.Patient) error {
+// DeletePatient deletes an existing patient
+func (service *defaultService) DeletePatient(patient *model.Patient) error {
 	if patient.PagerID != 0 {
 		return &invalidArgumentErr{"pagerId: cannot be set"}
 	}
@@ -202,7 +203,8 @@ func (service *DefaultService) DeletePatient(patient *model.Patient) error {
 	return nil
 }
 
-func (service *DefaultService) CallPatient(patient *model.Patient) error {
+// CallPatient calls a patient
+func (service *defaultService) CallPatient(patient *model.Patient) error {
 	tx, err := service.db.Begin()
 	if err != nil {
 		return errors.Wrap(err, "create transaction failed")
@@ -219,7 +221,7 @@ func (service *DefaultService) CallPatient(patient *model.Patient) error {
 	return nil
 }
 
-func (service *DefaultService) callPatient(tx Tx, patient *model.Patient) error {
+func (service *defaultService) callPatient(tx Tx, patient *model.Patient) error {
 	client := easycall.NewClient(config.EasyCall.URL, config.EasyCall.User, config.EasyCall.Password)
 
 	if err := client.Send(&easycall.SendOptions{
@@ -240,7 +242,7 @@ func (service *DefaultService) callPatient(tx Tx, patient *model.Patient) error 
 	return nil
 }
 
-func (service *DefaultService) validatePatient(tx Tx, patient *model.Patient) error {
+func (service *defaultService) validatePatient(tx Tx, patient *model.Patient) error {
 	var pagers []*model.Pager
 
 	if patient.PagerID != 0 {
@@ -277,7 +279,7 @@ func (service *DefaultService) validatePatient(tx Tx, patient *model.Patient) er
 	return nil
 }
 
-func (service *DefaultService) markPatientsInactiveFromClient(tx PatientTx, clientID uint) error {
+func (service *defaultService) markPatientsInactiveFromClient(tx PatientTx, clientID uint) error {
 	patients, err := tx.GetPatientsByClient(clientID, true)
 	if err != nil {
 		return errors.Wrap(err, "get all patients by client failed")
@@ -294,7 +296,7 @@ func (service *DefaultService) markPatientsInactiveFromClient(tx PatientTx, clie
 	return nil
 }
 
-func (service *DefaultService) removeInactivePatientsWithoutPagerFromClient(tx PatientTx, clientID uint) error {
+func (service *defaultService) removeInactivePatientsWithoutPagerFromClient(tx PatientTx, clientID uint) error {
 	patients, err := tx.GetPatientsByClient(clientID, false, false)
 	if err != nil {
 		return errors.Wrap(err, "get all patients by client failed")
@@ -311,19 +313,19 @@ func (service *DefaultService) removeInactivePatientsWithoutPagerFromClient(tx P
 	return nil
 }
 
-func (service *DefaultService) notifyNewPatient(patient *model.Patient) {
+func (service *defaultService) notifyNewPatient(patient *model.Patient) {
 	if service.notifier != nil {
 		service.notifier.NotifyNewPatient(patient)
 	}
 }
 
-func (service *DefaultService) notifyUpdatedPatient(patient *model.Patient) {
+func (service *defaultService) notifyUpdatedPatient(patient *model.Patient) {
 	if service.notifier != nil {
 		service.notifier.NotifyUpdatedPatient(patient)
 	}
 }
 
-func (service *DefaultService) notifyDeletedPatient(patient *model.Patient) {
+func (service *defaultService) notifyDeletedPatient(patient *model.Patient) {
 	if service.notifier != nil {
 		service.notifier.NotifyDeletedPatient(patient)
 	}
