@@ -37,7 +37,7 @@ func main() {
 		},
 
 		Commands: []*cli.Command{
-			Server(),
+			Web(),
 		},
 	}
 

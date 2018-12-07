@@ -25,11 +25,11 @@ import (
 	"gopkg.in/urfave/cli.v2"
 )
 
-// Server provides the sub-command to start the server.
-func Server() *cli.Command {
+// Web provides the sub-command to start the server.
+func Web() *cli.Command {
 	return &cli.Command{
-		Name:  "server",
-		Usage: "start the integrated server",
+		Name:  "web",
+		Usage: "start the integrated webserver",
 
 		Before: func(c *cli.Context) error {
 			return nil
