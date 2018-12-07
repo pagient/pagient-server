@@ -12,6 +12,12 @@ import (
 	"github.com/pkg/errors"
 )
 
+// DB interface
+type DB interface {
+	Begin() (bridge.Tx, error)
+	Close() error
+}
+
 type db struct {
 	*sql.DB
 }
@@ -39,8 +45,9 @@ func (t *tx) Rollback() error {
 	return t.Tx.Rollback()
 }
 
-// OpenSQL opens a mssql database connection by given config
-func Open() (*db, error) {
+// Open opens a sqlserver database connection
+// uses global config for connection parameters
+func Open() (DB, error) {
 	if config.Bridge.DB.Driver != "sqlserver" {
 		return nil, errors.New("only sqlserver is supported at the moment")
 	}
@@ -49,14 +56,14 @@ func Open() (*db, error) {
 	query.Add("database", config.Bridge.DB.Name)
 	query.Add("encrypt", "disable")
 
-	connUrl := &url.URL{
+	connURL := &url.URL{
 		Scheme:   "sqlserver",
 		User:     url.UserPassword(config.Bridge.DB.User, config.Bridge.DB.Password),
 		Host:     fmt.Sprintf("%s:%d", config.Bridge.DB.Host, config.Bridge.DB.Port),
 		RawQuery: query.Encode(),
 	}
 
-	dbConn, err := sql.Open(config.Bridge.DB.Driver, connUrl.String())
+	dbConn, err := sql.Open(config.Bridge.DB.Driver, connURL.String())
 
 	return &db{dbConn}, errors.Wrap(err, "could not connect to database server")
 }

@@ -34,6 +34,7 @@ func NewBridge(db DB) *DefaultBridge {
 	return &DefaultBridge{db, nil}
 }
 
+// GetToBeExaminedPatients returns all patients that are queued to be examined next
 func (b *DefaultBridge) GetToBeExaminedPatients() ([]*model.Patient, error) {
 	assignments, err := b.getRoomAssignments()
 	if err != nil {
@@ -45,6 +46,7 @@ func (b *DefaultBridge) GetToBeExaminedPatients() ([]*model.Patient, error) {
 	return patients, nil
 }
 
+// GetExaminedPatients returns all patients that have recently been examined and are finished now
 func (b *DefaultBridge) GetExaminedPatients() ([]*model.Patient, error) {
 	assignments, err := b.getRoomAssignments()
 	if err != nil {
