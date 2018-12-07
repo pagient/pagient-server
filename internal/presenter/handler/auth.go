@@ -47,7 +47,7 @@ func CreateToken(userService service.UserService, tokenService service.TokenServ
 			Raw:  jwtToken.Raw,
 			User: *user,
 		}
-		err = tokenService.AddToken(token)
+		err = tokenService.CreateToken(token)
 		if err != nil {
 			render.Render(w, req, renderer.ErrInternalServer(err))
 			return

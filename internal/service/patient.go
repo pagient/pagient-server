@@ -60,7 +60,7 @@ func (service *DefaultService) ShowPatient(id uint) (*model.Patient, error) {
 }
 
 // Add adds a new patient if given model is valid and not already existing
-func (service *DefaultService) AddPatient(patient *model.Patient) (*model.Patient, error) {
+func (service *DefaultService) CreatePatient(patient *model.Patient) (*model.Patient, error) {
 	patient.Status = model.PatientStatePending
 
 	if patient.ClientID == 0 {

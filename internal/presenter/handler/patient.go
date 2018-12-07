@@ -41,7 +41,7 @@ func AddPatient(patientService service.PatientService) http.HandlerFunc {
 		}
 		patientReq.ClientID = ctxClient.ID
 
-		patient, err := patientService.AddPatient(patientReq.GetModel())
+		patient, err := patientService.CreatePatient(patientReq.GetModel())
 		if err != nil {
 			if service.IsModelExistErr(err) {
 				render.Render(w, req, renderer.ErrConflict(err))

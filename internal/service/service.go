@@ -21,7 +21,7 @@ type PatientService interface {
 	ListPatients() ([]*model.Patient, error)
 	ListPagerPatientsByStatus(...model.PatientState) ([]*model.Patient, error)
 	ShowPatient(uint) (*model.Patient, error)
-	AddPatient(*model.Patient) (*model.Patient, error)
+	CreatePatient(*model.Patient) (*model.Patient, error)
 	UpdatePatient(*model.Patient) (*model.Patient, error)
 	DeletePatient(*model.Patient) error
 	CallPatient(*model.Patient) error
@@ -30,7 +30,7 @@ type PatientService interface {
 type TokenService interface {
 	ListTokensByUser(string) ([]*model.Token, error)
 	ShowToken(string) (*model.Token, error)
-	AddToken(*model.Token) error
+	CreateToken(*model.Token) error
 	DeleteToken(*model.Token) error
 }
 

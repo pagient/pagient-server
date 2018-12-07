@@ -50,7 +50,7 @@ func (service *DefaultService) ShowToken(rawToken string) (*model.Token, error) 
 }
 
 // Add adds an active token to a user
-func (service *DefaultService) AddToken(token *model.Token) error {
+func (service *DefaultService) CreateToken(token *model.Token) error {
 	tx, err := service.db.Begin()
 	if err != nil {
 		return errors.Wrap(err, "create transaction failed")
