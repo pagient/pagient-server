@@ -65,6 +65,7 @@ type UserTx interface {
 	GetUsers() ([]*model.User, error)
 	GetUser(string) (*model.User, error)
 	GetUserByToken(string) (*model.User, error)
+	AddUser(*model.User) (*model.User, error)
 }
 
 type entryExistErr interface {

@@ -37,6 +37,7 @@ type UserService interface {
 	ListUsers() ([]*model.User, error)
 	ShowUser(string) (*model.User, error)
 	ShowUserByToken(string) (*model.User, error)
+	CreateUser(*model.User) (*model.User, error)
 	Login(string, string) (*model.User, bool, error)
 }
 

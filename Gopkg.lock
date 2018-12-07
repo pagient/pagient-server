@@ -181,9 +181,13 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:7d80d5561efbfcfdc3e4720bf5e331d574fd6f1e531b115ecf568aab3e2b656d"
+  digest = "1:68344dbfaa4179bb50a583eb8172ace3f1edaf3aebc24e68c03f549f6e6b60dc"
   name = "golang.org/x/crypto"
-  packages = ["md4"]
+  packages = [
+    "bcrypt",
+    "blowfish",
+    "md4",
+  ]
   pruneopts = "UT"
   revision = "a49355c7e3f8fe157a85be2f77e6e269a0f89602"
 
@@ -249,6 +253,7 @@
     "github.com/rs/zerolog",
     "github.com/rs/zerolog/hlog",
     "github.com/rs/zerolog/log",
+    "golang.org/x/crypto/bcrypt",
     "golang.org/x/net/webdav",
     "gopkg.in/ini.v1",
     "gopkg.in/urfave/cli.v2",

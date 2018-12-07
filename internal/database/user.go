@@ -35,3 +35,10 @@ func (t *tx) GetUserByToken(rawToken string) (*model.User, error) {
 
 	return user, errors.Wrap(err, "select user by token failed")
 }
+
+func (t *tx) AddUser(user *model.User) (*model.User, error) {
+	// FIXME: handle sql constraint errors
+	err := t.Create(user).Error
+
+	return user, errors.Wrap(err, "create user failed")
+}
