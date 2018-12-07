@@ -42,3 +42,10 @@ func (t *tx) AddUser(user *model.User) (*model.User, error) {
 
 	return user, errors.Wrap(err, "create user failed")
 }
+
+func (t *tx) UpdateUserPassword(user *model.User) (*model.User, error) {
+	// FIXME: handle sql constraint errors
+	err := t.Model(user).UpdateColumn("password", user.Password).Error
+
+	return user, errors.Wrap(err, "update password failed")
+}

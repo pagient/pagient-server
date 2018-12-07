@@ -102,6 +102,50 @@ func (service *DefaultService) CreateUser(user *model.User) (*model.User, error)
 	return user, nil
 }
 
+func (service *DefaultService) ChangeUserPassword(user *model.User) (*model.User, error) {
+	if err := user.ValidatePasswordChange(); err != nil {
+		if model.IsValidationErr(err) {
+			return nil, &modelValidationErr{err.Error()}
+		}
+
+		return nil, errors.Wrap(err, "validate user failed")
+	}
+
+	passwordHash, err := hashPassword(user.Password)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	tx, err := service.db.Begin()
+	if err != nil {
+		return nil, errors.Wrap(err, "create transaction failed")
+	}
+
+	user, err = tx.GetUser(user.Username)
+	if err != nil {
+		log.Error().
+			Err(err).
+			Msg("get user failed")
+	}
+	if user == nil {
+		return nil, &modelNotExistErr{"user doesn't exist"}
+	}
+
+	user.Password = passwordHash
+	user, err = tx.UpdateUserPassword(user)
+	if err != nil {
+		log.Error().
+			Err(err).
+			Msg("update user password failed")
+
+		tx.Rollback()
+		return nil, errors.Wrap(err, "update user password failed")
+	}
+
+	tx.Commit()
+	return user, nil
+}
+
 // Login checks whether the combination of username and password is valid
 func (service *DefaultService) Login(username, password string) (*model.User, bool, error) {
 	tx, err := service.db.Begin()
