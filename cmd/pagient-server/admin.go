@@ -74,7 +74,11 @@ func Admin() *cli.Command {
 	}
 }
 
-func basicSetup() service.Service {
+type db interface {
+	Close() error
+}
+
+func basicSetup() (service.Service, db) {
 	if err := config.Load(); err != nil {
 		log.Fatal().
 			Err(err).
@@ -96,11 +100,12 @@ func basicSetup() service.Service {
 	// Setup Business Layer
 	s := service.Init(db, nil)
 
-	return s
+	return s, db
 }
 
 func runCreateUser(c *cli.Context) error {
-	s := basicSetup()
+	s, db := basicSetup()
+	defer db.Close()
 
 	user := &model.User{
 		Username: c.String("username"),
@@ -120,7 +125,8 @@ func runCreateUser(c *cli.Context) error {
 }
 
 func runChangePassword(c *cli.Context) error {
-	s := basicSetup()
+	s, db := basicSetup()
+	defer db.Close()
 
 	user := &model.User{
 		Username: c.String("username"),
@@ -139,7 +145,8 @@ func runChangePassword(c *cli.Context) error {
 }
 
 func runCreateClient(c *cli.Context) error {
-	s := basicSetup()
+	s, db := basicSetup()
+	defer db.Close()
 
 	client := &model.Client{
 		Name: c.String("username"),

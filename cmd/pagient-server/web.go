@@ -62,6 +62,7 @@ func Web() *cli.Command {
 
 				os.Exit(1)
 			}
+			defer db.Close()
 
 			// Initialize notifier (websocket hub)
 			hub := websocket.NewHub()
