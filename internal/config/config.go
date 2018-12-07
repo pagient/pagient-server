@@ -37,6 +37,7 @@ var (
 	// EasyCall config
 	EasyCall = &easyCall{}
 
+	// AppWorkPath of binary
 	AppWorkPath string
 	isWindows   bool
 )
