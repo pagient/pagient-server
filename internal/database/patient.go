@@ -48,7 +48,7 @@ func (t *tx) GetPatientsByClient(clientID uint, optionals ...bool) ([]*model.Pat
 			comparison = "!= 0"
 		}
 
-		stmt.Where("pager_id "+ comparison)
+		stmt.Where("pager_id " + comparison)
 	}
 
 	err := stmt.Find(&patients).Error
@@ -89,9 +89,9 @@ func (t *tx) UpdatePatient(patient *model.Patient) (*model.Patient, error) {
 // MarkPatientsInactiveByClient sets active to false for every patient by that client
 func (t *tx) MarkPatientsInactiveByClient(clientID uint) error {
 	err := t.Where(&model.Patient{
-			ClientID: clientID,
-			Active:   true,
-		}).
+		ClientID: clientID,
+		Active:   true,
+	}).
 		Model(model.Patient{}).
 		Updates(map[string]interface{}{"active": false}).
 		Error
@@ -127,7 +127,7 @@ func (t *tx) RemovePatientsByClient(clientID uint, optionals ...bool) error {
 			comparison = "!= 0"
 		}
 
-		stmt.Where("pager_id "+ comparison)
+		stmt.Where("pager_id " + comparison)
 	}
 
 	err := stmt.Delete(model.Patient{}).Error

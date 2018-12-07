@@ -42,7 +42,6 @@ func (user *User) ValidatePasswordChange() error {
 	if err := validation.ValidateStruct(user,
 		validation.Field(&user.ID, validation.Required),
 		validation.Field(&user.Password, validation.Required, validation.Length(1, 100)),
-
 	); err != nil {
 		if e, ok := err.(validation.InternalError); ok {
 			return errors.Wrap(e, "internal validation error occured")

@@ -16,8 +16,8 @@ import (
 // Admin provides the sub-command to perform administrative tasks
 func Admin() *cli.Command {
 	subcmdCreateUser := &cli.Command{
-		Name: "create-user",
-		Usage: "Create a new user in database",
+		Name:   "create-user",
+		Usage:  "Create a new user in database",
 		Action: runCreateUser,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
@@ -29,15 +29,15 @@ func Admin() *cli.Command {
 				Usage: "User password",
 			},
 			&cli.UintFlag{
-				Name: "client",
+				Name:  "client",
 				Usage: "Client ID",
 			},
 		},
 	}
 
 	subcmdChangePassword := &cli.Command{
-		Name: "change-password",
-		Usage: "Change a user's password",
+		Name:   "change-password",
+		Usage:  "Change a user's password",
 		Action: runChangePassword,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
@@ -52,8 +52,8 @@ func Admin() *cli.Command {
 	}
 
 	subcmdCreateClient := &cli.Command{
-		Name: "create-client",
-		Usage: "Create a new client in database",
+		Name:   "create-client",
+		Usage:  "Create a new client in database",
 		Action: runCreateClient,
 		Flags: []cli.Flag{
 			&cli.StringFlag{

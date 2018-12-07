@@ -5,7 +5,6 @@ package main
 import (
 	"context"
 	"crypto/tls"
-	"github.com/pagient/pagient-server/internal/caller"
 	"net/http"
 	"os"
 	"os/signal"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/pagient/pagient-server/internal/bridge"
 	bridgeDB "github.com/pagient/pagient-server/internal/bridge/database"
+	"github.com/pagient/pagient-server/internal/caller"
 	"github.com/pagient/pagient-server/internal/config"
 	"github.com/pagient/pagient-server/internal/database"
 	"github.com/pagient/pagient-server/internal/logger"
