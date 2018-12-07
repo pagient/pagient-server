@@ -9,6 +9,7 @@ type ClientService interface {
 	ListClients() ([]*model.Client, error)
 	ShowClient(uint) (*model.Client, error)
 	ShowClientByUser(string) (*model.Client, error)
+	CreateClient(*model.Client) (*model.Client, error)
 }
 
 type PagerService interface {

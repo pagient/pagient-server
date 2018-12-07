@@ -71,3 +71,39 @@ func (service *DefaultService) ShowClientByUser(username string) (*model.Client,
 	tx.Commit()
 	return client, nil
 }
+
+func (service *DefaultService) CreateClient(client *model.Client) (*model.Client, error) {
+	if err := service.validateClient(client); err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	tx, err := service.db.Begin()
+	if err != nil {
+		return nil, errors.Wrap(err, "create transaction failed")
+	}
+
+	client, err = tx.AddClient(client)
+	if err != nil {
+		log.Error().
+			Err(err).
+			Msg("add client failed")
+
+		tx.Rollback()
+		return nil, errors.Wrap(err, "add client failed")
+	}
+
+	tx.Commit()
+	return client, nil
+}
+
+func (service *DefaultService) validateClient(client *model.Client) error {
+	if err := client.Validate(); err != nil {
+		if model.IsValidationErr(err) {
+			return &modelValidationErr{err.Error()}
+		}
+
+		return errors.Wrap(err, "validate client failed")
+	}
+
+	return nil
+}

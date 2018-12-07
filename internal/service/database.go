@@ -28,6 +28,7 @@ type ClientTx interface {
 	GetClients() ([]*model.Client, error)
 	GetClient(uint) (*model.Client, error)
 	GetClientByUser(string) (*model.Client, error)
+	AddClient(*model.Client) (*model.Client, error)
 }
 
 // PagerTx interface
