@@ -105,7 +105,7 @@ func (service *DefaultService) CreatePatient(patient *model.Patient) (*model.Pat
 	}
 
 	tx.Commit()
-	service.notifier.NotifyNewPatient(patient)
+	service.notifyNewPatient(patient)
 
 	return patient, errors.Wrap(err, "add patient failed")
 }
@@ -169,7 +169,7 @@ func (service *DefaultService) UpdatePatient(patient *model.Patient) (*model.Pat
 	}
 
 	tx.Commit()
-	service.notifier.NotifyUpdatedPatient(patient)
+	service.notifyUpdatedPatient(patient)
 
 	return patient, nil
 }
@@ -197,7 +197,7 @@ func (service *DefaultService) DeletePatient(patient *model.Patient) error {
 	}
 
 	tx.Commit()
-	service.notifier.NotifyDeletedPatient(patient)
+	service.notifyDeletedPatient(patient)
 
 	return nil
 }
@@ -214,7 +214,7 @@ func (service *DefaultService) CallPatient(patient *model.Patient) error {
 	}
 
 	tx.Commit()
-	service.notifier.NotifyUpdatedPatient(patient)
+	service.notifyUpdatedPatient(patient)
 
 	return nil
 }
@@ -288,7 +288,7 @@ func (service *DefaultService) markPatientsInactiveFromClient(tx PatientTx, clie
 	}
 
 	for _, patient := range patients {
-		service.notifier.NotifyUpdatedPatient(patient)
+		service.notifyUpdatedPatient(patient)
 	}
 
 	return nil
@@ -305,8 +305,26 @@ func (service *DefaultService) removeInactivePatientsWithoutPagerFromClient(tx P
 	}
 
 	for _, patient := range patients {
-		service.notifier.NotifyDeletedPatient(patient)
+		service.notifyDeletedPatient(patient)
 	}
 
 	return nil
+}
+
+func (service *DefaultService) notifyNewPatient(patient *model.Patient) {
+	if service.notifier != nil {
+		service.notifier.NotifyNewPatient(patient)
+	}
+}
+
+func (service *DefaultService) notifyUpdatedPatient(patient *model.Patient) {
+	if service.notifier != nil {
+		service.notifier.NotifyUpdatedPatient(patient)
+	}
+}
+
+func (service *DefaultService) notifyDeletedPatient(patient *model.Patient) {
+	if service.notifier != nil {
+		service.notifier.NotifyDeletedPatient(patient)
+	}
 }
