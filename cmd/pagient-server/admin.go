@@ -51,12 +51,25 @@ func Admin() *cli.Command {
 		},
 	}
 
+	subcmdCreateClient := &cli.Command{
+		Name: "create-client",
+		Usage: "Create a new client in database",
+		Action: runCreateClient,
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:  "name",
+				Usage: "Name",
+			},
+		},
+	}
+
 	return &cli.Command{
 		Name:  "admin",
 		Usage: "perform admin specific tasks, e.g. create users and clients",
 		Subcommands: []*cli.Command{
 			subcmdCreateUser,
 			subcmdChangePassword,
+			subcmdCreateClient,
 		},
 	}
 }
@@ -123,4 +136,22 @@ func runChangePassword(c *cli.Context) error {
 	}
 
 	return errors.Wrap(err, "change user password failed")
+}
+
+func runCreateClient(c *cli.Context) error {
+	s := basicSetup()
+
+	client := &model.Client{
+		Name: c.String("username"),
+	}
+
+	client, err := s.CreateClient(client)
+	if err != nil && service.IsModelValidationErr(err) {
+		log.Info().
+			Msgf("Client is invalid: %s", err.Error())
+
+		return nil
+	}
+
+	return errors.Wrap(err, "create client failed")
 }
