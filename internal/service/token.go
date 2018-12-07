@@ -13,7 +13,7 @@ func (service *DefaultService) ListTokensByUser(username string) ([]*model.Token
 		return nil, errors.Wrap(err, "create transaction failed")
 	}
 
-	tokens, err := tx.GetTokenByUser(username)
+	tokens, err := tx.GetTokensByUser(username)
 	if err != nil {
 		log.Error().
 			Err(err).

@@ -1,16 +1,21 @@
 package database
 
 import (
+	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/sqlite" // import sqlite for database connection
 	"github.com/pagient/pagient-server/internal/config"
 	"github.com/pagient/pagient-server/internal/model"
 	"github.com/pagient/pagient-server/internal/service"
-
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/sqlite" // import sqlite for database connection
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
+
+// DB interface
+type DB interface {
+	Begin() (service.Tx, error)
+	Close() error
+}
 
 type db struct {
 	*gorm.DB
@@ -39,7 +44,9 @@ func (t *tx) Rollback() error {
 	return t.DB.Rollback().Error
 }
 
-func Open() (*db, error) {
+// Open opens a sqlite3 database connection
+// uses global config for connection parameters
+func Open() (DB, error) {
 	if config.General.DB.Driver != "sqlite3" {
 		return nil, errors.New("only sqlite3 is supported at the moment")
 	}

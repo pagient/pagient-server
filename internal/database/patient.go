@@ -7,7 +7,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// GetAll lists all patients
+// GetPatients lists all patients
 func (t *tx) GetPatients() ([]*model.Patient, error) {
 	var patients []*model.Patient
 	err := t.Find(&patients).Error
@@ -56,7 +56,7 @@ func (t *tx) GetPatientsByClient(clientID uint, optionals ...bool) ([]*model.Pat
 	return patients, errors.Wrap(err, "select patients by client, activity and pager assignment failed")
 }
 
-// Get returns a patient by ID
+// GetPatient returns a patient by ID
 func (t *tx) GetPatient(id uint) (*model.Patient, error) {
 	patient := &model.Patient{}
 	err := t.Find(patient, id).Error
@@ -67,7 +67,7 @@ func (t *tx) GetPatient(id uint) (*model.Patient, error) {
 	return patient, errors.Wrap(err, "select patient by id failed")
 }
 
-// Add stores the values in the repository
+// AddPatient stores the values in the repository
 func (t *tx) AddPatient(patient *model.Patient) (*model.Patient, error) {
 	// FIXME: handle sql constraint errors
 	err := t.Create(patient).Error
@@ -75,7 +75,7 @@ func (t *tx) AddPatient(patient *model.Patient) (*model.Patient, error) {
 	return patient, errors.Wrap(err, "create patient failed")
 }
 
-// Update updates the values in the repository
+// UpdatePatient updates the values in the repository
 func (t *tx) UpdatePatient(patient *model.Patient) (*model.Patient, error) {
 	// FIXME: handle sql constraint errors
 	err := t.Save(patient).Error
@@ -99,7 +99,7 @@ func (t *tx) MarkPatientsInactiveByClient(clientID uint) error {
 	return errors.Wrap(err, "upate patients to inactive by client failed")
 }
 
-// Remove deletes the values from the repository
+// RemovePatient deletes the values from the repository
 func (t *tx) RemovePatient(patient *model.Patient) error {
 	err := t.Delete(patient).Error
 	if gorm.IsRecordNotFoundError(err) {

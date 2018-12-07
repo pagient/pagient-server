@@ -56,7 +56,7 @@ type PatientTx interface {
 // TokenTx interface
 type TokenTx interface {
 	GetToken(string) (*model.Token, error)
-	GetTokenByUser(string) ([]*model.Token, error)
+	GetTokensByUser(string) ([]*model.Token, error)
 	AddToken(*model.Token) (*model.Token, error)
 	RemoveToken(*model.Token) error
 }

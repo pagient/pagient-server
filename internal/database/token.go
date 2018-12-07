@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// GetToken returns the token by it's raw string form
 func (t *tx) GetToken(rawToken string) (*model.Token, error) {
 	token := &model.Token{}
 	err := t.Where(&model.Token{
@@ -19,7 +20,8 @@ func (t *tx) GetToken(rawToken string) (*model.Token, error) {
 	return token, errors.Wrap(err, "select token failed")
 }
 
-func (t *tx) GetTokenByUser(username string) ([]*model.Token, error) {
+// GetTokensByUser returns all tokens from a user
+func (t *tx) GetTokensByUser(username string) ([]*model.Token, error) {
 	var tokens []*model.Token
 	err := t.Joins("JOIN users ON users.id = tokens.user_id").
 		Where("users.username = ?", username).Find(&tokens).Error
@@ -27,12 +29,14 @@ func (t *tx) GetTokenByUser(username string) ([]*model.Token, error) {
 	return tokens, errors.Wrap(err, "select tokens by user failed")
 }
 
+// AddToken adds a token
 func (t *tx) AddToken(token *model.Token) (*model.Token, error) {
 	err := t.Create(token).Error
 
 	return token, errors.Wrap(err, "create token failed")
 }
 
+// RemoveToken removes a token
 func (t *tx) RemoveToken(token *model.Token) error {
 	err := t.Delete(token).Error
 	if gorm.IsRecordNotFoundError(err) {
