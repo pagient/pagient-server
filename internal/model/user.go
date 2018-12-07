@@ -38,6 +38,7 @@ func (user *User) Validate(clients []*Client) error {
 	return nil
 }
 
+// ValidatePasswordChange validates the user requirements when changing password
 func (user *User) ValidatePasswordChange() error {
 	if err := validation.ValidateStruct(user,
 		validation.Field(&user.ID, validation.Required),
