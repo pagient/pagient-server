@@ -43,7 +43,7 @@ func (service *defaultService) ShowPager(id uint) (*model.Pager, error) {
 			Msg("get pager failed")
 
 		tx.Rollback()
-		return nil, errors.Wrapf(err, "get pager failed", id)
+		return nil, errors.Wrapf(err, "get pager %d failed", id)
 	}
 
 	tx.Commit()

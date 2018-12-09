@@ -50,4 +50,6 @@ func (user *User) ValidatePasswordChange() error {
 
 		return &modelValidationErr{err.Error()}
 	}
+
+	return nil
 }
