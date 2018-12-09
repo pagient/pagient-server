@@ -46,14 +46,14 @@ func (b *DefaultBridge) GetToBeExaminedPatients() ([]*model.Patient, error) {
 	return patients, nil
 }
 
-// GetExaminedPatients returns all patients that have recently been examined and are finished now
+// GetExaminedPatients returns all patients that have been examined and are finished now since last call
 func (b *DefaultBridge) GetExaminedPatients() ([]*model.Patient, error) {
 	assignments, err := b.getRoomAssignments()
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	removedAssignments := disjointSet(b.lastAssignments, assignments)
+	removedAssignments := subtractSet(b.lastAssignments, assignments)
 
 	patients := mapAssignmentsToPatients(removedAssignments)
 
@@ -80,11 +80,10 @@ func (b *DefaultBridge) getRoomAssignments() ([]*bridgeModel.RoomAssignment, err
 	return assignments, errors.Wrap(err, "get room assignments failed")
 }
 
-func disjointSet(assignmentsA, assignmentsB []*bridgeModel.RoomAssignment) []*bridgeModel.RoomAssignment {
+func subtractSet(assignmentsA, assignmentsB []*bridgeModel.RoomAssignment) []*bridgeModel.RoomAssignment {
 	sortAssignmentsByPID(assignmentsB)
 
-	disjointSet := make([]*bridgeModel.RoomAssignment, max(len(assignmentsA), len(assignmentsB)))
-
+	subtractSet := make([]*bridgeModel.RoomAssignment, 0, len(assignmentsA))
 	for _, assignmentA := range assignmentsA {
 		found := false
 		for _, assignmentB := range assignmentsB {
@@ -99,15 +98,15 @@ func disjointSet(assignmentsA, assignmentsB []*bridgeModel.RoomAssignment) []*br
 		}
 
 		if !found {
-			disjointSet = append(disjointSet, assignmentA)
+			subtractSet = append(subtractSet, assignmentA)
 		}
 	}
 
-	return disjointSet
+	return subtractSet
 }
 
 func mapAssignmentsToPatients(assignments []*bridgeModel.RoomAssignment) []*model.Patient {
-	patients := make([]*model.Patient, len(assignments))
+	patients := make([]*model.Patient, 0, len(assignments))
 	for _, assignment := range assignments {
 		patients = append(patients, &model.Patient{ID: assignment.PID})
 	}
@@ -119,11 +118,4 @@ func sortAssignmentsByPID(assignments []*bridgeModel.RoomAssignment) {
 	sort.Slice(assignments, func(i, j int) bool {
 		return assignments[i].PID < assignments[j].PID
 	})
-}
-
-func max(a, b int) int {
-	if a >= b {
-		return a
-	}
-	return b
 }

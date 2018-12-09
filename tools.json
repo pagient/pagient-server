@@ -27,6 +27,10 @@
     {
       "Repository": "github.com/UnnoTed/fileb0x",
       "Commit": "033c2ecc1c0f93d04afe94186f15193dd4441646"
+    },
+    {
+      "Repository": "github.com/vektra/mockery/cmd/mockery",
+      "Commit": "e78b021dcbb558a8e7ac1fc5bc757ad7c277bb81"
     }
   ],
   "RetoolVersion": "1.3.7"
