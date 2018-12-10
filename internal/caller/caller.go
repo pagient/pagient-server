@@ -4,7 +4,6 @@ import (
 	"sort"
 	"time"
 
-	"github.com/pagient/pagient-server/internal/config"
 	"github.com/pagient/pagient-server/internal/model"
 	"github.com/pagient/pagient-server/internal/notifier"
 	"github.com/pagient/pagient-server/internal/service"
@@ -34,10 +33,9 @@ func NewCaller(s service.PatientService, bridge SoftwareBridge) *Caller {
 	}
 }
 
-// Run runs the bridge functionality in a new goroutine
-func (c *Caller) Run(stop <-chan struct{}) error {
-	ticker := time.NewTicker(time.Duration(config.Bridge.PollingInterval) * time.Second)
-
+// Run runs the bridge functionality in a new goroutine repeated by given every every
+func (c *Caller) Run(every time.Duration, stop <-chan struct{}) error {
+	ticker := time.NewTicker(every)
 	go func() {
 		for {
 			select {

@@ -124,7 +124,8 @@ func Web() *cli.Command {
 					log.Info().
 						Msg("starting caller")
 
-					return pagerCaller.Run(stop)
+					every := time.Duration(config.Bridge.PollingInterval) * time.Second
+					return pagerCaller.Run(every, stop)
 				}, func(reason error) {
 					close(stop)
 
