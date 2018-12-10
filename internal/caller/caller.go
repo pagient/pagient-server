@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/pagient/pagient-server/internal/model"
-	"github.com/pagient/pagient-server/internal/notifier"
 	"github.com/pagient/pagient-server/internal/service"
 
 	"github.com/pkg/errors"
@@ -20,9 +19,8 @@ type SoftwareBridge interface {
 
 // Caller struct encapsulates the surgery software bridge
 type Caller struct {
-	service  service.PatientService
-	notifier notifier.Notifier
-	bridge   SoftwareBridge
+	service service.PatientService
+	bridge  SoftwareBridge
 }
 
 // NewCaller returns a surgery software bridge struct
