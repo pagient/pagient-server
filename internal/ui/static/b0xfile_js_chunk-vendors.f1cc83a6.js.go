@@ -2,7 +2,7 @@
 // modified(2018-08-16 11:00:28.539000418 +0200 CEST)
 // original path: ../../public/dist/js/chunk-vendors.f1cc83a6.js
 
-package assets
+package static
 
 import (
 	"bytes"

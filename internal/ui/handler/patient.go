@@ -4,9 +4,9 @@ import (
 	"net/http"
 
 	"github.com/pagient/pagient-server/internal/model"
-	"github.com/pagient/pagient-server/internal/presenter/renderer"
-	"github.com/pagient/pagient-server/internal/presenter/router/middleware/context"
 	"github.com/pagient/pagient-server/internal/service"
+	"github.com/pagient/pagient-server/internal/ui/renderer"
+	"github.com/pagient/pagient-server/internal/ui/router/middleware/context"
 
 	"github.com/go-chi/render"
 )

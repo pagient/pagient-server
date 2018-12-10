@@ -2,7 +2,7 @@
 // modified(2018-08-16 11:00:28.539285782 +0200 CEST)
 // original path: ../../public/dist/fonts/MaterialIcons-Regular.570eb838.woff2
 
-package assets
+package static
 
 import (
 	"bytes"

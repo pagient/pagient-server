@@ -2,7 +2,6 @@ package service
 
 import (
 	"github.com/pagient/pagient-server/internal/model"
-	"github.com/pagient/pagient-server/internal/notifier"
 )
 
 // ClientService interface
@@ -59,10 +58,10 @@ type Service interface {
 
 type defaultService struct {
 	db       DB
-	notifier notifier.Notifier
+	notifier UINotifier
 }
 
 // NewService constructs a new service layer
-func NewService(db DB, notifier notifier.Notifier) Service {
+func NewService(db DB, notifier UINotifier) Service {
 	return &defaultService{db, notifier}
 }

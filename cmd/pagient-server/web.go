@@ -16,9 +16,9 @@ import (
 	"github.com/pagient/pagient-server/internal/config"
 	"github.com/pagient/pagient-server/internal/database"
 	"github.com/pagient/pagient-server/internal/logger"
-	"github.com/pagient/pagient-server/internal/presenter/router"
-	"github.com/pagient/pagient-server/internal/presenter/websocket"
 	"github.com/pagient/pagient-server/internal/service"
+	"github.com/pagient/pagient-server/internal/ui/router"
+	"github.com/pagient/pagient-server/internal/ui/websocket"
 
 	"github.com/oklog/run"
 	"github.com/rs/zerolog/log"

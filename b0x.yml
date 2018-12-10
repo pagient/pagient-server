@@ -2,10 +2,10 @@
 # where fileb0x was run at!
 
 # default: main
-pkg: assets
+pkg: static
 
 # destination
-dest: "../../internal/assets/"
+dest: "../../internal/ui/static/"
 
 # gofmt
 # type: bool

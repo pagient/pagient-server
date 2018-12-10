@@ -2,7 +2,7 @@
 // modified(2018-08-16 11:00:28.540816148 +0200 CEST)
 // original path: ../../public/dist/js/app.5b6611de.js.map
 
-package assets
+package static
 
 import (
 	"bytes"

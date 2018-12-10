@@ -1,9 +1,9 @@
-package notifier
+package service
 
 import "github.com/pagient/pagient-server/internal/model"
 
-// Notifier interface for async view updates
-type Notifier interface {
+// UINotifier interface for async view updates
+type UINotifier interface {
 	NotifyNewPatient(*model.Patient)
 	NotifyUpdatedPatient(*model.Patient)
 	NotifyDeletedPatient(*model.Patient)

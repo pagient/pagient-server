@@ -4,14 +4,14 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/pagient/pagient-server/internal/assets"
 	"github.com/pagient/pagient-server/internal/config"
-	"github.com/pagient/pagient-server/internal/presenter/handler"
-	"github.com/pagient/pagient-server/internal/presenter/router/middleware/auth"
-	"github.com/pagient/pagient-server/internal/presenter/router/middleware/context"
-	"github.com/pagient/pagient-server/internal/presenter/router/middleware/header"
-	"github.com/pagient/pagient-server/internal/presenter/websocket"
 	"github.com/pagient/pagient-server/internal/service"
+	"github.com/pagient/pagient-server/internal/ui/handler"
+	"github.com/pagient/pagient-server/internal/ui/router/middleware/auth"
+	"github.com/pagient/pagient-server/internal/ui/router/middleware/context"
+	"github.com/pagient/pagient-server/internal/ui/router/middleware/header"
+	"github.com/pagient/pagient-server/internal/ui/static"
+	"github.com/pagient/pagient-server/internal/ui/websocket"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -99,7 +99,7 @@ func Load(s service.Service, wsHub *websocket.Hub) http.Handler {
 		// Pagient UI static files
 		root.Get("/*", http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			// static files contain all files from "public/dist/"
-			fs := http.StripPrefix("/", http.FileServer(assets.HTTP))
+			fs := http.StripPrefix("/", http.FileServer(static.HTTP))
 
 			fs.ServeHTTP(w, req)
 		}))

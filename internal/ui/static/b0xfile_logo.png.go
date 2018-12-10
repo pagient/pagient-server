@@ -2,7 +2,7 @@
 // modified(2018-08-16 11:00:28.52126077 +0200 CEST)
 // original path: ../../public/dist/logo.png
 
-package assets
+package static
 
 import (
 	"bytes"

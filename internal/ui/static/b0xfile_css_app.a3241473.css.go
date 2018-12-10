@@ -2,7 +2,7 @@
 // modified(2018-08-16 11:00:28.539685873 +0200 CEST)
 // original path: ../../public/dist/css/app.a3241473.css
 
-package assets
+package static
 
 import (
 	"bytes"

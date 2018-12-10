@@ -2,7 +2,7 @@
 // modified(2018-08-16 11:00:28.521215143 +0200 CEST)
 // original path: ../../public/dist/index.html
 
-package assets
+package static
 
 import (
 	"bytes"

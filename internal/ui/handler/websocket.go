@@ -4,9 +4,9 @@ import (
 	"net/http"
 
 	"github.com/pagient/pagient-server/internal/config"
-	"github.com/pagient/pagient-server/internal/presenter/renderer"
-	"github.com/pagient/pagient-server/internal/presenter/websocket"
 	"github.com/pagient/pagient-server/internal/service"
+	"github.com/pagient/pagient-server/internal/ui/renderer"
+	"github.com/pagient/pagient-server/internal/ui/websocket"
 
 	"github.com/go-chi/jwtauth"
 	"github.com/go-chi/render"
