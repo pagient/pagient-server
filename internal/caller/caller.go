@@ -56,7 +56,7 @@ func (c *Caller) Run(every time.Duration, stop <-chan struct{}) error {
 					continue
 				}
 
-				toBeCalledPatients := intersect(patients, queuedPatients)
+				toBeCalledPatients := intersectionSet(patients, queuedPatients)
 				if err := c.callPatients(toBeCalledPatients); err != nil {
 					log.Error().
 						Err(err).
@@ -83,7 +83,7 @@ func (c *Caller) Run(every time.Duration, stop <-chan struct{}) error {
 					continue
 				}
 
-				notReturnedPagerPatients := intersect(patients, finishedPatients)
+				notReturnedPagerPatients := intersectionSet(patients, finishedPatients)
 				if err := c.markExaminedPatientsFinished(notReturnedPagerPatients); err != nil {
 					log.Error().
 						Err(err).
@@ -98,7 +98,6 @@ func (c *Caller) Run(every time.Duration, stop <-chan struct{}) error {
 			}
 		}
 	}()
-
 	<-stop
 
 	return nil
@@ -125,10 +124,10 @@ func (c *Caller) markExaminedPatientsFinished(patients []*model.Patient) error {
 	return nil
 }
 
-func intersect(patientsA, patientsB []*model.Patient) []*model.Patient {
+func intersectionSet(patientsA, patientsB []*model.Patient) []*model.Patient {
 	sortPatientsByID(patientsB)
 
-	intersection := make([]*model.Patient, min(len(patientsA), len(patientsB)))
+	intersectionSet := make([]*model.Patient, 0, min(len(patientsA), len(patientsB)))
 	for _, patientA := range patientsA {
 		for _, patientB := range patientsB {
 			if patientA.ID < patientB.ID {
@@ -136,13 +135,13 @@ func intersect(patientsA, patientsB []*model.Patient) []*model.Patient {
 			}
 
 			if patientA.ID == patientB.ID {
-				intersection = append(intersection, patientA)
+				intersectionSet = append(intersectionSet, patientA)
 			}
 
 		}
 	}
 
-	return intersection
+	return intersectionSet
 }
 
 func sortPatientsByID(patients []*model.Patient) {
