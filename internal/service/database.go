@@ -41,7 +41,7 @@ type PagerTx interface {
 // PatientTx interface
 type PatientTx interface {
 	GetPatients() ([]*model.Patient, error)
-	GetPatientsWithPagerByStatus(...model.PatientState) ([]*model.Patient, error)
+	GetPatientsWithPagerByStatus(...model.PatientStatus) ([]*model.Patient, error)
 	// Get Patients by Client, Activity (first in slice) and Assignment of a Pager (second in slice)
 	GetPatientsByClient(uint, ...bool) ([]*model.Patient, error)
 	GetPatient(uint) (*model.Patient, error)

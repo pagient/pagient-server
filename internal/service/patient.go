@@ -27,13 +27,13 @@ func (service *defaultService) ListPatients() ([]*model.Patient, error) {
 }
 
 // ListPagerPatientsByStatus returns all patients with a pager by status
-func (service *defaultService) ListPagerPatientsByStatus(states ...model.PatientState) ([]*model.Patient, error) {
+func (service *defaultService) ListPagerPatientsByStatus(statuses ...model.PatientStatus) ([]*model.Patient, error) {
 	tx, err := service.db.Begin()
 	if err != nil {
 		return nil, errors.Wrap(err, "create transaction failed")
 	}
 
-	patients, err := tx.GetPatientsWithPagerByStatus(states...)
+	patients, err := tx.GetPatientsWithPagerByStatus(statuses...)
 	if err != nil {
 		tx.Rollback()
 		return nil, errors.Wrap(err, "get patients having pagers by status failed")
@@ -62,7 +62,7 @@ func (service *defaultService) ShowPatient(id uint) (*model.Patient, error) {
 
 // CreatePatient adds a new patient if given model is valid and not already existing
 func (service *defaultService) CreatePatient(patient *model.Patient) (*model.Patient, error) {
-	patient.Status = model.PatientStatePending
+	patient.Status = model.PatientStatusPending
 
 	if patient.ClientID == 0 {
 		return nil, &invalidArgumentErr{"clientId: cannot be blank"}
@@ -157,8 +157,8 @@ func (service *defaultService) UpdatePatient(patient *model.Patient) (*model.Pat
 		return nil, errors.WithStack(err)
 	}
 
-	// RoomAssignment status changed from another state to PatientStateCall
-	if patient.Status == model.PatientStateCall && patient.Status != patientBeforeUpdate.Status {
+	// RoomAssignment status changed from another state to PatientStatusCall
+	if patient.Status == model.PatientStatusCall && patient.Status != patientBeforeUpdate.Status {
 		log.Debug().
 			Uint("pager", patient.PagerID).
 			Msg("pager gets called")
@@ -232,7 +232,7 @@ func (service *defaultService) callPatient(tx Tx, patient *model.Patient) error 
 		return &externalServiceErr{"pager call failed"}
 	}
 
-	patient.Status = model.PatientStateCalled
+	patient.Status = model.PatientStatusCalled
 
 	patient, err := tx.UpdatePatient(patient)
 	if err != nil {
@@ -252,7 +252,7 @@ func (service *defaultService) validatePatient(tx Tx, patient *model.Patient) er
 		if err != nil {
 			return errors.Wrap(err, "get all pagers failed")
 		}
-	} else if patient.Status == model.PatientStateCall {
+	} else if patient.Status == model.PatientStatusCall {
 		return &modelValidationErr{"Status: \"call\" can only be set if PagerID is set."}
 	}
 

@@ -42,7 +42,7 @@ func (c *Caller) Run(stop <-chan struct{}) error {
 		for {
 			select {
 			case <-ticker.C:
-				patients, err := c.service.ListPagerPatientsByStatus(model.PatientStatePending)
+				patients, err := c.service.ListPagerPatientsByStatus(model.PatientStatusPending)
 				if err != nil {
 					log.Error().
 						Err(err).
@@ -69,7 +69,7 @@ func (c *Caller) Run(stop <-chan struct{}) error {
 					continue
 				}
 
-				patients, err = c.service.ListPagerPatientsByStatus(model.PatientStatePending, model.PatientStateCall, model.PatientStateCalled)
+				patients, err = c.service.ListPagerPatientsByStatus(model.PatientStatusPending, model.PatientStatusCall, model.PatientStatusCalled)
 				if err != nil {
 					log.Error().
 						Err(err).
@@ -120,7 +120,7 @@ func (c *Caller) callPatients(patients []*model.Patient) error {
 
 func (c *Caller) markExaminedPatientsFinished(patients []*model.Patient) error {
 	for _, patient := range patients {
-		patient.Status = model.PatientStateFinished
+		patient.Status = model.PatientStatusFinished
 		if _, err := c.service.UpdatePatient(patient); err != nil {
 			return errors.Wrap(err, "update patient failed")
 		}

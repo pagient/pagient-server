@@ -16,12 +16,12 @@ func (t *tx) GetPatients() ([]*model.Patient, error) {
 }
 
 // GetPatientsWithPagerByStatus returns all patients having pagers and one of the specified states
-func (t *tx) GetPatientsWithPagerByStatus(states ...model.PatientState) ([]*model.Patient, error) {
+func (t *tx) GetPatientsWithPagerByStatus(statuses ...model.PatientStatus) ([]*model.Patient, error) {
 	var patients []*model.Patient
 	stmt := t.Where("pager_id != 0")
 
-	if len(states) > 0 {
-		stmt.Where("status IN (?)", states)
+	if len(statuses) > 0 {
+		stmt.Where("status IN (?)", statuses)
 	}
 
 	err := stmt.Find(&patients).Error

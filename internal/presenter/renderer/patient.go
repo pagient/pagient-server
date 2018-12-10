@@ -37,7 +37,7 @@ func (pr *PatientRequest) Bind(r *http.Request) error {
 			return errors.New("client_id attribute is not allowed to be updated")
 		}
 
-		if pr.PagerID == 0 && pr.Status == string(model.PatientStateCall) {
+		if pr.PagerID == 0 && pr.Status == string(model.PatientStatusCall) {
 			return errors.New("patient call state can only be set if a pager is assigned")
 		}
 	} else {
@@ -62,7 +62,7 @@ func (pr *PatientRequest) GetModel() *model.Patient {
 		Name:             pr.Name,
 		PagerID:          pr.PagerID,
 		ClientID:         pr.ClientID,
-		Status:           model.PatientState(pr.Status),
+		Status:           model.PatientStatus(pr.Status),
 		Active:           pr.Active,
 	}
 }

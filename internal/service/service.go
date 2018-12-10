@@ -22,7 +22,7 @@ type PagerService interface {
 // PatientService interface
 type PatientService interface {
 	ListPatients() ([]*model.Patient, error)
-	ListPagerPatientsByStatus(...model.PatientState) ([]*model.Patient, error)
+	ListPagerPatientsByStatus(...model.PatientStatus) ([]*model.Patient, error)
 	ShowPatient(uint) (*model.Patient, error)
 	CreatePatient(*model.Patient) (*model.Patient, error)
 	UpdatePatient(*model.Patient) (*model.Patient, error)
