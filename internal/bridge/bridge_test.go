@@ -13,22 +13,22 @@ import (
 
 func TestDefaultBridge_GetToBeExaminedPatients(t *testing.T) {
 	tests := map[string]struct {
-		RoomAssignments []*bridgeModel.RoomAssignment
-		DBError         error
-		Patients        []*model.Patient
+		roomAssignments []*bridgeModel.RoomAssignment
+		dbError         error
+		patients        []*model.Patient
 	}{
 		"no room assignments": {
-			RoomAssignments: nil,
-			DBError: nil,
-			Patients: []*model.Patient{},
+			roomAssignments: nil,
+			dbError:         nil,
+			patients:        []*model.Patient{},
 		},
 		"empty room assignments": {
-			RoomAssignments: []*bridgeModel.RoomAssignment{},
-			DBError: nil,
-			Patients: []*model.Patient{},
+			roomAssignments: []*bridgeModel.RoomAssignment{},
+			dbError:         nil,
+			patients:        []*model.Patient{},
 		},
 		"some room assignments": {
-			RoomAssignments: []*bridgeModel.RoomAssignment{
+			roomAssignments: []*bridgeModel.RoomAssignment{
 				{
 					PID: 1,
 				},
@@ -39,8 +39,8 @@ func TestDefaultBridge_GetToBeExaminedPatients(t *testing.T) {
 					PID: 3,
 				},
 			},
-			DBError: nil,
-			Patients: []*model.Patient{
+			dbError: nil,
+			patients: []*model.Patient{
 				{
 					ID: 1,
 				},
@@ -53,9 +53,9 @@ func TestDefaultBridge_GetToBeExaminedPatients(t *testing.T) {
 			},
 		},
 		"database error": {
-			RoomAssignments: nil,
-			DBError: errors.New("sample test error"),
-			Patients: nil,
+			roomAssignments: nil,
+			dbError:         errors.New("sample test error"),
+			patients:        nil,
 		},
 	}
 
@@ -65,18 +65,18 @@ func TestDefaultBridge_GetToBeExaminedPatients(t *testing.T) {
 		tx := &MockTx{}
 		tx.On("Commit").Return(nil).Once()
 		tx.On("Rollback").Return(nil).Once()
-		tx.On("GetRoomAssignments", mock.AnythingOfType("string"), mock.AnythingOfType("uint")).Return(test.RoomAssignments, test.DBError).Once()
+		tx.On("GetRoomAssignments", mock.AnythingOfType("string"), mock.AnythingOfType("uint")).Return(test.roomAssignments, test.dbError).Once()
 
-		db:= &MockDB{}
+		db := &MockDB{}
 		db.On("Begin").Return(tx, nil).Once()
 
 		bridge := NewBridge(db)
 
 		patientsExaminedNext, err := bridge.GetToBeExaminedPatients()
-		assert.ElementsMatch(t, test.Patients, patientsExaminedNext)
-		if test.DBError != nil {
+		assert.ElementsMatch(t, test.patients, patientsExaminedNext)
+		if test.dbError != nil {
 			assert.Error(t, err)
-			assert.EqualError(t, test.DBError, errors.Cause(err).Error())
+			assert.EqualError(t, test.dbError, errors.Cause(err).Error())
 		} else {
 			assert.NoError(t, err)
 		}
@@ -85,23 +85,23 @@ func TestDefaultBridge_GetToBeExaminedPatients(t *testing.T) {
 
 func TestDefaultBridge_GetExaminedPatients(t *testing.T) {
 	tests := map[string]struct {
-		LastAssignments []*bridgeModel.RoomAssignment
-		RoomAssignments []*bridgeModel.RoomAssignment
-		DBError         error
-		Patients        []*model.Patient
+		lastAssignments []*bridgeModel.RoomAssignment
+		roomAssignments []*bridgeModel.RoomAssignment
+		dbError         error
+		patients        []*model.Patient
 	}{
 		"no last assignments": {
-			LastAssignments: nil,
-			RoomAssignments: []*bridgeModel.RoomAssignment{
+			lastAssignments: nil,
+			roomAssignments: []*bridgeModel.RoomAssignment{
 				{
 					PID: 1,
 				},
 			},
-			DBError: nil,
-			Patients: nil,
+			dbError:  nil,
+			patients: nil,
 		},
 		"no examined patients": {
-			LastAssignments: []*bridgeModel.RoomAssignment{
+			lastAssignments: []*bridgeModel.RoomAssignment{
 				{
 					PID: 1,
 				},
@@ -109,7 +109,7 @@ func TestDefaultBridge_GetExaminedPatients(t *testing.T) {
 					PID: 3,
 				},
 			},
-			RoomAssignments: []*bridgeModel.RoomAssignment{
+			roomAssignments: []*bridgeModel.RoomAssignment{
 				{
 					PID: 3,
 				},
@@ -117,11 +117,11 @@ func TestDefaultBridge_GetExaminedPatients(t *testing.T) {
 					PID: 1,
 				},
 			},
-			DBError: nil,
-			Patients: nil,
+			dbError:  nil,
+			patients: nil,
 		},
 		"no more room assignments": {
-			LastAssignments: []*bridgeModel.RoomAssignment{
+			lastAssignments: []*bridgeModel.RoomAssignment{
 				{
 					PID: 1,
 				},
@@ -129,9 +129,9 @@ func TestDefaultBridge_GetExaminedPatients(t *testing.T) {
 					PID: 2,
 				},
 			},
-			RoomAssignments: nil,
-			DBError: nil,
-			Patients: []*model.Patient{
+			roomAssignments: nil,
+			dbError:         nil,
+			patients: []*model.Patient{
 				{
 					ID: 1,
 				},
@@ -141,7 +141,7 @@ func TestDefaultBridge_GetExaminedPatients(t *testing.T) {
 			},
 		},
 		"all last assignments are now finished patients": {
-			LastAssignments: []*bridgeModel.RoomAssignment{
+			lastAssignments: []*bridgeModel.RoomAssignment{
 				{
 					PID: 1,
 				},
@@ -149,7 +149,7 @@ func TestDefaultBridge_GetExaminedPatients(t *testing.T) {
 					PID: 2,
 				},
 			},
-			RoomAssignments: []*bridgeModel.RoomAssignment{
+			roomAssignments: []*bridgeModel.RoomAssignment{
 				{
 					PID: 3,
 				},
@@ -157,8 +157,8 @@ func TestDefaultBridge_GetExaminedPatients(t *testing.T) {
 					PID: 4,
 				},
 			},
-			DBError: nil,
-			Patients: []*model.Patient{
+			dbError: nil,
+			patients: []*model.Patient{
 				{
 					ID: 1,
 				},
@@ -168,7 +168,7 @@ func TestDefaultBridge_GetExaminedPatients(t *testing.T) {
 			},
 		},
 		"a few examined patients": {
-			LastAssignments: []*bridgeModel.RoomAssignment{
+			lastAssignments: []*bridgeModel.RoomAssignment{
 				{
 					PID: 1,
 				},
@@ -182,7 +182,7 @@ func TestDefaultBridge_GetExaminedPatients(t *testing.T) {
 					PID: 4,
 				},
 			},
-			RoomAssignments: []*bridgeModel.RoomAssignment{
+			roomAssignments: []*bridgeModel.RoomAssignment{
 				{
 					PID: 3,
 				},
@@ -190,8 +190,8 @@ func TestDefaultBridge_GetExaminedPatients(t *testing.T) {
 					PID: 2,
 				},
 			},
-			DBError: nil,
-			Patients: []*model.Patient{
+			dbError: nil,
+			patients: []*model.Patient{
 				{
 					ID: 1,
 				},
@@ -201,7 +201,7 @@ func TestDefaultBridge_GetExaminedPatients(t *testing.T) {
 			},
 		},
 		"database error": {
-			LastAssignments: []*bridgeModel.RoomAssignment{
+			lastAssignments: []*bridgeModel.RoomAssignment{
 				{
 					PID: 1,
 				},
@@ -209,9 +209,9 @@ func TestDefaultBridge_GetExaminedPatients(t *testing.T) {
 					PID: 2,
 				},
 			},
-			RoomAssignments: nil,
-			DBError: errors.New("sample test error"),
-			Patients: nil,
+			roomAssignments: nil,
+			dbError:         errors.New("sample test error"),
+			patients:        nil,
 		},
 	}
 
@@ -224,16 +224,16 @@ func TestDefaultBridge_GetExaminedPatients(t *testing.T) {
 
 		callCount := 0
 		tx.On("GetRoomAssignments", mock.AnythingOfType("string"), mock.AnythingOfType("uint")).
-			Return(func (s string, u ...uint) []*bridgeModel.RoomAssignment {
+			Return(func(s string, u ...uint) []*bridgeModel.RoomAssignment {
 				callCount++
 				if callCount == 1 {
-					return test.LastAssignments
+					return test.lastAssignments
 				}
-				return test.RoomAssignments
-			}, test.DBError).
+				return test.roomAssignments
+			}, test.dbError).
 			Times(2)
 
-		db:= &MockDB{}
+		db := &MockDB{}
 		db.On("Begin").Return(tx, nil).Times(2)
 
 		bridge := NewBridge(db)
@@ -242,10 +242,10 @@ func TestDefaultBridge_GetExaminedPatients(t *testing.T) {
 		assert.ElementsMatch(t, nil, patientsExamined)
 
 		patientsExamined, err = bridge.GetExaminedPatients()
-		assert.ElementsMatch(t, test.Patients, patientsExamined)
-		if test.DBError != nil {
+		assert.ElementsMatch(t, test.patients, patientsExamined)
+		if test.dbError != nil {
 			assert.Error(t, err)
-			assert.EqualError(t, test.DBError, errors.Cause(err).Error())
+			assert.EqualError(t, test.dbError, errors.Cause(err).Error())
 		} else {
 			assert.NoError(t, err)
 		}
