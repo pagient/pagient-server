@@ -41,7 +41,8 @@ func AddPatient(patientService service.PatientService) http.HandlerFunc {
 		}
 		patientReq.ClientID = ctxClient.ID
 
-		patient, err := patientService.CreatePatient(patientReq.GetModel())
+		patient := patientReq.GetModel()
+		err := patientService.CreatePatient(patient)
 		if err != nil {
 			if service.IsModelExistErr(err) {
 				render.Render(w, req, renderer.ErrConflict(err))
@@ -87,7 +88,8 @@ func UpdatePatient(patientService service.PatientService) http.HandlerFunc {
 			patientReq.ClientID = ctxClient.ID
 		}
 
-		patient, err := patientService.UpdatePatient(patientReq.GetModel())
+		patient := patientReq.GetModel()
+		err := patientService.UpdatePatient(patient)
 		if err != nil {
 			if service.IsModelValidationErr(err) {
 				render.Render(w, req, renderer.ErrValidation(err))

@@ -73,28 +73,28 @@ func (service *defaultService) ShowClientByUser(username string) (*model.Client,
 }
 
 // CreateClient creates a new client
-func (service *defaultService) CreateClient(client *model.Client) (*model.Client, error) {
+func (service *defaultService) CreateClient(client *model.Client) error {
 	if err := service.validateClient(client); err != nil {
-		return nil, errors.WithStack(err)
+		return errors.WithStack(err)
 	}
 
 	tx, err := service.db.Begin()
 	if err != nil {
-		return nil, errors.Wrap(err, "create transaction failed")
+		return errors.Wrap(err, "create transaction failed")
 	}
 
-	client, err = tx.AddClient(client)
+	err = tx.AddClient(client)
 	if err != nil {
 		log.Error().
 			Err(err).
 			Msg("add client failed")
 
 		tx.Rollback()
-		return nil, errors.Wrap(err, "add client failed")
+		return errors.Wrap(err, "add client failed")
 	}
 
 	tx.Commit()
-	return client, nil
+	return nil
 }
 
 func (service *defaultService) validateClient(client *model.Client) error {

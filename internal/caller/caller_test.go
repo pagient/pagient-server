@@ -114,7 +114,7 @@ func TestCaller_Run(t *testing.T) {
 		for _, patient := range test.finishedPatients {
 			s.
 				On("UpdatePatient", patient).
-				Return(patient, nil).
+				Return(nil).
 				Times(test.repeats)
 		}
 

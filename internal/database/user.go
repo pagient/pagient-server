@@ -40,17 +40,17 @@ func (t *tx) GetUserByToken(rawToken string) (*model.User, error) {
 }
 
 // AddUser creates a new user
-func (t *tx) AddUser(user *model.User) (*model.User, error) {
+func (t *tx) AddUser(user *model.User) error {
 	// FIXME: handle sql constraint errors
 	err := t.Create(user).Error
 
-	return user, errors.Wrap(err, "create user failed")
+	return errors.Wrap(err, "create user failed")
 }
 
 // UpdateUserPassword updates only the password of provided user
-func (t *tx) UpdateUserPassword(user *model.User) (*model.User, error) {
+func (t *tx) UpdateUserPassword(user *model.User) error {
 	// FIXME: handle sql constraint errors
 	err := t.Model(user).UpdateColumn("password", user.Password).Error
 
-	return user, errors.Wrap(err, "update password failed")
+	return errors.Wrap(err, "update password failed")
 }

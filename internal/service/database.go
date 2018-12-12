@@ -28,7 +28,7 @@ type ClientTx interface {
 	GetClients() ([]*model.Client, error)
 	GetClient(uint) (*model.Client, error)
 	GetClientByUser(string) (*model.Client, error)
-	AddClient(*model.Client) (*model.Client, error)
+	AddClient(*model.Client) error
 }
 
 // PagerTx interface
@@ -45,8 +45,8 @@ type PatientTx interface {
 	// Get Patients by Client, Activity (first in slice) and Assignment of a Pager (second in slice)
 	GetPatientsByClient(uint, ...bool) ([]*model.Patient, error)
 	GetPatient(uint) (*model.Patient, error)
-	AddPatient(*model.Patient) (*model.Patient, error)
-	UpdatePatient(*model.Patient) (*model.Patient, error)
+	AddPatient(*model.Patient) error
+	UpdatePatient(*model.Patient) error
 	MarkPatientsInactiveByClient(uint) error
 	RemovePatient(*model.Patient) error
 	// Remove Patients by Client, Activity (first in slice) and Assignment of a Pager (second in slice)
@@ -57,7 +57,7 @@ type PatientTx interface {
 type TokenTx interface {
 	GetToken(string) (*model.Token, error)
 	GetTokensByUser(string) ([]*model.Token, error)
-	AddToken(*model.Token) (*model.Token, error)
+	AddToken(*model.Token) error
 	RemoveToken(*model.Token) error
 }
 
@@ -66,8 +66,8 @@ type UserTx interface {
 	GetUsers() ([]*model.User, error)
 	GetUser(string) (*model.User, error)
 	GetUserByToken(string) (*model.User, error)
-	AddUser(*model.User) (*model.User, error)
-	UpdateUserPassword(*model.User) (*model.User, error)
+	AddUser(*model.User) error
+	UpdateUserPassword(*model.User) error
 }
 
 type entryExistErr interface {

@@ -72,55 +72,55 @@ func (service *defaultService) ShowUserByToken(rawToken string) (*model.User, er
 }
 
 // CreateUser creates a new user
-func (service *defaultService) CreateUser(user *model.User) (*model.User, error) {
+func (service *defaultService) CreateUser(user *model.User) error {
 	tx, err := service.db.Begin()
 	if err != nil {
-		return nil, errors.Wrap(err, "create transaction failed")
+		return errors.Wrap(err, "create transaction failed")
 	}
 
 	if err := service.validateUser(tx, user); err != nil {
 		tx.Rollback()
-		return nil, errors.WithStack(err)
+		return errors.WithStack(err)
 	}
 
 	user.Password, err = hashPassword(user.Password)
 	if err != nil {
 		tx.Rollback()
-		return nil, errors.WithStack(err)
+		return errors.WithStack(err)
 	}
 
-	user, err = tx.AddUser(user)
+	err = tx.AddUser(user)
 	if err != nil {
 		log.Error().
 			Err(err).
 			Msg("add user failed")
 
 		tx.Rollback()
-		return nil, errors.Wrap(err, "add user failed")
+		return errors.Wrap(err, "add user failed")
 	}
 
 	tx.Commit()
-	return user, nil
+	return nil
 }
 
 // ChangeUserPassword changes password of given user
-func (service *defaultService) ChangeUserPassword(user *model.User) (*model.User, error) {
+func (service *defaultService) ChangeUserPassword(user *model.User) error {
 	if err := user.ValidatePasswordChange(); err != nil {
 		if model.IsValidationErr(err) {
-			return nil, &modelValidationErr{err.Error()}
+			return &modelValidationErr{err.Error()}
 		}
 
-		return nil, errors.Wrap(err, "validate user failed")
+		return errors.Wrap(err, "validate user failed")
 	}
 
 	passwordHash, err := hashPassword(user.Password)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return errors.WithStack(err)
 	}
 
 	tx, err := service.db.Begin()
 	if err != nil {
-		return nil, errors.Wrap(err, "create transaction failed")
+		return errors.Wrap(err, "create transaction failed")
 	}
 
 	user, err = tx.GetUser(user.Username)
@@ -130,22 +130,22 @@ func (service *defaultService) ChangeUserPassword(user *model.User) (*model.User
 			Msg("get user failed")
 	}
 	if user == nil {
-		return nil, &modelNotExistErr{"user doesn't exist"}
+		return &modelNotExistErr{"user doesn't exist"}
 	}
 
 	user.Password = passwordHash
-	user, err = tx.UpdateUserPassword(user)
+	err = tx.UpdateUserPassword(user)
 	if err != nil {
 		log.Error().
 			Err(err).
 			Msg("update user password failed")
 
 		tx.Rollback()
-		return nil, errors.Wrap(err, "update user password failed")
+		return errors.Wrap(err, "update user password failed")
 	}
 
 	tx.Commit()
-	return user, nil
+	return nil
 }
 
 // Login checks whether the combination of username and password is valid

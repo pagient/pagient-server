@@ -30,10 +30,10 @@ func (t *tx) GetTokensByUser(username string) ([]*model.Token, error) {
 }
 
 // AddToken adds a token
-func (t *tx) AddToken(token *model.Token) (*model.Token, error) {
+func (t *tx) AddToken(token *model.Token) error {
 	err := t.Create(token).Error
 
-	return token, errors.Wrap(err, "create token failed")
+	return errors.Wrap(err, "create token failed")
 }
 
 // RemoveToken removes a token

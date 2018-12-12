@@ -25,72 +25,45 @@ func (_m *MockService) CallPatient(_a0 *model.Patient) error {
 }
 
 // ChangeUserPassword provides a mock function with given fields: _a0
-func (_m *MockService) ChangeUserPassword(_a0 *model.User) (*model.User, error) {
+func (_m *MockService) ChangeUserPassword(_a0 *model.User) error {
 	ret := _m.Called(_a0)
 
-	var r0 *model.User
-	if rf, ok := ret.Get(0).(func(*model.User) *model.User); ok {
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*model.User) error); ok {
 		r0 = rf(_a0)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*model.User)
-		}
+		r0 = ret.Error(0)
 	}
 
-	var r1 error
-	if rf, ok := ret.Get(1).(func(*model.User) error); ok {
-		r1 = rf(_a0)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // CreateClient provides a mock function with given fields: _a0
-func (_m *MockService) CreateClient(_a0 *model.Client) (*model.Client, error) {
+func (_m *MockService) CreateClient(_a0 *model.Client) error {
 	ret := _m.Called(_a0)
 
-	var r0 *model.Client
-	if rf, ok := ret.Get(0).(func(*model.Client) *model.Client); ok {
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*model.Client) error); ok {
 		r0 = rf(_a0)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*model.Client)
-		}
+		r0 = ret.Error(0)
 	}
 
-	var r1 error
-	if rf, ok := ret.Get(1).(func(*model.Client) error); ok {
-		r1 = rf(_a0)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // CreatePatient provides a mock function with given fields: _a0
-func (_m *MockService) CreatePatient(_a0 *model.Patient) (*model.Patient, error) {
+func (_m *MockService) CreatePatient(_a0 *model.Patient) error {
 	ret := _m.Called(_a0)
 
-	var r0 *model.Patient
-	if rf, ok := ret.Get(0).(func(*model.Patient) *model.Patient); ok {
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*model.Patient) error); ok {
 		r0 = rf(_a0)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*model.Patient)
-		}
+		r0 = ret.Error(0)
 	}
 
-	var r1 error
-	if rf, ok := ret.Get(1).(func(*model.Patient) error); ok {
-		r1 = rf(_a0)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // CreateToken provides a mock function with given fields: _a0
@@ -108,26 +81,17 @@ func (_m *MockService) CreateToken(_a0 *model.Token) error {
 }
 
 // CreateUser provides a mock function with given fields: _a0
-func (_m *MockService) CreateUser(_a0 *model.User) (*model.User, error) {
+func (_m *MockService) CreateUser(_a0 *model.User) error {
 	ret := _m.Called(_a0)
 
-	var r0 *model.User
-	if rf, ok := ret.Get(0).(func(*model.User) *model.User); ok {
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*model.User) error); ok {
 		r0 = rf(_a0)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*model.User)
-		}
+		r0 = ret.Error(0)
 	}
 
-	var r1 error
-	if rf, ok := ret.Get(1).(func(*model.User) error); ok {
-		r1 = rf(_a0)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // DeletePatient provides a mock function with given fields: _a0
@@ -494,24 +458,15 @@ func (_m *MockService) ShowUserByToken(_a0 string) (*model.User, error) {
 }
 
 // UpdatePatient provides a mock function with given fields: _a0
-func (_m *MockService) UpdatePatient(_a0 *model.Patient) (*model.Patient, error) {
+func (_m *MockService) UpdatePatient(_a0 *model.Patient) error {
 	ret := _m.Called(_a0)
 
-	var r0 *model.Patient
-	if rf, ok := ret.Get(0).(func(*model.Patient) *model.Patient); ok {
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*model.Patient) error); ok {
 		r0 = rf(_a0)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*model.Patient)
-		}
+		r0 = ret.Error(0)
 	}
 
-	var r1 error
-	if rf, ok := ret.Get(1).(func(*model.Patient) error); ok {
-		r1 = rf(_a0)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }

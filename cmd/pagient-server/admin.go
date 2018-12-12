@@ -113,7 +113,7 @@ func runCreateUser(c *cli.Context) error {
 		ClientID: c.Uint("client"),
 	}
 
-	user, err := s.CreateUser(user)
+	err := s.CreateUser(user)
 	if err != nil && service.IsModelValidationErr(err) {
 		log.Info().
 			Msgf("User is invalid: %s", err.Error())
@@ -133,7 +133,7 @@ func runChangePassword(c *cli.Context) error {
 		Password: c.String("password"),
 	}
 
-	user, err := s.ChangeUserPassword(user)
+	err := s.ChangeUserPassword(user)
 	if err != nil && service.IsModelValidationErr(err) {
 		log.Info().
 			Msgf("User is invalid: %s", err.Error())
@@ -152,7 +152,7 @@ func runCreateClient(c *cli.Context) error {
 		Name: c.String("username"),
 	}
 
-	client, err := s.CreateClient(client)
+	err := s.CreateClient(client)
 	if err != nil && service.IsModelValidationErr(err) {
 		log.Info().
 			Msgf("Client is invalid: %s", err.Error())

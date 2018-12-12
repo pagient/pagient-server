@@ -39,9 +39,9 @@ func (t *tx) GetClientByUser(username string) (*model.Client, error) {
 }
 
 // AddClient creates a new client
-func (t *tx) AddClient(client *model.Client) (*model.Client, error) {
+func (t *tx) AddClient(client *model.Client) error {
 	// FIXME: handle sql constraint errors
 	err := t.Create(client).Error
 
-	return client, errors.Wrap(err, "create client failed")
+	return errors.Wrap(err, "create client failed")
 }

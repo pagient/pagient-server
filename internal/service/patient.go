@@ -61,100 +61,100 @@ func (service *defaultService) ShowPatient(id uint) (*model.Patient, error) {
 }
 
 // CreatePatient adds a new patient if given model is valid and not already existing
-func (service *defaultService) CreatePatient(patient *model.Patient) (*model.Patient, error) {
+func (service *defaultService) CreatePatient(patient *model.Patient) error {
 	patient.Status = model.PatientStatusPending
 
 	if patient.ClientID == 0 {
-		return nil, &invalidArgumentErr{"clientId: cannot be blank"}
+		return &invalidArgumentErr{"clientId: cannot be blank"}
 	}
 
 	tx, err := service.db.Begin()
 	if err != nil {
-		return nil, errors.Wrap(err, "create transaction failed")
+		return errors.Wrap(err, "create transaction failed")
 	}
 
 	if err := service.validatePatient(tx, patient); err != nil {
 		tx.Rollback()
-		return nil, errors.WithStack(err)
+		return errors.WithStack(err)
 	}
 
 	if patient.Active {
 		if err := service.markPatientsInactiveFromClient(tx, patient.ClientID); err != nil {
 			tx.Rollback()
-			return nil, errors.WithStack(err)
+			return errors.WithStack(err)
 		}
 	}
 
 	if err := service.removeInactivePatientsWithoutPagerFromClient(tx, patient.ClientID); err != nil {
 		tx.Rollback()
-		return nil, errors.WithStack(err)
+		return errors.WithStack(err)
 	}
 
-	patient, err = tx.AddPatient(patient)
+	err = tx.AddPatient(patient)
 	if err != nil {
 		tx.Rollback()
 
 		if isEntryNotValidErr(err) {
-			return nil, &modelValidationErr{err.Error()}
+			return &modelValidationErr{err.Error()}
 		}
 
 		if isEntryExistErr(err) {
-			return nil, &modelExistErr{"patient already exists"}
+			return &modelExistErr{"patient already exists"}
 		}
 
-		return nil, errors.Wrap(err, "add patient failed")
+		return errors.Wrap(err, "add patient failed")
 	}
 
 	tx.Commit()
 	service.notifyNewPatient(patient)
 
-	return patient, errors.Wrap(err, "add patient failed")
+	return errors.Wrap(err, "add patient failed")
 }
 
 // UpdatePatient updates an existing patient if given model is valid
-func (service *defaultService) UpdatePatient(patient *model.Patient) (*model.Patient, error) {
+func (service *defaultService) UpdatePatient(patient *model.Patient) error {
 	tx, err := service.db.Begin()
 	if err != nil {
-		return nil, errors.Wrap(err, "create transaction failed")
+		return errors.Wrap(err, "create transaction failed")
 	}
 
 	if err := service.validatePatient(tx, patient); err != nil {
 		tx.Rollback()
-		return nil, errors.WithStack(err)
+		return errors.WithStack(err)
 	}
 
 	// load patient's old state to compare changed properties
 	patientBeforeUpdate, err := tx.GetPatient(patient.ID)
 	if err != nil {
 		tx.Rollback()
-		return nil, errors.Wrap(err, "get patient failed")
+		return errors.Wrap(err, "get patient failed")
 	}
 
 	if patient.Active {
 		if err := service.markPatientsInactiveFromClient(tx, patient.ClientID); err != nil {
 			tx.Rollback()
-			return nil, errors.WithStack(err)
+			return errors.WithStack(err)
 		}
 	}
 
-	patient, err = tx.UpdatePatient(patient)
+	err = tx.UpdatePatient(patient)
 	if err != nil {
 		tx.Rollback()
 
 		if isEntryNotValidErr(err) {
-			return nil, &modelValidationErr{err.Error()}
+			return &modelValidationErr{err.Error()}
 		}
 
 		if isEntryNotExistErr(err) {
-			return nil, &modelNotExistErr{"patient doesn't exist"}
+			return &modelNotExistErr{"patient doesn't exist"}
 		}
 
-		return nil, errors.Wrap(err, "update patient failed")
+		return errors.Wrap(err, "update patient failed")
 	}
 
 	if err := service.removeInactivePatientsWithoutPagerFromClient(tx, patient.ClientID); err != nil {
 		tx.Rollback()
-		return nil, errors.WithStack(err)
+		return errors.WithStack(err)
 	}
 
 	// RoomAssignment status changed from another state to PatientStatusCall
@@ -165,14 +165,14 @@ func (service *defaultService) UpdatePatient(patient *model.Patient) (*model.Pat
 
 		if err := service.callPatient(tx, patient); err != nil {
 			tx.Rollback()
-			return nil, errors.Wrap(err, "call patient failed")
+			return errors.Wrap(err, "call patient failed")
 		}
 	}
 
 	tx.Commit()
 	service.notifyUpdatedPatient(patient)
 
-	return patient, nil
+	return nil
 }
 
 // DeletePatient deletes an existing patient
@@ -234,7 +234,7 @@ func (service *defaultService) callPatient(tx Tx, patient *model.Patient) error 
 
 	patient.Status = model.PatientStatusCalled
 
-	patient, err := tx.UpdatePatient(patient)
+	err := tx.UpdatePatient(patient)
 	if err != nil {
 		return errors.Wrap(err, "update patient failed")
 	}

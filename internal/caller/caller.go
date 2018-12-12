@@ -116,7 +116,7 @@ func (c *Caller) callPatients(patients []*model.Patient) error {
 func (c *Caller) markExaminedPatientsFinished(patients []*model.Patient) error {
 	for _, patient := range patients {
 		patient.Status = model.PatientStatusFinished
-		if _, err := c.service.UpdatePatient(patient); err != nil {
+		if err := c.service.UpdatePatient(patient); err != nil {
 			return errors.Wrap(err, "update patient failed")
 		}
 	}

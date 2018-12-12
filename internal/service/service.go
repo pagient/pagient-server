@@ -9,7 +9,7 @@ type ClientService interface {
 	ListClients() ([]*model.Client, error)
 	ShowClient(uint) (*model.Client, error)
 	ShowClientByUser(string) (*model.Client, error)
-	CreateClient(*model.Client) (*model.Client, error)
+	CreateClient(*model.Client) error
 }
 
 // PagerService interface
@@ -23,8 +23,8 @@ type PatientService interface {
 	ListPatients() ([]*model.Patient, error)
 	ListPagerPatientsByStatus(...model.PatientStatus) ([]*model.Patient, error)
 	ShowPatient(uint) (*model.Patient, error)
-	CreatePatient(*model.Patient) (*model.Patient, error)
-	UpdatePatient(*model.Patient) (*model.Patient, error)
+	CreatePatient(*model.Patient) error
+	UpdatePatient(*model.Patient) error
 	DeletePatient(*model.Patient) error
 	CallPatient(*model.Patient) error
 }
@@ -42,8 +42,8 @@ type UserService interface {
 	ListUsers() ([]*model.User, error)
 	ShowUser(string) (*model.User, error)
 	ShowUserByToken(string) (*model.User, error)
-	CreateUser(*model.User) (*model.User, error)
-	ChangeUserPassword(*model.User) (*model.User, error)
+	CreateUser(*model.User) error
+	ChangeUserPassword(*model.User) error
 	Login(string, string) (*model.User, bool, error)
 }
 

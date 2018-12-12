@@ -68,22 +68,22 @@ func (t *tx) GetPatient(id uint) (*model.Patient, error) {
 }
 
 // AddPatient stores the values in the repository
-func (t *tx) AddPatient(patient *model.Patient) (*model.Patient, error) {
+func (t *tx) AddPatient(patient *model.Patient) error {
 	// FIXME: handle sql constraint errors
 	err := t.Create(patient).Error
 
-	return patient, errors.Wrap(err, "create patient failed")
+	return errors.Wrap(err, "create patient failed")
 }
 
 // UpdatePatient updates the values in the repository
-func (t *tx) UpdatePatient(patient *model.Patient) (*model.Patient, error) {
+func (t *tx) UpdatePatient(patient *model.Patient) error {
 	// FIXME: handle sql constraint errors
 	err := t.Save(patient).Error
 	if gorm.IsRecordNotFoundError(err) {
-		return nil, &entryNotExistErr{"patient not found"}
+		return &entryNotExistErr{"patient not found"}
 	}
 
-	return patient, errors.Wrap(err, "update patient failed")
+	return errors.Wrap(err, "update patient failed")
 }
 
 // MarkPatientsInactiveByClient sets active to false for every patient by that client

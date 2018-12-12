@@ -56,7 +56,7 @@ func (service *defaultService) CreateToken(token *model.Token) error {
 		return errors.Wrap(err, "create transaction failed")
 	}
 
-	token, err = tx.AddToken(token)
+	err = tx.AddToken(token)
 	if err != nil {
 		log.Error().
 			Err(err).
