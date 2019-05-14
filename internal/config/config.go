@@ -1,22 +1,17 @@
 package config
 
 import (
-	"github.com/rs/zerolog"
 	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	_ "github.com/kardianos/minwinsvc" // import minwinsvc for windows services
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
 	"gopkg.in/ini.v1"
-	"runtime"
-)
-
-// enumerates all repository provider types
-const (
-	DatabaseProviderFile string = "file"
 )
 
 var (
@@ -46,7 +41,6 @@ var (
 type general struct {
 	Root   string `ini:"ROOT"`
 	Secret string `ini:"SECRET"`
-	DB     db     `ini:"general"`
 }
 
 // Server defines the server configuration.
@@ -203,7 +197,7 @@ func getWorkPath(appPath string) string {
 }
 
 func sanitizePath(dirtyPath string) string {
-	if !filepath.IsAbs(DB.Path) {
+	if !filepath.IsAbs(dirtyPath) {
 		return path.Join(General.Root, dirtyPath)
 	}
 

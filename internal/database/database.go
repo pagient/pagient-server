@@ -47,11 +47,11 @@ func (t *tx) Rollback() error {
 // Open opens a sqlite3 database connection
 // uses global config for connection parameters
 func Open() (DB, error) {
-	if config.General.DB.Driver != "sqlite3" {
+	if config.DB.Driver != "sqlite3" {
 		return nil, errors.New("only sqlite3 is supported at the moment")
 	}
 
-	dbConn, err := gorm.Open(config.General.DB.Driver, config.DB.Path)
+	dbConn, err := gorm.Open(config.DB.Driver, config.DB.Path)
 	if err != nil {
 		return nil, errors.New("establish database connection failed")
 	}
