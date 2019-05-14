@@ -13,9 +13,9 @@ func (t *tx) GetRoomAssignments(roomSymbol string, limit ...uint) ([]*model.Room
 		top = int(limit[0])
 	}
 
-	rows, err := t.Query("SELECT pds6_wz.PID FROM pds6_wz JOIN pds6_stwz ON pds6_wz.wzid = pds6_stwz.wzid WHERE pds6_stwz.code = ? ORDER BY pds6_wz.flgnr ASC", roomSymbol)
+	rows, err := t.Query("SELECT pds6_wz.PID FROM pds6_wz JOIN pds6_stwz ON pds6_wz.wzid = pds6_stwz.wzid WHERE pds6_stwz.code = @p1 ORDER BY pds6_wz.flgnr ASC", roomSymbol)
 	if top > 0 {
-		rows, err = t.Query("SELECT TOP(?) pds6_wz.PID FROM pds6_wz JOIN pds6_stwz ON pds6_wz.wzid = pds6_stwz.wzid WHERE pds6_stwz.code = ? ORDER BY pds6_wz.flgnr ASC", top, roomSymbol)
+		rows, err = t.Query("SELECT TOP(@p1) pds6_wz.PID FROM pds6_wz JOIN pds6_stwz ON pds6_wz.wzid = pds6_stwz.wzid WHERE pds6_stwz.code = @p2 ORDER BY pds6_wz.flgnr ASC", top, roomSymbol)
 	}
 
 	if err != nil {
