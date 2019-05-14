@@ -149,7 +149,7 @@ func runCreateClient(c *cli.Context) error {
 	defer db.Close()
 
 	client := &model.Client{
-		Name: c.String("username"),
+		Name: c.String("name"),
 	}
 
 	err := s.CreateClient(client)
