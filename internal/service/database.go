@@ -36,6 +36,7 @@ type PagerTx interface {
 	GetPagers() ([]*model.Pager, error)
 	GetUnassignedPagers() ([]*model.Pager, error)
 	GetPager(uint) (*model.Pager, error)
+	AddPager(*model.Pager) error
 }
 
 // PatientTx interface

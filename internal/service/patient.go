@@ -222,10 +222,15 @@ func (service *defaultService) CallPatient(patient *model.Patient) error {
 }
 
 func (service *defaultService) callPatient(tx Tx, patient *model.Patient) error {
+	pager, err := tx.GetPager(patient.PagerID)
+	if err != nil {
+		return errors.Wrap(err, "get pager failed")
+	}
+
 	client := easycall.NewClient(config.EasyCall.URL, config.EasyCall.User, config.EasyCall.Password)
 
 	if err := client.Send(&easycall.SendOptions{
-		Receiver: int(patient.PagerID),
+		Receiver: int(pager.EasyCallID),
 		Message:  "",
 		Port:     config.EasyCall.Port,
 	}); err != nil {
@@ -234,7 +239,7 @@ func (service *defaultService) callPatient(tx Tx, patient *model.Patient) error 
 
 	patient.Status = model.PatientStatusCalled
 
-	err := tx.UpdatePatient(patient)
+	err = tx.UpdatePatient(patient)
 	if err != nil {
 		return errors.Wrap(err, "update patient failed")
 	}

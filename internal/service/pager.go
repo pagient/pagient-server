@@ -49,3 +49,40 @@ func (service *defaultService) ShowPager(id uint) (*model.Pager, error) {
 	tx.Commit()
 	return pager, nil
 }
+
+// CreatePager creates a new pager
+func (service *defaultService) CreatePager(pager *model.Pager) error {
+	if err := service.validatePager(pager); err != nil {
+		return errors.WithStack(err)
+	}
+
+	tx, err := service.db.Begin()
+	if err != nil {
+		return errors.Wrap(err, "create transaction failed")
+	}
+
+	err = tx.AddPager(pager)
+	if err != nil {
+		log.Error().
+			Err(err).
+			Msg("add pager failed")
+
+		tx.Rollback()
+		return errors.Wrap(err, "add pager failed")
+	}
+
+	tx.Commit()
+	return nil
+}
+
+func (service *defaultService) validatePager(pager *model.Pager) error {
+	if err := pager.Validate(); err != nil {
+		if model.IsValidationErr(err) {
+			return &modelValidationErr{err.Error()}
+		}
+
+		return errors.Wrap(err, "validate pager failed")
+	}
+
+	return nil
+}

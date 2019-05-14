@@ -55,10 +55,26 @@ func Admin() *cli.Command {
 		Name:   "create-client",
 		Usage:  "Create a new client in database",
 		Action: runCreateClient,
-		Flags: []cli.Flag{
+		Flags:  []cli.Flag{
 			&cli.StringFlag{
 				Name:  "name",
 				Usage: "Name",
+			},
+		},
+	}
+
+	subcmdCreatePager := &cli.Command{
+		Name:   "create-pager",
+		Usage:  "Create a new pager in database",
+		Action: runCreatePager,
+		Flags:  []cli.Flag{
+			&cli.StringFlag{
+				Name:  "name",
+				Usage: "Name",
+			},
+			&cli.UintFlag{
+				Name:  "id",
+				Usage: "EasyCall ID",
 			},
 		},
 	}
@@ -70,6 +86,7 @@ func Admin() *cli.Command {
 			subcmdCreateUser,
 			subcmdChangePassword,
 			subcmdCreateClient,
+			subcmdCreatePager,
 		},
 	}
 }
@@ -161,4 +178,24 @@ func runCreateClient(c *cli.Context) error {
 	}
 
 	return errors.Wrap(err, "create client failed")
+}
+
+func runCreatePager(c *cli.Context) error {
+	s, db := basicSetup()
+	defer db.Close()
+
+	pager := &model.Pager{
+		Name: c.String("name"),
+		EasyCallID: c.Uint("id"),
+	}
+
+	err := s.CreatePager(pager)
+	if err != nil && service.IsModelValidationErr(err) {
+		log.Info().
+			Msgf("Pager is invalid: %s", err.Error())
+
+		return nil
+	}
+
+	return errors.Wrap(err, "create pager failed")
 }

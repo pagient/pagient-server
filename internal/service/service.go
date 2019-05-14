@@ -16,6 +16,7 @@ type ClientService interface {
 type PagerService interface {
 	ListPagers() ([]*model.Pager, error)
 	ShowPager(uint) (*model.Pager, error)
+	CreatePager(*model.Pager) error
 }
 
 // PatientService interface

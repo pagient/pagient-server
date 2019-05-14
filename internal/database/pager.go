@@ -34,3 +34,11 @@ func (t *tx) GetPager(id uint) (*model.Pager, error) {
 
 	return pager, errors.Wrap(err, "select pager by id failed")
 }
+
+// AddPager creates a new pager
+func (t *tx) AddPager(pager *model.Pager) error {
+	// FIXME: handle sql constraint errors
+	err := t.Create(pager).Error
+
+	return errors.Wrap(err, "create pager failed")
+}
