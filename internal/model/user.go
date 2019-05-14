@@ -1,8 +1,9 @@
 package model
 
 import (
+	"regexp"
+
 	"github.com/go-ozzo/ozzo-validation"
-	"github.com/go-ozzo/ozzo-validation/is"
 	"github.com/pkg/errors"
 )
 
@@ -24,7 +25,7 @@ func (user *User) Validate(clients []*Client) error {
 	}
 
 	if err := validation.ValidateStruct(user,
-		validation.Field(&user.Username, validation.Required, is.Alphanumeric),
+		validation.Field(&user.Username, validation.Required, validation.Match(regexp.MustCompile("[[:word:]]+$"))),
 		validation.Field(&user.Password, validation.Required, validation.Length(1, 100)),
 		validation.Field(&user.ClientID, validation.In(clientIDs...)),
 	); err != nil {
