@@ -13,7 +13,7 @@ func main() {
 	app := &cli.App{
 		Name:     "pagient",
 		Version:  version.Version.String(),
-		Usage:    "pagient server",
+		Usage:    "pagient web",
 		Compiled: time.Now(),
 
 		Authors: []*cli.Author{
