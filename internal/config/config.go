@@ -64,7 +64,7 @@ type server struct {
 type db struct {
 	Driver   string `ini:"DB_DRIVER"`
 	Host     string `ini:"DB_HOST,omitempty"`
-	Port     string `ini:"DB_PORT,omitempty"`
+	Port     int    `ini:"DB_PORT,omitempty"`
 	Name     string `ini:"DB_NAME,omitempty"`
 	User     string `ini:"DB_USER,omitempty"`
 	Password string `ini:"DB_PASSWORD,omitempty"`
