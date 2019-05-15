@@ -1,14 +1,17 @@
 package database
 
 import (
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/sqlite" // import sqlite for database connection
+	"log"
+	"os"
+
 	"github.com/pagient/pagient-server/internal/config"
 	"github.com/pagient/pagient-server/internal/model"
 	"github.com/pagient/pagient-server/internal/service"
+
+	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/sqlite" // import sqlite for database connection
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 )
 
 // DB interface
@@ -57,7 +60,8 @@ func Open() (DB, error) {
 	}
 
 	dbConn.LogMode(zerolog.GlobalLevel() <= zerolog.DebugLevel)
-	dbConn.SetLogger(&log.Logger)
+	dbConn.SetLogger(log.New(os.Stdout, "\r\n", 0))
+
 
 	// Create database tables etc.
 	if err := createTables(dbConn); err != nil {
