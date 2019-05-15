@@ -295,6 +295,7 @@ func (service *defaultService) markPatientsInactiveFromClient(tx PatientTx, clie
 	}
 
 	for _, patient := range patients {
+		patient.Active = false
 		service.notifyUpdatedPatient(patient)
 	}
 
