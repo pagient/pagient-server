@@ -86,7 +86,7 @@ func UpdatePatient(patientService service.PatientService) http.HandlerFunc {
 		// prevent direct ClientID update
 		ctxPatient := req.Context().Value(context.PatientKey).(*model.Patient)
 		patientReq.ID = ctxPatient.ID
-		patientReq.ClientID = ctxPatient.ID
+		patientReq.ClientID = ctxPatient.ClientID
 
 		// Set clientID to the client that updated the patient
 		// Update/Keep ClientID of requester's client
