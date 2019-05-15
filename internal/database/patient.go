@@ -7,6 +7,22 @@ import (
 	"github.com/pkg/errors"
 )
 
+func activeScope(active bool) func(*gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Where("active = ?", active)
+	}
+}
+
+func pagerScope(hasPager bool) func(*gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		if hasPager {
+			return db.Where("pager_id = ?", 0)
+		} else {
+			return db.Where("pager_id != ?", 0)
+		}
+	}
+}
+
 // GetPatients lists all patients
 func (t *tx) GetPatients() ([]*model.Patient, error) {
 	var patients []*model.Patient
@@ -32,23 +48,14 @@ func (t *tx) GetPatientsWithPagerByStatus(statuses ...model.PatientStatus) ([]*m
 // GetPatientsByClient returns all patients from client and activity status (first of slice) and assignment of a pager (second of slice)
 func (t *tx) GetPatientsByClient(clientID uint, optionals ...bool) ([]*model.Patient, error) {
 	var patients []*model.Patient
-	stmt := t.Where(&model.Patient{
-		ClientID: clientID,
-	})
+	stmt := t.Where("client_id = ?", clientID)
 
 	if len(optionals) > 0 {
-		stmt.Where("active = ?", optionals[0])
+		stmt = stmt.Scopes(activeScope(optionals[0]))
 	}
 
 	if len(optionals) > 1 {
-		// has no pager
-		comparison := "= 0"
-		if optionals[1] {
-			// has a pager
-			comparison = "!= 0"
-		}
-
-		stmt.Where("pager_id " + comparison)
+		stmt = stmt.Scopes(pagerScope(optionals[1]))
 	}
 
 	err := stmt.Find(&patients).Error
@@ -111,23 +118,14 @@ func (t *tx) RemovePatient(patient *model.Patient) error {
 
 // RemovePatientsByClient removes all patients from client and activity status (first of slice) and assignment of a pager (second of slice)
 func (t *tx) RemovePatientsByClient(clientID uint, optionals ...bool) error {
-	stmt := t.Where(&model.Patient{
-		ClientID: clientID,
-	})
+	stmt := t.Where("client_id = ?", clientID)
 
 	if len(optionals) > 0 {
-		stmt.Where("active = ?", optionals[0])
+		stmt = stmt.Scopes(activeScope(optionals[0]))
 	}
 
 	if len(optionals) > 1 {
-		// has no pager
-		comparison := "= 0"
-		if optionals[1] {
-			// has a pager
-			comparison = "!= 0"
-		}
-
-		stmt.Where("pager_id " + comparison)
+		stmt = stmt.Scopes(pagerScope(optionals[1]))
 	}
 
 	err := stmt.Delete(model.Patient{}).Error
