@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/pagient/pagient-server/internal/model"
+
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )

@@ -62,7 +62,6 @@ func Open() (DB, error) {
 	dbConn.LogMode(zerolog.GlobalLevel() <= zerolog.DebugLevel)
 	dbConn.SetLogger(log.New(os.Stdout, "\r\n", 0))
 
-
 	// Create database tables etc.
 	if err := createTables(dbConn); err != nil {
 		return nil, errors.New("create database tables failed")

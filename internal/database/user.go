@@ -1,8 +1,9 @@
 package database
 
 import (
-	"github.com/jinzhu/gorm"
 	"github.com/pagient/pagient-server/internal/model"
+
+	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
 )
 

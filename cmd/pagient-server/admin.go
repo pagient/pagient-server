@@ -55,7 +55,7 @@ func Admin() *cli.Command {
 		Name:   "create-client",
 		Usage:  "Create a new client in database",
 		Action: runCreateClient,
-		Flags:  []cli.Flag{
+		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:  "name",
 				Usage: "Name",
@@ -67,7 +67,7 @@ func Admin() *cli.Command {
 		Name:   "create-pager",
 		Usage:  "Create a new pager in database",
 		Action: runCreatePager,
-		Flags:  []cli.Flag{
+		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:  "name",
 				Usage: "Name",
@@ -185,7 +185,7 @@ func runCreatePager(c *cli.Context) error {
 	defer db.Close()
 
 	pager := &model.Pager{
-		Name: c.String("name"),
+		Name:       c.String("name"),
 		EasyCallID: c.Uint("id"),
 	}
 

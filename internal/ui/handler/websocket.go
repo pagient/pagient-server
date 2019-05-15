@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"net/url"
 
 	"github.com/pagient/pagient-server/internal/config"
 	"github.com/pagient/pagient-server/internal/service"
@@ -12,7 +13,6 @@ import (
 	"github.com/go-chi/render"
 	ws "github.com/gorilla/websocket"
 	"github.com/rs/zerolog/log"
-	"net/url"
 )
 
 // ServeWebsocket establishes the websocket connection per client

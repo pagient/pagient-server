@@ -17,9 +17,8 @@ func pagerScope(hasPager bool) func(*gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
 		if hasPager {
 			return db.Where("pager_id = ?", 0)
-		} else {
-			return db.Where("pager_id != ?", 0)
 		}
+		return db.Where("pager_id != ?", 0)
 	}
 }
 
