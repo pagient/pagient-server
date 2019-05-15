@@ -7,7 +7,7 @@ import (
 )
 
 // GetRoomAssignments returns current assignments of patients to surgery rooms
-func (t *tx) GetRoomAssignments(roomSymbol string, limit ...uint) ([]*model.RoomAssignment, error) {
+func (t *db) GetRoomAssignments(roomSymbol string, limit ...uint) ([]*model.RoomAssignment, error) {
 	top := 0
 	if len(limit) > 0 {
 		top = int(limit[0])

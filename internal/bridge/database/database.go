@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/pagient/pagient-server/internal/bridge"
+	bridgeModel "github.com/pagient/pagient-server/internal/bridge/model"
 	"github.com/pagient/pagient-server/internal/config"
 
 	_ "github.com/denisenkom/go-mssqldb" // import mssql for database connection
@@ -14,7 +14,7 @@ import (
 
 // DB interface
 type DB interface {
-	Begin() (bridge.Tx, error)
+	GetRoomAssignments(string, ...uint) ([]*bridgeModel.RoomAssignment, error)
 	Close() error
 }
 
@@ -22,27 +22,9 @@ type db struct {
 	*sql.DB
 }
 
-// Begin starts an returns a new transaction.
-func (db *db) Begin() (bridge.Tx, error) {
-	t, err := db.DB.Begin()
-	return &tx{t}, errors.Wrap(err, "begin new transaction failed")
-}
-
 // Close closes the database
 func (db *db) Close() error {
 	return db.DB.Close()
-}
-
-type tx struct {
-	*sql.Tx
-}
-
-func (t *tx) Commit() error {
-	return t.Tx.Commit()
-}
-
-func (t *tx) Rollback() error {
-	return t.Tx.Rollback()
 }
 
 // Open opens a sqlserver database connection
@@ -54,7 +36,6 @@ func Open() (DB, error) {
 
 	query := url.Values{}
 	query.Add("database", config.Bridge.DB.Name)
-	query.Add("encrypt", "disable")
 
 	connURL := &url.URL{
 		Scheme:   "sqlserver",

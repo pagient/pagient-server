@@ -12,14 +12,6 @@ import (
 
 // DB interface
 type DB interface {
-	Begin() (Tx, error)
-}
-
-// Tx interface
-type Tx interface {
-	Commit() error
-	Rollback() error
-
 	GetRoomAssignments(string, ...uint) ([]*bridgeModel.RoomAssignment, error)
 }
 
@@ -65,19 +57,8 @@ func (b *DefaultBridge) GetExaminedPatients() ([]*model.Patient, error) {
 }
 
 func (b *DefaultBridge) getRoomAssignments() ([]*bridgeModel.RoomAssignment, error) {
-	tx, err := b.db.Begin()
-	if err != nil {
-		return nil, errors.Wrap(err, "create transaction failed")
-	}
-
-	assignments, err := tx.GetRoomAssignments(config.Bridge.CallActionWZ, config.Bridge.CallActionQueuePosition)
-	if err != nil {
-		tx.Rollback()
-		return nil, errors.Wrap(err, "get patients by room assignment failed")
-	}
-
-	err = tx.Commit()
-	return assignments, errors.Wrap(err, "get room assignments failed")
+	assignments, err := b.db.GetRoomAssignments(config.Bridge.CallActionWZ, config.Bridge.CallActionQueuePosition)
+	return assignments, errors.Wrap(err, "get patients by room assignment failed")
 }
 
 func subtractSet(assignmentsA, assignmentsB []*bridgeModel.RoomAssignment) []*bridgeModel.RoomAssignment {

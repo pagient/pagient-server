@@ -62,13 +62,8 @@ func TestDefaultBridge_GetToBeExaminedPatients(t *testing.T) {
 	for name, test := range tests {
 		t.Logf("Running test case: %s", name)
 
-		tx := &MockTx{}
-		tx.On("Commit").Return(nil).Once()
-		tx.On("Rollback").Return(nil).Once()
-		tx.On("GetRoomAssignments", mock.AnythingOfType("string"), mock.AnythingOfType("uint")).Return(test.roomAssignments, test.dbError).Once()
-
 		db := &MockDB{}
-		db.On("Begin").Return(tx, nil).Once()
+		db.On("GetRoomAssignments", mock.AnythingOfType("string"), mock.AnythingOfType("uint")).Return(test.roomAssignments, test.dbError).Once()
 
 		bridge := NewBridge(db)
 
@@ -218,12 +213,9 @@ func TestDefaultBridge_GetExaminedPatients(t *testing.T) {
 	for name, test := range tests {
 		t.Logf("Running test case: %s", name)
 
-		tx := &MockTx{}
-		tx.On("Commit").Return(nil).Times(2)
-		tx.On("Rollback").Return(nil).Times(2)
-
+		db := &MockDB{}
 		callCount := 0
-		tx.On("GetRoomAssignments", mock.AnythingOfType("string"), mock.AnythingOfType("uint")).
+		db.On("GetRoomAssignments", mock.AnythingOfType("string"), mock.AnythingOfType("uint")).
 			Return(func(s string, u ...uint) []*bridgeModel.RoomAssignment {
 				callCount++
 				if callCount == 1 {
@@ -232,9 +224,6 @@ func TestDefaultBridge_GetExaminedPatients(t *testing.T) {
 				return test.roomAssignments
 			}, test.dbError).
 			Times(2)
-
-		db := &MockDB{}
-		db.On("Begin").Return(tx, nil).Times(2)
 
 		bridge := NewBridge(db)
 

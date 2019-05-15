@@ -104,7 +104,7 @@ func Web() *cli.Command {
 
 			{
 				// Setup Bridge Database Connection
-				db, err := bridgeDB.Open()
+				bDB, err := bridgeDB.Open()
 				if err != nil {
 					log.Fatal().
 						Err(err).
@@ -112,9 +112,10 @@ func Web() *cli.Command {
 
 					return err
 				}
+				defer bDB.Close()
 
 				// Setup Software Bridge
-				softwareBridge := bridge.NewBridge(db)
+				softwareBridge := bridge.NewBridge(bDB)
 
 				// Setup Caller
 				pagerCaller := caller.NewCaller(s, softwareBridge)
