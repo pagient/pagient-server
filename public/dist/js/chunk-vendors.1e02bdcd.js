@@ -1155,4 +1155,3 @@ var i=function(t){var e=Number(t.version.split(".")[0]);if(e>=2)t.mixin({beforeC
   !*** external {"commonjs":"vue","commonjs2":"vue","amd":"vue","root":"Vue"} ***!
   \******************************************************************************/
 /*! no static exports found */function(e,n){e.exports=t}})["default"]})},zuR4:function(t,e,n){"use strict";var i=n("xTJ+"),r=n("HSsa"),s=n("CgaS"),o=n("JEQr");function a(t){var e=new s(t),n=r(s.prototype.request,e);return i.extend(n,s.prototype,e),i.extend(n,e),n}var c=a(o);c.Axios=s,c.create=function(t){return a(i.merge(o,t))},c.Cancel=n("endd"),c.CancelToken=n("jfS+"),c.isCancel=n("Lmem"),c.all=function(t){return Promise.all(t)},c.spread=n("DfZB"),t.exports=c,t.exports.default=c}}]);
-//# sourceMappingURL=chunk-vendors.f1cc83a6.js.map

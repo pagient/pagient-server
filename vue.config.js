@@ -3,6 +3,8 @@ var path = require("path");
 module.exports = {
   // where to output the built files
   outputDir: "public/dist",
+  // disable source maps for prod
+  productionSourceMap: false,
 
   chainWebpack: config => {
     config
