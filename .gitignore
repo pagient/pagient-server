@@ -1,19 +1,19 @@
 # Pagient related
 
-/_tools
-/vendor
-/dist
-/bin
+_tools
+vendor
+dist
+bin
 
-/conf
-!/conf/app.ini.sample
-/data
+conf/*
+!conf/app.ini.sample
+data
 
-/docs/public
-/tmp
+docs/public
+tmp
 
 # binary
-/pagient
+pagient
 
 # local env files
 .env.local
