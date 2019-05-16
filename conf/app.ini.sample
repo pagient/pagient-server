@@ -3,6 +3,8 @@
 ROOT      = data/
 ; secret for file encryption
 SECRET    =
+
+[db]
 ; database driver
 DB_DRIVER = sqlite3
 ; path of sqlite database
