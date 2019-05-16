@@ -7,8 +7,10 @@ import (
 
 	"github.com/pagient/pagient-server/internal/model"
 	"github.com/pagient/pagient-server/internal/service"
+	"github.com/pagient/pagient-server/internal/ui/renderer"
 
 	"github.com/go-chi/chi"
+	"github.com/go-chi/render"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
@@ -24,7 +26,7 @@ func PatientCtx(patientService service.PatientService) func(http.Handler) http.H
 			if patientID := chi.URLParam(req, "patientID"); patientID != "" {
 				id, err := strconv.Atoi(patientID)
 				if err != nil {
-					http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+					render.Render(w, req, renderer.ErrBadRequest(err))
 					return
 				}
 
@@ -34,12 +36,12 @@ func PatientCtx(patientService service.PatientService) func(http.Handler) http.H
 						Err(err).
 						Msg("get patient failed")
 
-					http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+					render.Render(w, req, renderer.ErrInternalServer(err))
 					return
 				}
 
 				if patient == nil {
-					http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+					render.Render(w, req, renderer.ErrNotFound)
 					return
 				}
 
@@ -53,7 +55,7 @@ func PatientCtx(patientService service.PatientService) func(http.Handler) http.H
 				Err(err).
 				Msg("patient id parameter missing in url")
 
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			render.Render(w, req, renderer.ErrInternalServer(err))
 		})
 	}
 }

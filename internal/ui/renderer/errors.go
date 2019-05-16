@@ -18,7 +18,7 @@ type ErrResponse struct {
 
 // Render renders the ErrResponse
 func (e *ErrResponse) Render(w http.ResponseWriter, req *http.Request) error {
-	if e.HTTPStatusCode == 500 {
+	if e.Err != nil {
 		log.Error().
 			Err(e.Err).
 			Msg("")
@@ -31,8 +31,7 @@ func (e *ErrResponse) Render(w http.ResponseWriter, req *http.Request) error {
 // ErrBadRequest represents a 400 error
 func ErrBadRequest(err error) render.Renderer {
 	return &ErrResponse{
-		Err:            err,
-		HTTPStatusCode: 400,
+		HTTPStatusCode: http.StatusBadRequest,
 		Message:        http.StatusText(http.StatusBadRequest),
 		ErrorText:      err.Error(),
 	}
@@ -41,8 +40,7 @@ func ErrBadRequest(err error) render.Renderer {
 // ErrConflict represents a 409 error
 func ErrConflict(err error) render.Renderer {
 	return &ErrResponse{
-		Err:            err,
-		HTTPStatusCode: 409,
+		HTTPStatusCode: http.StatusConflict,
 		Message:        http.StatusText(http.StatusConflict),
 	}
 }
@@ -50,8 +48,7 @@ func ErrConflict(err error) render.Renderer {
 // ErrValidation represents a 422 error caused by validation
 func ErrValidation(err error) render.Renderer {
 	return &ErrResponse{
-		Err:            err,
-		HTTPStatusCode: 422,
+		HTTPStatusCode: http.StatusUnprocessableEntity,
 		Message:        http.StatusText(http.StatusUnprocessableEntity),
 		ErrorText:      err.Error(),
 	}
@@ -61,7 +58,7 @@ func ErrValidation(err error) render.Renderer {
 func ErrInternalServer(err error) render.Renderer {
 	return &ErrResponse{
 		Err:            err,
-		HTTPStatusCode: 500,
+		HTTPStatusCode: http.StatusInternalServerError,
 		Message:        http.StatusText(http.StatusInternalServerError),
 	}
 }
@@ -70,10 +67,13 @@ func ErrInternalServer(err error) render.Renderer {
 func ErrGateway(err error) render.Renderer {
 	return &ErrResponse{
 		Err:            err,
-		HTTPStatusCode: 504,
+		HTTPStatusCode: http.StatusGatewayTimeout,
 		Message:        http.StatusText(http.StatusGatewayTimeout),
 	}
 }
 
+// ErrUnauthorized represents a 401 error
+var ErrUnauthorized = &ErrResponse{HTTPStatusCode: http.StatusUnauthorized, Message: http.StatusText(http.StatusUnauthorized)}
+
 // ErrNotFound represents a 404 error
-var ErrNotFound = &ErrResponse{HTTPStatusCode: 404, Message: http.StatusText(http.StatusNotFound)}
+var ErrNotFound = &ErrResponse{HTTPStatusCode: http.StatusNotFound, Message: http.StatusText(http.StatusNotFound)}

@@ -6,7 +6,9 @@ import (
 
 	"github.com/pagient/pagient-server/internal/model"
 	"github.com/pagient/pagient-server/internal/service"
+	"github.com/pagient/pagient-server/internal/ui/renderer"
 
+	"github.com/go-chi/render"
 	"github.com/rs/zerolog/log"
 )
 
@@ -21,7 +23,7 @@ func ClientCtx(clientService service.ClientService) func(http.Handler) http.Hand
 					Err(err).
 					Msg("get client failed")
 
-				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+				render.Render(w, req, renderer.ErrInternalServer(err))
 				return
 			}
 

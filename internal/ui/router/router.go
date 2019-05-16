@@ -7,14 +7,13 @@ import (
 	"github.com/pagient/pagient-server/internal/config"
 	"github.com/pagient/pagient-server/internal/service"
 	"github.com/pagient/pagient-server/internal/ui/handler"
-	"github.com/pagient/pagient-server/internal/ui/router/middleware/auth"
-	"github.com/pagient/pagient-server/internal/ui/router/middleware/context"
-	"github.com/pagient/pagient-server/internal/ui/router/middleware/header"
+	"github.com/pagient/pagient-server/internal/ui/router/context"
+	"github.com/pagient/pagient-server/internal/ui/router/middleware"
 	"github.com/pagient/pagient-server/internal/ui/static"
 	"github.com/pagient/pagient-server/internal/ui/websocket"
 
 	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
+	chiMiddleware "github.com/go-chi/chi/middleware"
 	"github.com/go-chi/jwtauth"
 	"github.com/go-chi/render"
 	"github.com/rs/zerolog/hlog"
@@ -23,7 +22,6 @@ import (
 
 // Load initializes the routing of the application.
 func Load(s service.Service, wsHub *websocket.Hub) http.Handler {
-
 	mux := chi.NewRouter()
 
 	mux.Use(hlog.NewHandler(log.Logger))
@@ -39,22 +37,22 @@ func Load(s service.Service, wsHub *websocket.Hub) http.Handler {
 	mux.Use(hlog.RemoteAddrHandler("ip"))
 	mux.Use(hlog.RequestIDHandler("request_id", "Request-Id"))
 
-	mux.Use(middleware.RequestID)
-	mux.Use(middleware.RealIP)
-	mux.Use(middleware.Recoverer)
-	mux.Use(middleware.Timeout(60 * time.Second))
+	mux.Use(chiMiddleware.RequestID)
+	mux.Use(chiMiddleware.RealIP)
+	mux.Use(chiMiddleware.Recoverer)
+	mux.Use(chiMiddleware.Timeout(60 * time.Second))
 
-	mux.Use(header.Version)
-	mux.Use(header.Cache)
-	mux.Use(header.Secure())
-	mux.Use(header.Options())
+	mux.Use(middleware.Version)
+	mux.Use(middleware.Cache)
+	mux.Use(middleware.Secure())
+	mux.Use(middleware.Options())
 
 	tokenAuth := jwtauth.New("HS256", []byte(config.General.Secret), nil)
 
 	mux.Route("/", func(root chi.Router) {
 		root.Group(func(r chi.Router) {
 			r.Use(jwtauth.Verifier(tokenAuth))
-			r.Use(auth.Authenticator(s, s))
+			r.Use(middleware.Authenticator(s, s))
 
 			r.Route("/api", func(r chi.Router) {
 				r.Use(render.SetContentType(render.ContentTypeJSON))
@@ -89,7 +87,7 @@ func Load(s service.Service, wsHub *websocket.Hub) http.Handler {
 
 			r.Route("/", func(r chi.Router) {
 				r.Use(jwtauth.Verifier(tokenAuth))
-				r.Use(auth.Authenticator(s, s))
+				r.Use(middleware.Authenticator(s, s))
 
 				r.Delete("/token", handler.DeleteToken(s, wsHub))
 				r.Get("/sessions", handler.GetSessions(s, s))

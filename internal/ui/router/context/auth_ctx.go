@@ -5,8 +5,10 @@ import (
 	"net/http"
 
 	"github.com/pagient/pagient-server/internal/service"
+	"github.com/pagient/pagient-server/internal/ui/renderer"
 
 	"github.com/go-chi/jwtauth"
+	"github.com/go-chi/render"
 	"github.com/rs/zerolog/log"
 )
 
@@ -18,7 +20,7 @@ func AuthCtx(userService service.UserService) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			jwtToken, _, err := jwtauth.FromContext(req.Context())
 			if err != nil {
-				http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+				render.Render(w, req, renderer.ErrUnauthorized)
 				return
 			}
 
@@ -28,7 +30,7 @@ func AuthCtx(userService service.UserService) func(http.Handler) http.Handler {
 					Err(err).
 					Msg("get user failed")
 
-				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+				render.Render(w, req, renderer.ErrInternalServer(err))
 				return
 			}
 

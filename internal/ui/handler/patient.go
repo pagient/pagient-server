@@ -1,12 +1,13 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/pagient/pagient-server/internal/model"
 	"github.com/pagient/pagient-server/internal/service"
 	"github.com/pagient/pagient-server/internal/ui/renderer"
-	"github.com/pagient/pagient-server/internal/ui/router/middleware/context"
+	"github.com/pagient/pagient-server/internal/ui/router/context"
 
 	"github.com/go-chi/render"
 )
@@ -33,10 +34,20 @@ func AddPatient(patientService service.PatientService) http.HandlerFunc {
 			return
 		}
 
+		if patientReq.ClientID != 0 {
+			render.Render(w, req, renderer.ErrBadRequest(errors.New("clientId not allowed")))
+			return
+		}
+
+		if patientReq.Status != "" {
+			render.Render(w, req, renderer.ErrBadRequest(errors.New("status not allowed")))
+			return
+		}
+
 		// Set clientID to the client that added the patientReq
 		ctxClient := req.Context().Value(context.ClientKey).(*model.Client)
 		if ctxClient == nil {
-			http.Error(w, http.StatusText(http.StatusUnauthorized), 401)
+			render.Render(w, req, renderer.ErrUnauthorized)
 			return
 		}
 		patientReq.ClientID = ctxClient.ID
@@ -85,8 +96,21 @@ func UpdatePatient(patientService service.PatientService) http.HandlerFunc {
 		// prevent ID update
 		// prevent direct ClientID update
 		ctxPatient := req.Context().Value(context.PatientKey).(*model.Patient)
-		patientReq.ID = ctxPatient.ID
-		patientReq.ClientID = ctxPatient.ClientID
+
+		if patientReq.ID != 0 && patientReq.ID != ctxPatient.ID {
+			render.Render(w, req, renderer.ErrBadRequest(errors.New("id not allowed")))
+			return
+		}
+
+		if patientReq.ClientID != 0 && patientReq.ClientID != ctxPatient.ClientID {
+			render.Render(w, req, renderer.ErrBadRequest(errors.New("clientId not allowed")))
+			return
+		}
+
+		if patientReq.PagerID == 0 && patientReq.Status == string(model.PatientStatusCall) {
+			render.Render(w, req, renderer.ErrBadRequest(errors.New("status \"call\" can only be set if pager is assigned")))
+			return
+		}
 
 		// Set clientID to the client that updated the patient
 		// Update/Keep ClientID of requester's client

@@ -3,11 +3,8 @@ package renderer
 import (
 	"net/http"
 
-	"github.com/pagient/pagient-server/internal/model"
-	"github.com/pagient/pagient-server/internal/ui/router/middleware/context"
-
 	"github.com/go-chi/render"
-	"github.com/pkg/errors"
+	"github.com/pagient/pagient-server/internal/model"
 )
 
 // PatientRequest is the request payload for patient data model
@@ -23,39 +20,11 @@ type PatientRequest struct {
 
 // Bind postprocesses the decoding of the request body
 func (pr *PatientRequest) Bind(r *http.Request) error {
-	var patient *model.Patient
-
-	// Request is an update
-	if r.Context().Value(context.PatientKey) != nil {
-		patient = r.Context().Value(context.PatientKey).(*model.Patient)
-
-		if pr.ID != 0 && pr.ID != patient.ID {
-			return errors.New("id attribute is not allowed to be updated")
-		}
-
-		if pr.ClientID != 0 && pr.ClientID != patient.ClientID {
-			return errors.New("client_id attribute is not allowed to be updated")
-		}
-
-		if pr.PagerID == 0 && pr.Status == string(model.PatientStatusCall) {
-			return errors.New("patient call state can only be set if a pager is assigned")
-		}
-	} else {
-		if pr.ClientID != 0 {
-			return errors.New("client_id not allowed")
-		}
-
-		if pr.Status != "" {
-			return errors.New("status not allowed")
-		}
-	}
-
 	return nil
 }
 
-// GetModel returns a RoomAssignment model
+// GetModel returns a Patient model
 func (pr *PatientRequest) GetModel() *model.Patient {
-
 	return &model.Patient{
 		ID:               pr.ID,
 		SocialSecurityNo: pr.SocialSecurityNo,

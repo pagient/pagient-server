@@ -30,7 +30,7 @@ func CreateToken(userService service.UserService, tokenService service.TokenServ
 		}
 
 		if !valid {
-			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			render.Render(w, req, renderer.ErrUnauthorized)
 			return
 		}
 
