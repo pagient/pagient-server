@@ -1,23 +1,27 @@
 package database
 
 import (
+	"database/sql"
+
 	"github.com/pagient/pagient-server/internal/bridge/model"
 
 	"github.com/pkg/errors"
 )
 
 // GetRoomAssignments returns current assignments of patients to surgery rooms
-func (t *db) GetRoomAssignments(roomSymbol string, limit ...uint) ([]*model.RoomAssignment, error) {
+func (db *db) GetRoomAssignments(roomSymbol string, limit ...uint) ([]*model.RoomAssignment, error) {
 	top := 0
 	if len(limit) > 0 {
 		top = int(limit[0])
 	}
 
-	rows, err := t.Query("SELECT pds6_wz.PID FROM pds6_wz JOIN pds6_stwz ON pds6_wz.wzid = pds6_stwz.wzid WHERE pds6_stwz.code = @p1 ORDER BY pds6_wz.flgnr ASC", roomSymbol)
-	if top > 0 {
-		rows, err = t.Query("SELECT TOP(@p1) pds6_wz.PID FROM pds6_wz JOIN pds6_stwz ON pds6_wz.wzid = pds6_stwz.wzid WHERE pds6_stwz.code = @p2 ORDER BY pds6_wz.flgnr ASC", top, roomSymbol)
+	var rows *sql.Rows
+	var err error
+	if top == 0 {
+		rows, err = db.Query("SELECT pds6_wz.PID FROM pds6_wz JOIN pds6_stwz ON pds6_wz.wzid = pds6_stwz.wzid WHERE pds6_stwz.code = @p1 ORDER BY pds6_wz.flgnr ASC", roomSymbol)
+	} else {
+		rows, err = db.Query("SELECT TOP(@p1) pds6_wz.PID FROM pds6_wz JOIN pds6_stwz ON pds6_wz.wzid = pds6_stwz.wzid WHERE pds6_stwz.code = @p2 ORDER BY pds6_wz.flgnr ASC", top, roomSymbol)
 	}
-
 	if err != nil {
 		return nil, errors.Wrap(err, "could not query database")
 	}
