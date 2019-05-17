@@ -104,7 +104,7 @@ func Web() *cli.Command {
 
 			{
 				// Setup Bridge Database Connection
-				bDB, err := bridgeDB.Open()
+				db, err := bridgeDB.Open()
 				if err != nil {
 					log.Fatal().
 						Err(err).
@@ -112,13 +112,13 @@ func Web() *cli.Command {
 
 					return err
 				}
-				defer bDB.Close()
+				defer db.Close()
 
 				// Setup Software Bridge
-				softwareBridge := bridge.NewBridge(bDB)
+				b := bridge.NewBridge(db)
 
 				// Setup Caller
-				pagerCaller := caller.NewCaller(s, softwareBridge)
+				c := caller.NewCaller(s, b)
 				stop := make(chan struct{}, 1)
 
 				gr.Add(func() error {
@@ -126,7 +126,7 @@ func Web() *cli.Command {
 						Msg("starting caller")
 
 					every := time.Duration(config.Bridge.PollingInterval) * time.Second
-					return pagerCaller.Run(every, stop)
+					return c.Run(every, stop)
 				}, func(reason error) {
 					close(stop)
 

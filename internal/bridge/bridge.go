@@ -28,9 +28,9 @@ func NewBridge(db DB) *DefaultBridge {
 
 // GetToBeExaminedPatients returns all patients that are queued to be examined next
 func (b *DefaultBridge) GetToBeExaminedPatients() ([]*model.Patient, error) {
-	assignments, err := b.getRoomAssignments()
+	assignments, err := b.db.GetRoomAssignments(config.Bridge.CallActionWZ, config.Bridge.CallActionQueuePosition)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, errors.Wrap(err, "get patients by room assignment failed")
 	}
 
 	patients := mapAssignmentsToPatients(assignments)
@@ -40,9 +40,9 @@ func (b *DefaultBridge) GetToBeExaminedPatients() ([]*model.Patient, error) {
 
 // GetExaminedPatients returns all patients that have been examined and are finished now since last call
 func (b *DefaultBridge) GetExaminedPatients() ([]*model.Patient, error) {
-	assignments, err := b.getRoomAssignments()
+	assignments, err := b.db.GetRoomAssignments(config.Bridge.CallActionWZ, config.Bridge.CallActionQueuePosition)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, errors.Wrap(err, "get patients by room assignment failed")
 	}
 
 	removedAssignments := subtractSet(b.lastAssignments, assignments)
@@ -54,11 +54,6 @@ func (b *DefaultBridge) GetExaminedPatients() ([]*model.Patient, error) {
 	copy(b.lastAssignments, assignments)
 
 	return patients, nil
-}
-
-func (b *DefaultBridge) getRoomAssignments() ([]*bridgeModel.RoomAssignment, error) {
-	assignments, err := b.db.GetRoomAssignments(config.Bridge.CallActionWZ, config.Bridge.CallActionQueuePosition)
-	return assignments, errors.Wrap(err, "get patients by room assignment failed")
 }
 
 func subtractSet(assignmentsA, assignmentsB []*bridgeModel.RoomAssignment) []*bridgeModel.RoomAssignment {
