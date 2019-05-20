@@ -45,6 +45,13 @@ func Open() (DB, error) {
 	}
 
 	dbConn, err := sql.Open(config.Bridge.DB.Driver, connURL.String())
+	if err != nil {
+		return nil, errors.Wrap(err, "could not create db connection pool")
+	}
 
-	return &db{dbConn}, errors.Wrap(err, "could not connect to database server")
+	if err := dbConn.Ping(); err != nil {
+		dbConn.Close()
+		return nil, errors.Wrap(err, "could not connect to database server")
+	}
+	return &db{dbConn}, nil
 }
