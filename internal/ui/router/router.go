@@ -52,7 +52,7 @@ func Load(s service.Service, wsHub *websocket.Hub) http.Handler {
 	mux.Route("/", func(root chi.Router) {
 		root.Group(func(r chi.Router) {
 			r.Use(jwtauth.Verifier(tokenAuth))
-			r.Use(middleware.Authenticator(s, s))
+			r.Use(middleware.Authenticator(s))
 
 			r.Route("/api", func(r chi.Router) {
 				r.Use(render.SetContentType(render.ContentTypeJSON))
@@ -87,7 +87,7 @@ func Load(s service.Service, wsHub *websocket.Hub) http.Handler {
 
 			r.Route("/", func(r chi.Router) {
 				r.Use(jwtauth.Verifier(tokenAuth))
-				r.Use(middleware.Authenticator(s, s))
+				r.Use(middleware.Authenticator(s))
 
 				r.Delete("/token", handler.DeleteToken(s, wsHub))
 				r.Get("/sessions", handler.GetSessions(s, s))

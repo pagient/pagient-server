@@ -11,7 +11,7 @@ import (
 )
 
 // Authenticator middleware is used to authenticate the user by bearer token
-func Authenticator(tokenService service.TokenService, userService service.UserService) func(http.Handler) http.Handler {
+func Authenticator(tokenService service.TokenService) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			jwtToken, _, err := jwtauth.FromContext(req.Context())

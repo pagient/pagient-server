@@ -1,10 +1,10 @@
 package main
 
 import (
-	"os"
-
+	"fmt"
 	"github.com/pagient/pagient-server/internal/config"
 	"github.com/pagient/pagient-server/internal/database"
+	"github.com/pagient/pagient-server/internal/logger"
 	"github.com/pagient/pagient-server/internal/model"
 	"github.com/pagient/pagient-server/internal/service"
 
@@ -18,7 +18,7 @@ func Admin() *cli.Command {
 	subcmdCreateUser := &cli.Command{
 		Name:   "create-user",
 		Usage:  "Create a new user in database",
-		Action: runCreateUser,
+		Action: cliEnvSetup(runCreateUser),
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:  "username",
@@ -38,7 +38,7 @@ func Admin() *cli.Command {
 	subcmdChangePassword := &cli.Command{
 		Name:   "change-password",
 		Usage:  "Change a user's password",
-		Action: runChangePassword,
+		Action: cliEnvSetup(runChangePassword),
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:  "username",
@@ -54,7 +54,7 @@ func Admin() *cli.Command {
 	subcmdCreateClient := &cli.Command{
 		Name:   "create-client",
 		Usage:  "Create a new client in database",
-		Action: runCreateClient,
+		Action: cliEnvSetup(runCreateClient),
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:  "name",
@@ -66,7 +66,7 @@ func Admin() *cli.Command {
 	subcmdCreatePager := &cli.Command{
 		Name:   "create-pager",
 		Usage:  "Create a new pager in database",
-		Action: runCreatePager,
+		Action: cliEnvSetup(runCreatePager),
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:  "name",
@@ -91,39 +91,43 @@ func Admin() *cli.Command {
 	}
 }
 
-type db interface {
-	Close() error
+type commandFunc func(*cli.Context, service.Service, database.DB) error
+
+func cliEnvSetup(cmdFunc commandFunc) cli.ActionFunc {
+	return func(c *cli.Context) error {
+		if err := config.Load(); err != nil {
+			log.Fatal().
+				Err(err).
+				Msg("config could not be loaded")
+		}
+
+		config.Log.Pretty = true
+
+		// Setup Logger
+		if err := logger.Init(); err != nil {
+			log.Fatal().
+				Err(err).
+				Msg("logger initialization failed")
+		}
+		defer logger.Close()
+
+		// Setup Database Connection
+		db, err := database.Open()
+		if err != nil {
+			log.Fatal().
+				Err(err).
+				Msg("database initialization failed")
+		}
+		defer db.Close()
+
+		// Setup Business Layer
+		s := service.NewService(db, nil)
+
+		return cmdFunc(c, s, db)
+	}
 }
 
-func basicSetup() (service.Service, db) {
-	if err := config.Load(); err != nil {
-		log.Fatal().
-			Err(err).
-			Msg("config could not be loaded")
-
-		os.Exit(1)
-	}
-
-	// Setup Database Connection
-	db, err := database.Open()
-	if err != nil {
-		log.Fatal().
-			Err(err).
-			Msg("database initialization failed")
-
-		os.Exit(1)
-	}
-
-	// Setup Business Layer
-	s := service.NewService(db, nil)
-
-	return s, db
-}
-
-func runCreateUser(c *cli.Context) error {
-	s, db := basicSetup()
-	defer db.Close()
-
+func runCreateUser(c *cli.Context, s service.Service, db database.DB) error {
 	user := &model.User{
 		Username: c.String("username"),
 		Password: c.String("password"),
@@ -132,19 +136,19 @@ func runCreateUser(c *cli.Context) error {
 
 	err := s.CreateUser(user)
 	if err != nil && service.IsModelValidationErr(err) {
-		log.Info().
-			Msgf("User is invalid: %s", err.Error())
-
+		fmt.Printf("User is invalid: %s\n", err.Error())
 		return nil
 	}
 
-	return errors.Wrap(err, "create user failed")
+	if err != nil {
+		return errors.Wrap(err, "create user failed")
+	}
+
+	fmt.Printf("User - ID %d - successfully created!\n", user.ID)
+	return nil
 }
 
-func runChangePassword(c *cli.Context) error {
-	s, db := basicSetup()
-	defer db.Close()
-
+func runChangePassword(c *cli.Context, s service.Service, db database.DB) error {
 	user := &model.User{
 		Username: c.String("username"),
 		Password: c.String("password"),
@@ -152,38 +156,38 @@ func runChangePassword(c *cli.Context) error {
 
 	err := s.ChangeUserPassword(user)
 	if err != nil && service.IsModelValidationErr(err) {
-		log.Info().
-			Msgf("User is invalid: %s", err.Error())
-
+		fmt.Printf("User is invalid: %s\n", err.Error())
 		return nil
 	}
 
-	return errors.Wrap(err, "change user password failed")
+	if err != nil {
+		return errors.Wrap(err, "change user password failed")
+	}
+
+	fmt.Printf("Password of User %s successfully changed!\n", user.Username)
+	return nil
 }
 
-func runCreateClient(c *cli.Context) error {
-	s, db := basicSetup()
-	defer db.Close()
-
+func runCreateClient(c *cli.Context, s service.Service, db database.DB) error {
 	client := &model.Client{
 		Name: c.String("name"),
 	}
 
 	err := s.CreateClient(client)
 	if err != nil && service.IsModelValidationErr(err) {
-		log.Info().
-			Msgf("Client is invalid: %s", err.Error())
-
+		fmt.Printf("Client is invalid: %s\n", err.Error())
 		return nil
 	}
 
-	return errors.Wrap(err, "create client failed")
+	if err != nil {
+		return errors.Wrap(err, "create client failed")
+	}
+
+	fmt.Printf("Client - ID %d - successfully created!\n", client.ID)
+	return nil
 }
 
-func runCreatePager(c *cli.Context) error {
-	s, db := basicSetup()
-	defer db.Close()
-
+func runCreatePager(c *cli.Context, s service.Service, db database.DB) error {
 	pager := &model.Pager{
 		Name:       c.String("name"),
 		EasyCallID: c.Uint("id"),
@@ -191,11 +195,14 @@ func runCreatePager(c *cli.Context) error {
 
 	err := s.CreatePager(pager)
 	if err != nil && service.IsModelValidationErr(err) {
-		log.Info().
-			Msgf("Pager is invalid: %s", err.Error())
-
+		fmt.Printf("Pager is invalid: %s\n", err.Error())
 		return nil
 	}
 
-	return errors.Wrap(err, "create pager failed")
+	if err != nil {
+		return errors.Wrap(err, "create pager failed")
+	}
+
+	fmt.Printf("Pager - ID %d - successfully created!\n", pager.ID)
+	return nil
 }

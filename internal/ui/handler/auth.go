@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"github.com/dgrijalva/jwt-go"
 	"net/http"
 	"time"
 
@@ -35,9 +36,11 @@ func CreateToken(userService service.UserService, tokenService service.TokenServ
 		}
 
 		tokenAuth := jwtauth.New("HS256", []byte(config.General.Secret), nil)
-		jwtToken, _, err := tokenAuth.Encode(jwtauth.Claims{
-			"exp": jwtauth.ExpireIn(12 * time.Hour),
-		})
+
+		var claim jwt.MapClaims
+		jwtauth.SetExpiryIn(claim, 12 * time.Hour)
+
+		jwtToken, _, err := tokenAuth.Encode(claim)
 		if err != nil {
 			render.Render(w, req, renderer.ErrInternalServer(err))
 			return
